@@ -30,6 +30,17 @@ export default defineConfig({
       ],
     }),
     Components({
+      // 🔍 自動掃描的目錄（可寫多個）
+      dirs: ["src/components", "src/views/teacher/CourseManagement/component"],
+
+      // 🔄 遞迴讀取子資料夾
+      deep: true,
+
+      // 💅 指定要自動引入的副檔名
+      extensions: ["vue"],
+
+      // 📌 組件名稱是否要大小寫區分（建議 false）
+      directoryAsNamespace: false,
       resolvers: [
         // Auto register icon components
         // 自动注册图标组件

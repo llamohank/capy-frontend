@@ -1,7 +1,5 @@
 <script setup></script>
 <template>
-  <el-scrollbar>
-    <RouterView></RouterView>
-  </el-scrollbar>
+  <h2>platformmanagement</h2>
 </template>
 <style scoped></style>
