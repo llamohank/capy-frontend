@@ -1,7 +1,11 @@
 <script setup>
-const abc = ref(3);
+import { RouterView } from 'vue-router';
 </script>
+
 <template>
-  {{ abc }}
+<RouterView />
+
 </template>
-<style scoped></style>
+<style scoped>
+
+</style>
