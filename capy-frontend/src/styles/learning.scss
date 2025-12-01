@@ -2,7 +2,7 @@
  * 課程學習頁面全域樣式
  * 包含色彩系統、間距系統、字體規範等
  */
- 
+
 @use "sass:math";
 @use "sass:color";
 
@@ -179,7 +179,7 @@ $breakpoint-xl: 1920px;
   color: var(--capy-text-primary);
   margin-bottom: $spacing-md;
   padding-bottom: $spacing-sm;
-  border-bottom: 2px solid var(--capy-border-base);
+  // border-bottom: 2px solid var(--capy-border-base);
 }
 
 // 空狀態樣式
@@ -204,7 +204,7 @@ $breakpoint-xl: 1920px;
 .loading-state {
   @include flex-center;
   min-height: 200px;
-  
+
   .loading-spinner {
     font-size: 48px;
     color: var(--capy-primary);
@@ -247,7 +247,7 @@ $breakpoint-xl: 1920px;
 .el-input {
   .el-input__wrapper {
     transition: all $transition-base;
-    
+
     &:hover {
       box-shadow: 0 0 0 1px var(--capy-border-dark) inset;
     }
