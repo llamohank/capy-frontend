@@ -8,6 +8,7 @@ import LatestCourses from '@/components/student/Home/LatestCourses.vue'
 import Tags from '@/components/student/Home/tags.vue'
 import TopCourses from '@/components/student/Home/TopCourses.vue'
 import ContinueLearning from '@/components/student/Home/ContinueLearning.vue'
+// import ScrollytellingBackground from '@/components/student/Home/ScrollytellingBackground.vue'
 
 // 使用 user store 來判斷登入狀態
 const userStore = useUserStore()
@@ -91,6 +92,7 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
 .home-page {
   width: 100%;
   min-height: 100vh;
+  position: relative;
 }
 
 /* Remove gap between last section and footer */
@@ -103,11 +105,15 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
 .hero-section-wrapper {
   width: 100%;
   margin-bottom: 0;
+  position: relative;
+  z-index: 2;
 }
 
 /* Trust Bar Section */
 .trust-bar-section {
   margin-bottom: var(--capy-spacing-xxl);
+  position: relative;
+  z-index: 2;
 }
 
 /* Section Wrapper - Alternating Backgrounds */
@@ -115,6 +121,7 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
   width: 100%;
   padding: var(--capy-spacing-xxl) 0;
   position: relative;
+  z-index: 2;
 }
 
 .section-white {
