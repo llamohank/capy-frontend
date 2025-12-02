@@ -42,7 +42,7 @@ onMounted(async () => {
       ElMessage.success('登入成功!')
 
       // 檢查是否有原始目標路徑
-      const redirectPath = route.query.redirect || '/student/my-learning'
+      const redirectPath = route.query.redirect || '/'
 
       // 跳轉到目標頁面
       await router.replace(redirectPath)
@@ -76,7 +76,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* 使用變數確保與全站主題連動 */
+  background: linear-gradient(135deg, var(--capy-primary) 0%, var(--capy-primary-dark) 100%);
 }
 
 .loading-content {

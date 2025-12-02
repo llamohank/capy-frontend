@@ -1,6 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { getHomePageData } from '@/api/student/home.js'
+import { ElMessage } from 'element-plus'
 import Carousel from '@/components/student/Home/Carousel.vue'
 import TrustBar from '@/components/student/Home/TrustBar.vue'
 import GoldenTeachers from '@/components/student/Home/GoldenTeachers.vue'
@@ -13,78 +15,144 @@ import ContinueLearning from '@/components/student/Home/ContinueLearning.vue'
 // 使用 user store 來判斷登入狀態
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isAuthenticated)
+
+// 首頁資料狀態
+const loading = ref(true)
+const homeData = ref({
+  topCourses: [],
+  latestCourses: [],
+  goldenTeachers: [],
+  popularTags: [],
+  carousel: [],
+  stats: null,
+  continueLearning: []
+})
+
+// 獲取首頁資料
+const fetchHomeData = async () => {
+  try {
+    loading.value = true
+    const response = await getHomePageData()
+
+    console.log('API 回應 (已被 http.js 處理):', response)
+
+    // 注意：http.js 的 response 攔截器已經提取了 response.data.data
+    // 所以這裡的 response 直接就是後端的 data 陣列
+    // 後端格式: data: [{ popularCourses, latestCourses, topTags, goldenTr }]
+    if (response && Array.isArray(response) && response.length > 0) {
+      const apiData = response[0]
+      console.log('解析的 API 資料:', apiData)
+
+      homeData.value = {
+        topCourses: apiData.popularCourses || [],
+        latestCourses: apiData.latestCourses || [],
+        goldenTeachers: apiData.goldenTr || [],
+        popularTags: apiData.topTags || [],
+        carousel: [],  // 暫時為空，等待後端提供
+        stats: null,   // 暫時為空，等待後端提供
+        continueLearning: []  // 需要登入後才有資料
+      }
+
+      console.log('設定後的 homeData:', homeData.value)
+      console.log('熱門課程數量:', homeData.value.topCourses.length)
+      console.log('最新課程數量:', homeData.value.latestCourses.length)
+      console.log('標籤數量:', homeData.value.popularTags.length)
+    } else {
+      console.warn('API 回應格式不符合預期:', response)
+    }
+  } catch (error) {
+    console.error('獲取首頁資料失敗:', error)
+    console.error('錯誤詳情:', error.response || error.message)
+    ElMessage.error('載入首頁資料失敗，請稍後再試')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 組件掛載時獲取資料
+onMounted(() => {
+  fetchHomeData()
+})
 </script>
 
 <template>
   <div class="home-page">
-    <!-- Hero Section with Carousel -->
-    <section class="hero-section-wrapper">
-      <Carousel />
-    </section>
+    <!-- Loading 狀態 -->
+    <div v-if="loading" class="loading-container">
+      <el-skeleton :rows="5" animated />
+    </div>
 
-    <!-- Trust Bar -->
-    <section class="trust-bar-section">
-      <TrustBar />
-    </section>
+    <!-- 主要內容 -->
+    <div v-else>
+      <!-- Hero Section with Carousel -->
+      <section class="hero-section-wrapper">
+        <Carousel :carousel-data="homeData.carousel" />
+      </section>
 
-    <!-- Continue Learning (登入後才顯示) -->
-    <section v-if="isLoggedIn" class="section-wrapper section-white">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">繼續學習</h2>
-          <div class="title-underline"></div>
+      <!-- Trust Bar -->
+      <section class="trust-bar-section">
+        <TrustBar :stats="homeData.stats" />
+      </section>
+
+      <!-- Continue Learning (登入後才顯示) -->
+      <section v-if="isLoggedIn && homeData.continueLearning.length > 0" class="section-wrapper section-white">
+        <div class="section-container">
+          <div class="section-header">
+            <h2 class="section-title-student">繼續學習</h2>
+            <div class="title-underline"></div>
+          </div>
+          <ContinueLearning :enrollments="homeData.continueLearning" />
         </div>
-        <ContinueLearning />
-      </div>
-    </section>
+      </section>
 
-    <!-- Top Courses Section -->
-    <section class="section-wrapper section-white">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">熱門課程</h2>
-          <div class="title-underline"></div>
+      <!-- Top Courses Section -->
+      <section class="section-wrapper section-white">
+        <div class="section-container">
+          <div class="section-header">
+            <h2 class="section-title-student">熱門課程</h2>
+            <div class="title-underline"></div>
+          </div>
+          <TopCourses :courses="homeData.topCourses" />
         </div>
-        <TopCourses />
-      </div>
-    </section>
+      </section>
 
-    <!-- Tags Section -->
-    <section class="section-wrapper section-gray">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">熱門標籤</h2>
-          <div class="title-underline"></div>
+      <!-- Tags Section -->
+      <section class="section-wrapper section-gray">
+        <div class="section-container">
+          <div class="section-header">
+            <h2 class="section-title-student">熱門標籤</h2>
+            <div class="title-underline"></div>
+          </div>
+          <Tags :tags="homeData.popularTags" />
         </div>
-        <Tags />
-      </div>
-    </section>
+      </section>
 
-    <!-- Latest Courses Section with Decorative Blobs -->
-    <section class="section-wrapper section-white latest-courses-section">
-      <!-- Decorative Background Blobs -->
-      <div class="decorative-blob blob-1"></div>
-      <div class="decorative-blob blob-2"></div>
+      <!-- Latest Courses Section with Decorative Blobs -->
+      <section class="section-wrapper section-white latest-courses-section">
+        <!-- Decorative Background Blobs -->
+        <div class="decorative-blob blob-1"></div>
+        <div class="decorative-blob blob-2"></div>
 
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">最新課程</h2>
-          <div class="title-underline"></div>
+        <div class="section-container">
+          <div class="section-header">
+            <h2 class="section-title-student">最新課程</h2>
+            <div class="title-underline"></div>
+          </div>
+          <LatestCourses :courses="homeData.latestCourses" />
         </div>
-        <LatestCourses />
-      </div>
-    </section>
+      </section>
 
-    <!-- Golden Teachers Section -->
-    <section class="section-wrapper section-gray">
-      <div class="section-container">
-        <div class="section-header">
-          <h2 class="section-title">金牌講師</h2>
-          <div class="title-underline"></div>
+      <!-- Golden Teachers Section -->
+      <section class="section-wrapper section-gray">
+        <div class="section-container">
+          <div class="section-header">
+            <h2 class="section-title-student">金牌講師</h2>
+            <div class="title-underline"></div>
+          </div>
+          <GoldenTeachers :teachers="homeData.goldenTeachers" />
         </div>
-        <GoldenTeachers />
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -93,6 +161,17 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
   width: 100%;
   min-height: 100vh;
   position: relative;
+}
+
+/* Loading Container */
+.loading-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--capy-spacing-xxl) var(--capy-spacing-lg);
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Remove gap between last section and footer */
@@ -145,7 +224,7 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
   margin-bottom: var(--capy-spacing-xxl);
 }
 
-.section-title {
+.section-title-student {
   font-size: 32px;
   font-weight: var(--capy-font-weight-bold);
   color: var(--capy-text-primary);
@@ -201,22 +280,38 @@ const isLoggedIn = computed(() => userStore.isAuthenticated)
 }
 
 /* Responsive Design */
+
+/* Tablet Breakpoint (1024px) */
 @media (max-width: 1024px) {
   .section-wrapper {
-    padding: 60px 0;
+    padding: var(--capy-spacing-xl) 0;
+  }
+
+  .section-container {
+    padding: 0 var(--capy-spacing-md);
   }
 
   .section-header {
-    margin-bottom: 40px;
+    margin-bottom: var(--capy-spacing-xl);
   }
 
-  .section-title {
+  .section-title-student {
     font-size: 28px;
   }
 
   .title-underline {
     width: 50px;
     height: 3px;
+  }
+
+  .blob-1 {
+    width: 500px;
+    height: 500px;
+  }
+
+  .blob-2 {
+    width: 400px;
+    height: 400px;
   }
 }
 

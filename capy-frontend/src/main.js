@@ -1,5 +1,5 @@
 import "./styles/style.css";
-// import "./styles/common.css";
+import "./styles/common.css";
 import "./styles/theme-variables.css";
 import "./styles/learning.scss";
 
@@ -11,6 +11,7 @@ import './styles/element-plus-override.css'
 import { Icon } from "@iconify/vue";
 import App from "./App.vue";
 import router from "./router";
+
 
 const app = createApp(App);
 

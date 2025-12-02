@@ -1,32 +1,104 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const stats = ref([
   {
     id: 1,
     icon: '👥',
     number: '10,000+',
-    label: '活躍學員'
+    targetValue: 10000,
+    suffix: '+',
+    label: '活躍學員',
+    displayValue: 0
   },
   {
     id: 2,
     icon: '📚',
     number: '500+',
-    label: '精選課程'
+    targetValue: 500,
+    suffix: '+',
+    label: '精選課程',
+    displayValue: 0
   },
   {
     id: 3,
     icon: '🎓',
     number: '100+',
-    label: '專業講師'
+    targetValue: 100,
+    suffix: '+',
+    label: '專業講師',
+    displayValue: 0
   },
   {
     id: 4,
     icon: '⭐',
     number: '4.8',
-    label: '平均評分'
+    targetValue: 4.8,
+    suffix: '',
+    label: '平均評分',
+    displayValue: 0,
+    isDecimal: true
   }
 ])
+
+// 數字動畫函數
+const animateNumber = (stat, duration = 2000) => {
+  const startTime = Date.now()
+  const startValue = 0
+  const endValue = stat.targetValue
+
+  const animate = () => {
+    const currentTime = Date.now()
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+
+    // 使用 easeOutQuart 緩動函數
+    const easeProgress = 1 - Math.pow(1 - progress, 4)
+
+    if (stat.isDecimal) {
+      stat.displayValue = (startValue + (endValue - startValue) * easeProgress).toFixed(1)
+    } else {
+      stat.displayValue = Math.floor(startValue + (endValue - startValue) * easeProgress)
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate)
+    } else {
+      stat.displayValue = stat.isDecimal ? endValue.toFixed(1) : endValue
+    }
+  }
+
+  animate()
+}
+
+// 格式化顯示數字
+const formatDisplayNumber = (stat) => {
+  if (stat.displayValue === 0) return '0'
+
+  const value = stat.displayValue
+  if (stat.isDecimal) {
+    return value
+  }
+
+  // 格式化大數字（加入千分位逗號）
+  if (value >= 1000) {
+    return value.toLocaleString('zh-TW')
+  }
+
+  return value
+}
+
+onMounted(() => {
+  // 延遲啟動動畫，讓頁面先渲染
+  setTimeout(() => {
+    stats.value.forEach((stat, index) => {
+      // 錯開每個數字的動畫開始時間
+      setTimeout(() => {
+        animateNumber(stat, 2000)
+      }, index * 100)
+    })
+  }, 300)
+})
 </script>
 
 <template>
@@ -38,7 +110,9 @@ const stats = ref([
         class="stat-item"
       >
         <div class="stat-icon">{{ stat.icon }}</div>
-        <div class="stat-number">{{ stat.number }}</div>
+        <div class="stat-number">
+          {{ formatDisplayNumber(stat) }}{{ stat.suffix }}
+        </div>
         <div class="stat-label">{{ stat.label }}</div>
       </div>
     </div>

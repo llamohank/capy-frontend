@@ -1,0 +1,326 @@
+/**
+ * River & Cloud Tech - Component Styles
+ * 展示如何使用新的天空藍色彩系統
+ */
+
+/* ==================== 按鈕樣式 ==================== */
+
+/**
+ * 主要按鈕 - 使用天空藍背景搭配深色文字
+ * 設計理念：明亮的天空藍需要深色文字以確保可讀性
+ */
+.btn-primary {
+  background-color: var(--capy-primary);
+  color: #0F172A; /* Dark Navy - 深海軍藍，提供最佳對比度 */
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--capy-radius-md);
+  font-weight: var(--capy-font-weight-medium);
+  font-size: var(--capy-font-size-base);
+  cursor: pointer;
+  transition: all var(--capy-transition-base);
+  box-shadow: var(--capy-shadow-sm);
+}
+
+.btn-primary:hover {
+  background-color: var(--el-color-primary-light-1);
+  box-shadow: var(--capy-shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  background-color: var(--capy-primary-dark);
+  transform: translateY(0);
+  box-shadow: var(--capy-shadow-sm);
+}
+
+.btn-primary:disabled {
+  background-color: var(--el-color-primary-light-5);
+  color: var(--capy-text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/**
+ * 次要按鈕 - 使用深藍色文字搭配淺藍背景
+ */
+.btn-secondary {
+  background-color: var(--capy-primary-light);
+  color: var(--capy-primary-dark);
+  border: 1px solid var(--capy-primary);
+  padding: 12px 24px;
+  border-radius: var(--capy-radius-md);
+  font-weight: var(--capy-font-weight-medium);
+  font-size: var(--capy-font-size-base);
+  cursor: pointer;
+  transition: all var(--capy-transition-base);
+}
+
+.btn-secondary:hover {
+  background-color: var(--el-color-primary-light-8);
+  border-color: var(--capy-primary-dark);
+  color: var(--capy-primary-dark);
+}
+
+/**
+ * 輪廓按鈕 - 透明背景搭配天空藍邊框
+ */
+.btn-outline {
+  background-color: transparent;
+  color: var(--capy-primary);
+  border: 2px solid var(--capy-primary);
+  padding: 10px 22px;
+  border-radius: var(--capy-radius-md);
+  font-weight: var(--capy-font-weight-medium);
+  font-size: var(--capy-font-size-base);
+  cursor: pointer;
+  transition: all var(--capy-transition-base);
+}
+
+.btn-outline:hover {
+  background-color: var(--capy-primary);
+  color: #0F172A;
+}
+
+/**
+ * 警告按鈕 - 使用橘色作為強對比 CTA
+ */
+.btn-warning {
+  background-color: var(--capy-warning);
+  color: #FFFFFF;
+  border: none;
+  padding: 12px 24px;
+  border-radius: var(--capy-radius-md);
+  font-weight: var(--capy-font-weight-semibold);
+  font-size: var(--capy-font-size-base);
+  cursor: pointer;
+  transition: all var(--capy-transition-base);
+  box-shadow: var(--capy-shadow-sm);
+}
+
+.btn-warning:hover {
+  background-color: var(--el-color-warning-dark-2);
+  box-shadow: var(--capy-shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ==================== 標籤/徽章樣式 ==================== */
+
+/**
+ * 主要標籤 - 使用淺藍背景搭配深藍文字
+ * 設計理念：低飽和度背景確保可讀性，邊框增加視覺層次
+ */
+.tag-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: rgba(84, 205, 242, 0.1); /* 10% 透明度的天空藍 */
+  color: var(--capy-primary-dark);
+  border: 1px solid var(--capy-primary);
+  border-radius: var(--capy-radius-lg);
+  font-size: var(--capy-font-size-sm);
+  font-weight: var(--capy-font-weight-medium);
+  transition: all var(--capy-transition-fast);
+}
+
+.tag-primary:hover {
+  background-color: rgba(84, 205, 242, 0.2);
+  border-color: var(--capy-primary-dark);
+}
+
+/**
+ * 次要標籤 - 使用水豚棕保持吉祥物特色
+ */
+.tag-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: rgba(161, 136, 127, 0.1);
+  color: var(--capy-brand-dark);
+  border: 1px solid var(--capy-brand);
+  border-radius: var(--capy-radius-lg);
+  font-size: var(--capy-font-size-sm);
+  font-weight: var(--capy-font-weight-medium);
+}
+
+/**
+ * 成功標籤
+ */
+.tag-success {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background-color: var(--el-color-success-light-9);
+  color: var(--el-color-success-dark-2);
+  border: 1px solid var(--capy-success);
+  border-radius: var(--capy-radius-lg);
+  font-size: var(--capy-font-size-sm);
+  font-weight: var(--capy-font-weight-medium);
+}
+
+/* ==================== 連結樣式 ==================== */
+
+/**
+ * 主要連結 - 使用深藍色確保在白色背景上的可讀性
+ */
+.link-primary {
+  color: var(--capy-primary-dark);
+  text-decoration: none;
+  font-weight: var(--capy-font-weight-medium);
+  transition: color var(--capy-transition-fast);
+  position: relative;
+}
+
+.link-primary:hover {
+  color: var(--capy-primary);
+}
+
+.link-primary::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--capy-primary);
+  transition: width var(--capy-transition-base);
+}
+
+.link-primary:hover::after {
+  width: 100%;
+}
+
+/* ==================== 卡片樣式 ==================== */
+
+/**
+ * 河流卡片 - 使用天空藍作為強調色
+ */
+.card-river {
+  background-color: var(--capy-bg-surface);
+  border: 1px solid var(--capy-border-light);
+  border-radius: var(--capy-radius-lg);
+  padding: var(--capy-spacing-lg);
+  box-shadow: var(--capy-shadow-base);
+  transition: all var(--capy-transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-river::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    var(--capy-primary),
+    var(--capy-primary-dark)
+  );
+}
+
+.card-river:hover {
+  box-shadow: var(--capy-shadow-lg);
+  transform: translateY(-2px);
+  border-color: var(--capy-primary);
+}
+
+/* ==================== 輸入框樣式 ==================== */
+
+/**
+ * 主要輸入框 - 聚焦時使用天空藍
+ */
+.input-primary {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--capy-border-base);
+  border-radius: var(--capy-radius-md);
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-primary);
+  background-color: var(--capy-bg-surface);
+  transition: all var(--capy-transition-base);
+}
+
+.input-primary:focus {
+  outline: none;
+  border-color: var(--capy-primary);
+  box-shadow: 0 0 0 3px rgba(84, 205, 242, 0.1);
+}
+
+.input-primary::placeholder {
+  color: var(--capy-text-placeholder);
+}
+
+/* ==================== 河流 SVG 背景 ==================== */
+
+/**
+ * 河流背景裝飾 - 使用低透明度的天空藍
+ */
+.river-background {
+  position: relative;
+  overflow: hidden;
+}
+
+.river-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    rgba(84, 205, 242, 0.05) 0%,
+    rgba(14, 165, 233, 0.08) 100%
+  );
+  pointer-events: none;
+}
+
+/* ==================== 標題樣式 ==================== */
+
+/**
+ * 主標題 - 使用深藍色
+ */
+.heading-primary {
+  color: var(--capy-primary-dark);
+  font-weight: var(--capy-font-weight-bold);
+  font-size: var(--capy-font-size-title);
+  margin-bottom: var(--capy-spacing-md);
+}
+
+/* ==================== 使用範例 ==================== */
+
+/**
+ * HTML 使用範例：
+ *
+ * <!-- 主要按鈕 -->
+ * <button class="btn-primary">開始學習</button>
+ *
+ * <!-- 次要按鈕 -->
+ * <button class="btn-secondary">了解更多</button>
+ *
+ * <!-- 輪廓按鈕 -->
+ * <button class="btn-outline">瀏覽課程</button>
+ *
+ * <!-- 警告按鈕（強對比 CTA） -->
+ * <button class="btn-warning">限時優惠</button>
+ *
+ * <!-- 主要標籤 -->
+ * <span class="tag-primary">熱門</span>
+ *
+ * <!-- 次要標籤 -->
+ * <span class="tag-secondary">推薦</span>
+ *
+ * <!-- 主要連結 -->
+ * <a href="#" class="link-primary">查看詳情</a>
+ *
+ * <!-- 河流卡片 -->
+ * <div class="card-river">
+ *   <h3 class="heading-primary">課程標題</h3>
+ *   <p>課程描述...</p>
+ * </div>
+ *
+ * <!-- 輸入框 -->
+ * <input type="text" class="input-primary" placeholder="搜尋課程...">
+ */

@@ -100,7 +100,7 @@ const studentRoutes = [
         children: [
           // 我的學習
           {
-            path: 'my-learning',
+            path: '',
             name: 'MyLearning',
             component: () => import('@/views/student/StudentCenter/MyLearning/MyLearningPage.vue')
           },

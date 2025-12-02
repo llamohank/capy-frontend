@@ -1,54 +1,30 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Reading } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
-const teachers = ref([
-  {
-    id: 1,
-    name: "張明華",
-    avatar: "https://picsum.photos/200?1",
-    title: "資深前端工程師",
-    studentCount: 5240,
-    courseCount: 12,
-    rating: 4.9
-  },
-  {
-    id: 2,
-    name: "李佳玲",
-    avatar: "https://picsum.photos/200?2",
-    title: "全端開發專家",
-    studentCount: 4830,
-    courseCount: 15,
-    rating: 4.8
-  },
-  {
-    id: 3,
-    name: "王志強",
-    avatar: "https://picsum.photos/200?3",
-    title: "數據科學講師",
-    studentCount: 6120,
-    courseCount: 18,
-    rating: 4.9
-  },
-  {
-    id: 4,
-    name: "陳雅婷",
-    avatar: "https://picsum.photos/200?4",
-    title: "UI/UX 設計師",
-    studentCount: 3950,
-    courseCount: 10,
-    rating: 4.7
+// 接收從父組件傳來的講師資料
+const props = defineProps({
+  teachers: {
+    type: Array,
+    default: () => []
   }
-])
+})
+
+// 後端返回的格式已經是金牌講師，直接使用
+const displayTeachers = computed(() => props.teachers)
 
 const goToTeacher = (id) => {
   router.push(`/teacher/${id}`)
 }
 
 const formatStudentCount = (count) => {
+  // 處理 undefined 或 null 的情況
+  if (count === undefined || count === null) {
+    return '0'
+  }
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`
   }
@@ -59,7 +35,7 @@ const formatStudentCount = (count) => {
 <template>
   <div class="golden-teachers-container">
     <div
-      v-for="teacher in teachers"
+      v-for="teacher in displayTeachers"
       :key="teacher.id"
       class="teacher-card"
       @click="goToTeacher(teacher.id)"
@@ -69,7 +45,7 @@ const formatStudentCount = (count) => {
         <div class="avatar-ring"></div>
         <el-avatar
           :size="140"
-          :src="teacher.avatar"
+          :src="teacher.avatarUrl"
           class="teacher-avatar"
         />
       </div>
@@ -77,7 +53,7 @@ const formatStudentCount = (count) => {
       <!-- Teacher Info -->
       <div class="teacher-info">
         <h3 class="teacher-name">{{ teacher.name }}</h3>
-        <p class="teacher-title">{{ teacher.title }}</p>
+        <p class="teacher-title">{{ teacher.topCategory }}</p>
 
         <!-- Stats -->
         <div class="teacher-stats">

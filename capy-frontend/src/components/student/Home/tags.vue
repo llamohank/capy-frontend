@@ -1,22 +1,23 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
-const tagsData = ref([
-  { id: 1, name: "Java Basic", hot: 95 },
-  { id: 2, name: "Python Basic", hot: 88 },
-  { id: 3, name: "JavaScript Basic", hot: 76 },
-  { id: 4, name: "SQL Basic", hot: 64 }
-])
+// 接收從父組件傳來的標籤資料
+const props = defineProps({
+  tags: {
+    type: Array,
+    default: () => []
+  }
+})
 
-const sortedTags = computed(() =>
-  [...tagsData.value].sort((a, b) => b.hot - a.hot)
-)
+// 後端返回的格式: [{ id, name }]
+// 直接使用後端資料，不需要排序（後端已經按熱度排序）
+const displayTags = computed(() => props.tags)
 </script>
 
 <template>
   <div class="tags-container">
     <button
-      v-for="tag in sortedTags"
+      v-for="tag in displayTags"
       :key="tag.id"
       class="tag-pill"
     >
@@ -35,18 +36,21 @@ const sortedTags = computed(() =>
 }
 
 .tag-pill {
-  /* Shape - Pill形狀 */
+  /* Shape - Premium Pill形狀 */
   border-radius: 50px;
-  padding: 12px 28px;
+  padding: 8px 24px;
 
-  /* Ghost/Outline Style - 預設狀態 */
-  background-color: rgba(255, 255, 255, 0.6);
+  /* High Contrast Base Style */
+  background-color: #FFFFFF;
   border: 1px solid var(--capy-primary);
-  color: var(--capy-primary);
+  color: #0277BD;
 
   /* Typography */
   font-size: var(--capy-font-size-base);
-  font-weight: var(--capy-font-weight-medium);
+  font-weight: 600;
+
+  /* Subtle Depth */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04);
 
   /* Interaction */
   cursor: pointer;
@@ -64,13 +68,13 @@ const sortedTags = computed(() =>
   font-weight: var(--capy-font-weight-medium);
 }
 
-/* Hover 狀態 */
+/* Hover 狀態 - Premium Interaction */
 .tag-pill:hover {
   background-color: var(--capy-primary);
   color: white;
   border-color: var(--capy-primary);
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0, 191, 165, 0.3);
+  box-shadow: 0 8px 15px rgba(84, 205, 242, 0.35);
 }
 
 /* Active/按下狀態 */

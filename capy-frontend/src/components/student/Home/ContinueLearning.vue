@@ -14,7 +14,12 @@ const enrollments = ref([
       cover_image_url: 'https://picsum.photos/200',
       instructor_name: 'Ethan Carter'
     },
-    completion_percentage: 75
+    completion_percentage: 75,
+    last_watched: {
+      chapter: 3,
+      section: 2,
+      title: 'Python 進階語法'
+    }
   },
   {
     id: 2,
@@ -24,7 +29,12 @@ const enrollments = ref([
       cover_image_url: 'https://picsum.photos/200',
       instructor_name: '劉師 12 小時'
     },
-    completion_percentage: 30
+    completion_percentage: 30,
+    last_watched: {
+      chapter: 1,
+      section: 5,
+      title: '色彩理論基礎'
+    }
   },
   {
     id: 3,
@@ -34,9 +44,37 @@ const enrollments = ref([
       cover_image_url: 'https://picsum.photos/200',
       instructor_name: 'Sophia Lee'
     },
-    completion_percentage: 90
+    completion_percentage: 90,
+    last_watched: {
+      chapter: 5,
+      section: 1,
+      title: '使用者測試'
+    }
   }
 ])
+
+// 獲取進度提示文字
+const getProgressHint = (enrollment) => {
+  const percentage = enrollment.completion_percentage
+  const lastWatched = enrollment.last_watched
+
+  if (lastWatched) {
+    return `上次觀看到：第 ${lastWatched.chapter} 章 第 ${lastWatched.section} 節`
+  }
+
+  // 根據完成度給予激勵文字
+  if (percentage >= 90) {
+    return '只差一點點就完成了，加油！'
+  } else if (percentage >= 75) {
+    return `只差 ${100 - percentage}% 就完成了，加油！`
+  } else if (percentage >= 50) {
+    return '已經完成一半了，繼續努力！'
+  } else if (percentage >= 25) {
+    return '良好的開始，保持學習動力！'
+  } else {
+    return '開始你的學習之旅吧！'
+  }
+}
 
 // 處理卡片點擊，導航到課程學習頁面
 const handleCardClick = (courseId) => {
@@ -61,6 +99,9 @@ const handleCardClick = (courseId) => {
       <div class="course-info">
         <h3 class="course-title">{{ enrollment.course.title }}</h3>
         <p class="course-instructor">作者: {{ enrollment.course.instructor_name }}</p>
+
+        <!-- 進度資訊文字 -->
+        <p class="progress-hint">{{ getProgressHint(enrollment) }}</p>
 
         <!-- 進度條 -->
         <div class="progress-section">
@@ -144,6 +185,17 @@ const handleCardClick = (courseId) => {
   font-size: 13px;
   color: var(--el-text-color-secondary);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 進度提示文字 */
+.progress-hint {
+  font-size: 12px;
+  color: var(--capy-text-secondary);
+  margin: 4px 0 0 0;
+  font-style: italic;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
