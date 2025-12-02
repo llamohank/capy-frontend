@@ -2,7 +2,7 @@
 const formModel = ref({
   name: "java basic",
   price: "3600",
-  imageUrl: "https://picsum.photos/400",
+  imageUrl: "https://picsum.photos/300",
   cate: ["guide", "disciplines", "consistency"],
 });
 //category
@@ -312,15 +312,10 @@ const tagOptions = [
         Lorem ipsum dolor sit amet.
       </el-form-item>
       <el-form-item label="課程封面 :">
-        <img
-          style="max-width: 100%"
-          v-if="formModel.imageUrl"
-          :src="formModel.imageUrl"
-          class="avatar"
-        />
+        <img style="max-width: 100%" v-if="formModel.imageUrl" :src="formModel.imageUrl" />
       </el-form-item>
       <el-form-item label="課程價格 :">
-        {{ 55 }}
+        ${{ 55 }}
         <!-- <el-input readonly style="width: auto" v-model="formModel.price">
           <template #prefix> NTD &nbsp&nbsp</template>
         </el-input> -->
@@ -330,68 +325,24 @@ const tagOptions = [
         商業>會計
       </el-form-item>
       <el-form-item label="課程標籤 :">
-        <!-- <el-select
-          disabled
-          v-model="tagValue"
-          placeholder="選擇課程標籤"
-          style="width: 240px"
-          clearable
-          multiple
-        >
-          <template #label="{ label, value }">
-            <span style="font-weight: bold">{{ value }}</span>
-          </template>
-          <el-option
-            v-for="tag in tagOptions"
-            :key="tag.tagId"
-            :label="tag.label"
-            :value="tag.label"
-          />
-        </el-select> -->
         <el-tag effect="plain" round size="large">88</el-tag>
       </el-form-item>
       <el-form-item label="課程簡介 :">
-        <!-- <el-input style="width: 80%" type="textarea" :rows="5" placeholder="輸入課程簡介" /> -->
         <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloribus, molestias.</p>
       </el-form-item>
     </el-form>
   </div>
 </template>
 <style scoped>
-.avatar-uploader .el-upload {
-  border: 1px dashed #8c939d;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: var(--el-transition-duration-fast);
-}
-
-.avatar-uploader .el-upload:hover {
-  border-color: var(--el-color-primary);
-}
-
-.el-icon.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 178px;
-  height: 178px;
-  text-align: center;
-}
-/* :deep(.el-form) {
-  overflow: hidden;
-} */
-.form-label {
-  font-weight: 500;
-
-  /* color: #000; */
-}
 :deep(.el-form-item__content) {
-  padding-left: 16px;
+  padding-left: 12px;
 }
 :deep(.el-form-item__label) {
   font-weight: 500;
   letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+:deep(.el-form-item) {
   margin-bottom: 12px;
 }
 </style>
