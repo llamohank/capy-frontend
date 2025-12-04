@@ -1,9 +1,19 @@
 <script setup>
 const optionlist = ref(null);
+const list = [
+  {
+    name: "aaa",
+    id: 1,
+  },
+  {
+    name: "bbb",
+    id: 2,
+  },
+];
 onMounted(() => {
   //發請求獲取taglist
   //optionlist.value?.map((item) => ({ ...item, active: false }))
-  //optionlist.value=
+  optionlist.value = list;
 });
 const active = computed(() => optionlist.value?.filter((item) => item.active));
 const inactive = computed(() => optionlist.value?.filter((item) => !item.active));
@@ -12,12 +22,12 @@ const becomeActive = (id) => {
     ElMessage.error("已達標籤數量上限");
     return;
   }
-  alist.value.forEach((item) => {
+  optionlist.value.forEach((item) => {
     if (item.id === id) item.active = true;
   });
 };
 const becomeInactive = (id) => {
-  alist.value.forEach((item) => {
+  optionlist.value.forEach((item) => {
     if (item.id === id) item.active = false;
   });
 };
@@ -52,7 +62,7 @@ defineExpose({ activeList: active.value });
   flex-wrap: wrap;
   gap: 8px;
   padding: 8px 12px;
-  min-height: 24px;
+  min-height: 36px;
 }
 .tag {
   line-height: 1.5;

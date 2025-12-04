@@ -304,26 +304,12 @@ const tagOptions = [
   <div class="wrapper">
     <h2 class="section-title">課程基本資訊</h2>
     <el-form size="large" label-position="top" :model="formModel">
-      <el-form-item label="課程名稱 :">
-        <!-- <template #label>
-          <span class="form-label">課程名稱 :</span>
-        </template> -->
-        <!-- <el-input readonly style="width: 80%" v-model="formModel.name" /> -->
-        Lorem ipsum dolor sit amet.
-      </el-form-item>
+      <el-form-item label="課程名稱 :"> Lorem ipsum dolor sit amet. </el-form-item>
       <el-form-item label="課程封面 :">
         <img style="max-width: 100%" v-if="formModel.imageUrl" :src="formModel.imageUrl" />
       </el-form-item>
-      <el-form-item label="課程價格 :">
-        ${{ 55 }}
-        <!-- <el-input readonly style="width: auto" v-model="formModel.price">
-          <template #prefix> NTD &nbsp&nbsp</template>
-        </el-input> -->
-      </el-form-item>
-      <el-form-item label="課程分類 :">
-        <!-- <el-cascader disabled v-model="formModel.cate" :options="cateOptions" /> -->
-        商業>會計
-      </el-form-item>
+      <el-form-item label="課程價格 :"> ${{ 55 }} </el-form-item>
+      <el-form-item label="課程分類 :"> 商業>會計 </el-form-item>
       <el-form-item label="課程標籤 :">
         <el-tag effect="plain" round size="large">88</el-tag>
       </el-form-item>

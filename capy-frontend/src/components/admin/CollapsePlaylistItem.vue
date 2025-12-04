@@ -26,9 +26,13 @@ watch(
     //   videoPlayerRef.value.init();
     // }
     await nextTick();
+    if (value) {
+      await videoPlayerRef.value.init();
+      await videoPlayerRef.value.play();
+
+      return;
+    }
     await videoPlayerRef.value.destroy();
-    await videoPlayerRef.value.init();
-    await videoPlayerRef.value.play();
   }
 );
 const form = ref({
@@ -42,7 +46,7 @@ const form = ref({
   <!-- //添加單元影片dialog form -->
   <el-dialog center v-model="dialogFormVisible" title="單元影片詳情" width="600">
     <el-form :model="form" label-position="top" size="large" class="dialogForm">
-      <el-form-item label="單元影片標題 :">
+      <el-form-item label="影片標題 :">
         <p class="lesson-title">
           {{ form.lesson_name
           }}<el-tag style="margin-left: 8px" v-if="form.isFree">試看單元</el-tag>
@@ -51,7 +55,7 @@ const form = ref({
       <el-form-item label="對應章節 :">
         <p>{{ chapterinfo?.chapter_name }}</p>
       </el-form-item>
-      <el-form-item label="單元影片簡介 :">
+      <el-form-item label="影片簡介 :">
         <p>{{ form.lesson_description }}</p>
       </el-form-item>
 
@@ -159,5 +163,9 @@ const form = ref({
 }
 :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+:deep(.el-dialog__header) {
+  padding-top: 16px;
+  padding-bottom: 48px;
 }
 </style>

@@ -238,6 +238,7 @@ const handleUserCommand = (command) => {
   color: #304455;
   font-weight: 500;
   cursor: pointer;
+  outline: none;
   /* transition: box-shadow 0.2s; */
 }
 /* .user-chip:hover { */

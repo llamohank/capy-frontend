@@ -60,7 +60,12 @@ const data = computed(() => useIndex(tableData.value));
         </template>
       </el-table-column>
       <el-table-column prop="address" label="檢視">
-        <el-button type="primary" link>查看詳情</el-button>
+        <el-button
+          @click="$router.push({ name: 'instructor_detail', params: { instructorId: 1 } })"
+          type="primary"
+          link
+          >查看詳情</el-button
+        >
       </el-table-column>
     </el-table>
     <div class="pagination-btn">

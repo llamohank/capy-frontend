@@ -2,37 +2,44 @@
 import "shaka-player/dist/shaka-player.ui.js"; // ensures the UI build is registered
 import "shaka-player/dist/controls.css"; // required styling for Shaka controls
 import VideoPlayer from "@llamohank/custom-shaka-player";
-// import samplevideo from "@/assets/sample.mp4";
-import { onBeforeUnmount } from "vue";
+import samplevideo from "@/assets/sample.mp4";
 const videoPlayerRef = ref(null);
+let videoWidth = computed(() => videoPlayerRef.value?.videoWidth);
+let videoHeight = computed(() => videoPlayerRef.value?.videoHeight);
+let videoDuration = computed(() => videoPlayerRef.value?.duration);
 let player = null;
 onMounted(async () => {
   init();
   // play();
 });
-// onUnmount(() => {
-//   player.destroy();
-// });
-const play = async () => {
+
+const play = async (src) => {
   await player.play(samplevideo);
+  videoDuration = videoPlayerRef.value.duration;
+  videoWidth = videoPlayerRef.value.videoWidth;
+  videoHeight = videoPlayerRef.value.videoHeight;
+  // await player.play(src);
 };
 const init = async () => {
   player = new VideoPlayer(videoPlayerRef.value, videoPlayerRef.value.parentElement, {
     seekJumpSeconds: 10, // optional, defaults to 10
   });
   await player.initialize();
-  console.log("init");
+  // console.log("init");
 };
 const destroy = () => {
   if (player) {
     player.destroy();
-    console.log("close");
+    // console.log("close");
   }
 };
 defineExpose({
   destroy,
   init,
   play,
+  videoWidth,
+  videoHeight,
+  videoDuration,
 });
 </script>
 <template>

@@ -1,3 +1,6 @@
+import useCourseSwitch from "@/hooks/useCourseSwitch";
+
+const { switchCourseStatus } = useCourseSwitch();
 export default [
   {
     path: "/teacher",
@@ -16,20 +19,37 @@ export default [
         component: () => import("@/views/teacher/MyCourse/MyCourse.vue"),
       },
       {
-        path: "coursedetail/:courseId",
+        path: "coursedetail/:courseId/edit",
+        name: "editcoursedetail",
+        component: () => import("@/views/teacher/CourseDetail/EditCourseDetail.vue"),
+        beforeEnter: (to, from, next) => {
+          if (to.query.status !== "draft") {
+            next({
+              name: "coursedetail",
+              params: {
+                courseId: to.params.courseId,
+              },
+              query: {
+                status: switchCourseStatus(to.query.status),
+              },
+            });
+          } else {
+            next();
+          }
+        },
+      },
+      {
+        path: "coursedetail/:courseId/readonly",
         name: "coursedetail",
-        component: () => import("@/views/teacher/CourseDetail/CourseDetail.vue"),
+        component: () => import("@/views/teacher/CourseDetail/CourseDetailReadonly.vue"),
+        props: (route) => ({ status: route.query?.status }),
       },
       {
         path: "createcourse",
         name: "createcourse",
         component: () => import("@/views/teacher/CreateCourse/CreateCourse.vue"),
       },
-      {
-        path: "coursedata",
-        name: "coursedata",
-        component: () => import("@/views/teacher/DataStatics/CourseData.vue"),
-      },
+
       {
         path: "notification",
         name: "notification",

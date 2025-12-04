@@ -16,6 +16,14 @@ export default [
         component: () => import("@/views/admin/user/InstructorList.vue"),
       },
       {
+        path: "instructorDetail/:instructorId",
+        name: "instructor_detail",
+        component: () => import("@/views/admin/user/InstructorDetail.vue"),
+        props: (route) => ({
+          instructorId: route.params.instructorId,
+        }),
+      },
+      {
         path: "userManagement",
         name: "userManagement",
         component: () => import("@/views/admin/user/UserManagement.vue"),

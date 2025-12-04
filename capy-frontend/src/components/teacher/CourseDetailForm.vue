@@ -1,6 +1,8 @@
 <script setup>
 import TagPool from "./TagPool.vue";
-
+import { usecreateCourseStore } from "@/stores/createCourse";
+const createCourseStore = usecreateCourseStore();
+console.log(createCourseStore.currentStep);
 const formModel = ref({
   name: "java basic",
   price: "3600",
@@ -315,11 +317,11 @@ const deleteChapter = (index) => {
   <div class="wrapper">
     <h2 class="section-title">課程基本資訊</h2>
     <el-form size="large" label-position="top" label-width="auto" :model="formModel">
-      <el-form-item>
-        <template #label>
+      <el-form-item label="課程名稱 :">
+        <!-- <template #label>
           <span class="form-label">課程名稱 :</span>
-        </template>
-        <el-input style="width: 80%" v-model="formModel.name" />
+        </template> -->
+        <el-input style="width: 80%; font-size: 16px" v-model="formModel.name" />
       </el-form-item>
       <el-form-item label="課程封面 :">
         <el-upload :show-file-list="false">
@@ -328,12 +330,19 @@ const deleteChapter = (index) => {
         </el-upload>
       </el-form-item>
       <el-form-item label="課程價格 :">
-        <el-input style="width: auto" v-model="formModel.price">
+        <!-- <el-input style="width: auto" v-model="formModel.price">
           <template #prefix> NTD &nbsp&nbsp</template>
-        </el-input>
+        </el-input> -->
+        <el-input
+          v-model="formModel.price"
+          style="width: auto; font-size: 16px"
+          placeholder="Please input"
+          :formatter="(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')"
+          :parser="(value) => value.replace(/\$\s?|(,*)/g, '')"
+        />
       </el-form-item>
       <el-form-item label="課程分類 :">
-        <el-cascader v-model="formModel.cate" :options="cateOptions" />
+        <el-cascader style="width: 40%" v-model="formModel.cate" :options="cateOptions" />
       </el-form-item>
       <el-form-item label="課程標籤 :">
         <!-- <el-select
@@ -384,7 +393,17 @@ const deleteChapter = (index) => {
   height: 178px;
   text-align: center;
 }
-:deep(.el-form) {
-  overflow: hidden;
+
+:deep(.el-form-item__content) {
+  padding-left: 12px;
+  font-size: 16px;
+}
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+:deep(.el-form-item) {
+  margin-bottom: 12px;
 }
 </style>
