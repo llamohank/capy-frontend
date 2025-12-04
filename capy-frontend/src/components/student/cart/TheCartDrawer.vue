@@ -164,7 +164,7 @@ const handleRemoveItem = async (courseId) => {
     )
 
     const success = cartStore.removeItem(courseId)
-    
+
     if (success) {
       ElMessage.success('已從購物車移除')
     } else {
@@ -180,7 +180,7 @@ const handleRemoveItem = async (courseId) => {
  */
 const handleCheckout = () => {
   visible.value = false
-  router.push({ name: 'Cart' })
+  router.push({ name: 'checkout' })
 }
 
 // ==================== Lifecycle ====================

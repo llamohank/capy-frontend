@@ -22,7 +22,7 @@
           />
           <div class="user-info">
             <div class="user-nickname">{{ userStore.userInfo.nickname || '使用者' }}</div>
-            <div class="user-email">{{ userEmail }}</div>
+            <!-- <div class="user-email">{{ userEmail }}</div> -->
           </div>
         </div>
 
@@ -90,7 +90,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 預設頭像
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const defaultAvatar = '/capybaraProfile.png'
 
 // 模擬使用者 Email（實際應該從 userStore 取得）
 const userEmail = computed(() => {
@@ -139,7 +139,7 @@ const roleSwitcherIcon = computed(() => {
 const roleSwitcherLink = computed(() => {
   const roles = userStore.userInfo.roles || []
   if (roles.includes('admin')) {
-    return '/admin/users'
+    return '/admin'
   } else if (roles.includes('instructor')) {
     return '/teacher/workspace'
   }

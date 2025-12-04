@@ -3,8 +3,8 @@
     <div class="container">
       <!-- Header -->
       <div class="page-header">
-        <h1 class="page-title">Student Center</h1>
-        <p class="welcome-text">Welcome back, Sarah!</p>
+        <h1 class="page-title">學生個人中心</h1>
+        <p class="welcome-text">歡迎回來~ {{ userStore.userInfo.nickname || '訪客' }}!</p>
       </div>
 
 
@@ -14,16 +14,16 @@
         <div class="profile-card">
           <div class="profile-avatar">
             <img
-              :src="userProfile.avatar || 'https://via.placeholder.com/80'"
+              :src="userStore.userInfo.avatar || '/capybaraProfile.png'"
               alt="User Avatar"
             />
           </div>
           <div class="profile-info">
-            <h2 class="profile-name">{{ userProfile.name }}</h2>
-            <p class="profile-email">{{ userProfile.email }}</p>
+            <h2 class="profile-name">{{ userStore.userInfo.nickname || '訪客' }}</h2>
+            <p class="profile-email">{{ userStore.userInfo.email || '' }}</p>
           </div>
           <el-button class="edit-profile-btn" plain @click="openProfileDialog">
-            Edit Profile
+            更新個人檔案
           </el-button>
         </div>
       </div>
@@ -31,15 +31,15 @@
       <!-- Statistics Cards -->
       <div class="stats-section">
         <div class="stat-card">
-          <div class="stat-label">Active Courses</div>
+          <div class="stat-label">進行中的課程</div>
           <div class="stat-value">{{ stats.activeCourses }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Hours Learning</div>
+          <div class="stat-label">我的願望清單</div>
           <div class="stat-value">{{ stats.hoursLearning }}</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Courses Completed</div>
+          <div class="stat-label">已完成的課程</div>
           <div class="stat-value">{{ stats.coursesCompleted }}</div>
         </div>
       </div>
@@ -67,9 +67,9 @@
     <StudentProfileEditDialog
       v-model:visible="profileDialogVisible"
       :current-user="{
-        email: userProfile.email,
-        nickname: userProfile.name,
-        avatarUrl: userProfile.avatar
+        email: userStore.userInfo.email || '',
+        nickname: userStore.userInfo.nickname || '',
+        avatarUrl: userStore.userInfo.avatar || ''
       }"
       @save="handleProfileSave"
     />
@@ -85,18 +85,14 @@ import StudentProfileEditDialog from '@/components/student/StudentCenter/Student
 const userStore = useUserStore()
 
 const tabs = [
-  { label: 'My Learning', name: 'MyLearning' },
-  { label: 'Wishlist', name: 'Wishlist' },
-  { label: 'Orders紀錄', name: 'Orders' },
-  { label: 'Notifications', name: 'Notifications' }
+  { label: '我的課程', name: 'MyLearning' },
+  { label: '願望清單', name: 'Wishlist' },
+  { label: '訂單記錄', name: 'Orders' },
+  { label: '通知', name: 'Notifications' }
 ]
 
 
-const userProfile = ref({
-  name: 'Sarah Miller',
-  email: 'sarah.miller@email.com',
-  avatar: 'https://i.pravatar.cc/150?img=5'
-})
+// 移除本地 userProfile，直接使用 userStore
 
 const stats = ref({
   activeCourses: 12,
@@ -130,15 +126,11 @@ const handleProfileSave = async (updatedData) => {
       throw new Error('更新失敗')
     }
 
-    // Update local user profile
-    userProfile.value.name = updatedData.nickname
-    userProfile.value.avatar = updatedData.avatarUrl
-
     // Update user store
-    if (userStore.userInfo) {
-      userStore.userInfo.nickname = updatedData.nickname
-      userStore.userInfo.avatar = updatedData.avatarUrl
-    }
+    userStore.updateUserInfo({
+      nickname: updatedData.nickname,
+      avatar: updatedData.avatarUrl
+    })
 
     // Close dialog
     profileDialogVisible.value = false
@@ -303,7 +295,7 @@ const handleProfileSave = async (updatedData) => {
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #0B7FC1;
 }
 
 /* Tab Content */
