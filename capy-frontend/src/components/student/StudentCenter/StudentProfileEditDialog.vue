@@ -31,14 +31,20 @@
               :show-file-list="false"
               :http-request="handleAvatarUpload"
               :before-upload="beforeAvatarUpload"
+              :auto-upload="false"
+              :on-change="handleAvatarChange"
               accept="image/*"
             >
               <div class="avatar-container">
-                <img v-if="formData.avatarUrl" :src="formData.avatarUrl" class="avatar" />
+                <img
+                  v-if="previewAvatarUrl || formData.avatarUrl"
+                  :src="previewAvatarUrl || formData.avatarUrl"
+                  class="avatar"
+                />
                 <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
                 <div class="avatar-overlay">
                   <el-icon class="overlay-icon"><Camera /></el-icon>
-                  <span class="overlay-text">更換照片</span>
+                  <span class="overlay-text">更換頭像</span>
                 </div>
               </div>
             </el-upload>
@@ -58,6 +64,7 @@
                 v-model="formData.email"
                 disabled
                 placeholder="電子郵件"
+                class="disabled-email-input"
               >
                 <template #prefix>
                   <el-icon><Message /></el-icon>
@@ -198,13 +205,13 @@
     <template #footer>
       <!-- Settings View Footer -->
       <div v-if="currentView === 'settings' && activeTab === 'profile'" class="dialog-footer">
-        <el-button @click="handleCancel" size="large">
+        <el-button @click="handleCancel" size="large" :disabled="isLoading">
           取消
         </el-button>
         <el-button
           type="primary"
           @click="handleSave"
-          :loading="saving"
+          :loading="isLoading"
           size="large"
           class="save-button"
         >
@@ -280,12 +287,14 @@ const emit = defineEmits(['update:visible', 'save'])
 // Refs
 const formRef = ref(null)
 const passwordFormRef = ref(null)
-const saving = ref(false)
+const isLoading = ref(false)
 const uploading = ref(false)
 const updatingPassword = ref(false)
 const activeTab = ref('profile')
 const currentView = ref('settings') // 'settings' | 'password_change'
 const deletingAccount = ref(false)
+const previewAvatarUrl = ref('') // 本地預覽 URL
+const pendingAvatarFile = ref(null) // 待上傳的檔案
 
 // Router and Store
 const router = useRouter()
@@ -325,15 +334,63 @@ const dialogVisible = computed({
     if (!val) {
       currentView.value = 'settings'
       activeTab.value = 'profile'
+      // 清理預覽
+      cleanupPreview()
     }
   }
 })
+
+// 清理預覽資源
+const cleanupPreview = () => {
+  if (previewAvatarUrl.value) {
+    URL.revokeObjectURL(previewAvatarUrl.value)
+    previewAvatarUrl.value = ''
+  }
+  pendingAvatarFile.value = null
+}
+
+// 暱稱唯一性驗證（模擬 API 調用）
+const validateNicknameUnique = async (rule, value, callback) => {
+  if (!value) {
+    return callback()
+  }
+
+  // 如果暱稱沒有改變，跳過驗證
+  if (value === currentUserData.value.nickname) {
+    return callback()
+  }
+
+  try {
+    // 模擬 API 延遲
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // TODO: 替換為實際的 API 調用
+    // const response = await fetch(`/api/user/check-nickname?nickname=${encodeURIComponent(value)}`, {
+    //   credentials: 'include'
+    // })
+    // const data = await response.json()
+    // if (!data.available) {
+    //   return callback(new Error('此暱稱已被使用'))
+    // }
+
+    // 模擬：假設暱稱 "admin" 已被使用
+    if (value.toLowerCase() === 'admin') {
+      return callback(new Error('此暱稱已被使用'))
+    }
+
+    callback()
+  } catch (error) {
+    console.error('Nickname validation error:', error)
+    callback()
+  }
+}
 
 // Form Validation Rules
 const rules = {
   nickname: [
     { required: true, message: '請輸入暱稱', trigger: 'blur' },
-    { min: 2, max: 20, message: '暱稱長度應在 2 到 20 個字元之間', trigger: 'blur' }
+    { min: 2, max: 20, message: '暱稱長度應在 2 到 20 個字元之間', trigger: 'blur' },
+    { validator: validateNicknameUnique, trigger: 'blur' }
   ]
 }
 
@@ -347,10 +404,24 @@ watch(
         nickname: newUser.nickname || '',
         avatarUrl: newUser.avatarUrl || newUser.avatar || ''
       }
+      // 清理舊的預覽
+      cleanupPreview()
     }
   },
   { immediate: true, deep: true }
 )
+
+// 處理頭像選擇（本地預覽）
+const handleAvatarChange = (file) => {
+  if (!file || !file.raw) return
+
+  // 清理舊的預覽 URL
+  cleanupPreview()
+
+  // 創建本地預覽 URL
+  previewAvatarUrl.value = URL.createObjectURL(file.raw)
+  pendingAvatarFile.value = file.raw
+}
 
 // Avatar Upload Handler
 const handleAvatarUpload = async (options) => {
@@ -489,6 +560,8 @@ const handleCancel = () => {
   // Reset to profile tab and settings view
   activeTab.value = 'profile'
   currentView.value = 'settings'
+  // 清理預覽
+  cleanupPreview()
 }
 
 // Handle Save
@@ -499,7 +572,18 @@ const handleSave = async () => {
     // Validate form
     await formRef.value.validate()
 
-    saving.value = true
+    // 防止重複提交
+    if (isLoading.value) return
+
+    isLoading.value = true
+
+    // 如果有待上傳的頭像，先上傳
+    if (pendingAvatarFile.value) {
+      await handleAvatarUpload({ file: pendingAvatarFile.value })
+    }
+
+    // 模擬 API 延遲（1.5秒）
+    await new Promise(resolve => setTimeout(resolve, 1500))
 
     // Emit save event with updated data
     emit('save', {
@@ -507,12 +591,20 @@ const handleSave = async () => {
       avatarUrl: formData.value.avatarUrl
     })
 
+    ElMessage.success('個人資料已更新')
+
+    // 清理預覽資源
+    cleanupPreview()
+
+    // 關閉對話框
+    dialogVisible.value = false
+
     // Note: The parent component should handle the actual API call
     // and close the dialog after successful save
   } catch (error) {
     console.error('Form validation failed:', error)
   } finally {
-    saving.value = false
+    isLoading.value = false
   }
 }
 
@@ -637,6 +729,11 @@ const handleDeleteAccount = async () => {
 
 .profile-tabs :deep(.el-tabs__header) {
   margin-bottom: 0;
+  padding: 0 var(--capy-spacing-lg);
+}
+
+.profile-tabs :deep(.el-tabs__nav-wrap) {
+  padding: 0;
 }
 
 .profile-tabs :deep(.el-tabs__nav-wrap::after) {
@@ -648,7 +745,9 @@ const handleDeleteAccount = async () => {
   font-size: var(--capy-font-size-base);
   font-weight: var(--capy-font-weight-medium);
   color: var(--capy-text-secondary);
-  padding: var(--capy-spacing-md) var(--capy-spacing-lg);
+  padding: var(--capy-spacing-md) var(--capy-spacing-md);
+  height: 48px;
+  line-height: 48px;
 }
 
 .profile-tabs :deep(.el-tabs__item.is-active) {
@@ -657,6 +756,7 @@ const handleDeleteAccount = async () => {
 
 .profile-tabs :deep(.el-tabs__active-bar) {
   background-color: var(--capy-primary);
+  height: 2px;
 }
 
 .tab-content {
@@ -716,7 +816,7 @@ const handleDeleteAccount = async () => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -757,9 +857,15 @@ const handleDeleteAccount = async () => {
   color: var(--capy-text-primary);
 }
 
-.profile-form :deep(.el-input.is-disabled .el-input__wrapper) {
+/* 改善 Email 輸入框的可讀性 */
+.disabled-email-input :deep(.el-input__wrapper) {
   background-color: var(--capy-bg-base);
   cursor: not-allowed;
+}
+
+.disabled-email-input :deep(.el-input__inner) {
+  color: var(--el-text-color-regular) !important;
+  -webkit-text-fill-color: var(--el-text-color-regular) !important;
 }
 
 .profile-form :deep(.el-input__prefix) {

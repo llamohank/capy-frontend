@@ -3,7 +3,7 @@
     <!-- 左側圖片區域 -->
     <div class="left-section">
       <div class="image-wrapper">
-        <img src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&h=800&fit=crop" alt="學習圖片" class="side-image" />
+        <img src="/Gemini_Generated_Image_wncmt4wncmt4wncm.png" alt="學習圖片" class="side-image" />
       </div>
     </div>
 
@@ -27,7 +27,6 @@
           </div>
 
           <el-button
-            type="primary"
             class="submit-button"
             :loading="isLoading"
             @click="handleSubmit"
@@ -52,7 +51,6 @@
             我們已將重設密碼的連結發送至 <strong>{{ email }}</strong>
           </p>
           <el-button
-            type="primary"
             class="back-button"
             @click="goToLogin"
           >
@@ -225,12 +223,24 @@ const goToLogin = () => {
 
 /* 提交按鈕 */
 .submit-button {
+  height: 50px;
   width: 100%;
-  height: 48px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--capy-primary);
+  color: white;
   font-size: 15px;
   font-weight: 600;
-  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   margin-bottom: 20px;
+}
+
+.submit-button:hover {
+  background: var(--el-color-primary-dark-2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--capy-primary-rgb), 0.3);
 }
 
 /* 返回連結 */
@@ -281,11 +291,23 @@ const goToLogin = () => {
 }
 
 .back-button {
+  height: 45px;
   width: 100%;
-  height: 48px;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--capy-primary);
+  color: white;
   font-size: 15px;
   font-weight: 600;
-  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: var(--el-color-primary-dark-2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--capy-primary-rgb), 0.3);
 }
 
 /* Element Plus 覆寫 */
@@ -320,23 +342,23 @@ const goToLogin = () => {
   .forgot-password-container {
     flex-direction: column;
   }
-  
+
   .forgot-password-container > .left-section,
   .forgot-password-container > .right-section {
     width: 100%;
     height: auto;
   }
-  
+
   .left-section {
     min-height: 300px;
     border-radius: 20px 20px 0 0;
   }
-  
+
   .right-section {
     border-radius: 0 0 20px 20px;
     padding: 40px 20px;
   }
-  
+
   .side-image {
     height: 300px;
   }

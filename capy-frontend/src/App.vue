@@ -1,4 +1,20 @@
-<script setup></script>
+<script setup>
+import { onMounted } from 'vue'
+import { useUserStore } from '@/stores/user'
+import { useCartStore } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
+
+const userStore = useUserStore()
+const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
+
+onMounted(async () => {
+  await userStore.init()
+  cartStore.loadFromStorage()
+  wishlistStore.loadFromStorage()
+})
+
+</script>
 <template>
   <RouterView />
 </template>

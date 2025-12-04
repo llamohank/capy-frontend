@@ -8,7 +8,7 @@
     <!-- Cover Image -->
     <div class="course-cover">
       <el-image
-        :src="course.cover"
+        :src="course.coverImageUrl"
         fit="cover"
         class="cover-image"
       >

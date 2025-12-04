@@ -1,42 +1,50 @@
 <script setup>
-import { ref } from 'vue'
+import { number } from 'echarts'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// 模擬課程資料
-const enrollments = ref([
-  {
-    id: 1,
-    course: {
-      id: 1,
-      title: '進階 Python',
-      cover_image_url: 'https://picsum.photos/200',
-      instructor_name: 'Ethan Carter'
-    },
-    completion_percentage: 75
-  },
-  {
-    id: 2,
-    course: {
-      id: 2,
-      title: '設計系統',
-      cover_image_url: 'https://picsum.photos/200',
-      instructor_name: '劉師 12 小時'
-    },
-    completion_percentage: 30
-  },
-  {
-    id: 3,
-    course: {
-      id: 3,
-      title: 'ui/ux 設計',
-      cover_image_url: 'https://picsum.photos/200',
-      instructor_name: 'Sophia Lee'
-    },
-    completion_percentage: 90
+// 接收從父組件傳來的課程資料
+const props = defineProps({
+  enrollments: {
+    type: Array,
+    default: () => []
   }
-])
+})
+
+// 獲取進度提示文字
+const getProgressHint = (enrollment) => {
+  const percentage = enrollment.completionPercentage
+  const sectionTitle = enrollment.lastWatchedSectionTitle
+  const lessonTitle = enrollment.lastWatchedLessonTitle
+  const sectionOrder = enrollment.lastWatchedSectionOrder
+  const lessonOrder = enrollment.lastWatchedLessonOrder
+
+  // 優先顯示具體的章節和課程標題
+  if (sectionTitle && lessonTitle) {
+    const fullText = `上次觀看：${sectionTitle} - ${lessonTitle}`
+    // 限制最多顯示 14 個字
+    return fullText.length > 18 ? fullText.substring(0, 18) + '...' : fullText
+  }
+
+  // 如果沒有標題，使用章節順序
+  if (sectionOrder && lessonOrder) {
+    return `上次觀看到：第 ${sectionOrder} 章 第 ${lessonOrder} 節`
+  }
+
+  // 根據完成度給予激勵文字
+  if (percentage >= 90) {
+    return '只差一點點就完成了，加油！'
+  } else if (percentage >= 75) {
+    return `只差 ${Math.round(100 - percentage)}% 就完成了，加油！`
+  } else if (percentage >= 50) {
+    return '已經完成一半了，繼續努力！'
+  } else if (percentage >= 25) {
+    return '良好的開始，保持學習動力！'
+  } else {
+    return '開始你的學習之旅吧！'
+  }
+}
 
 // 處理卡片點擊，導航到課程學習頁面
 const handleCardClick = (courseId) => {
@@ -47,30 +55,33 @@ const handleCardClick = (courseId) => {
 <template>
   <div class="continue-learning">
     <div
-      v-for="enrollment in enrollments"
-      :key="enrollment.id"
+      v-for="enrollment in props.enrollments"
+      :key="enrollment.courseId"
       class="course-card"
-      @click="handleCardClick(enrollment.course.id)"
+      @click="handleCardClick(enrollment.courseId)"
     >
       <!-- 課程縮圖 -->
       <div class="course-thumbnail">
-        <img :src="enrollment.course.cover_image_url" :alt="enrollment.course.title" />
+        <img :src="enrollment.coverImageUrl" :alt="enrollment.courseTitle" />
       </div>
 
       <!-- 課程資訊 -->
       <div class="course-info">
-        <h3 class="course-title">{{ enrollment.course.title }}</h3>
-        <p class="course-instructor">作者: {{ enrollment.course.instructor_name }}</p>
+        <h3 class="course-title">{{ enrollment.courseTitle }}</h3>
+        <p class="course-instructor">作者: {{ enrollment.instructorName }}</p>
+
+        <!-- 進度資訊文字 -->
+        <p class="progress-hint">{{ getProgressHint(enrollment) }}</p>
 
         <!-- 進度條 -->
         <div class="progress-section">
           <el-progress
-            :percentage="enrollment.completion_percentage"
+            :percentage="enrollment.completionPercentage"
             :stroke-width="8"
             :show-text="false"
             color="#4CAF50"
           />
-          <span class="progress-text">{{ enrollment.completion_percentage }}%</span>
+          <span class="progress-text">{{ enrollment.completionPercentage }}%</span>
         </div>
       </div>
     </div>
@@ -135,15 +146,28 @@ const handleCardClick = (courseId) => {
   color: var(--el-text-color-primary);
   margin: 0;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .course-instructor {
   font-size: 13px;
   color: var(--el-text-color-secondary);
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 進度提示文字 */
+.progress-hint {
+  font-size: 12px;
+  color: var(--capy-text-secondary);
+  margin: 4px 0 0 0;
+  font-style: italic;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

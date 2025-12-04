@@ -21,7 +21,7 @@ interface UserInfo {
  */
 export const useUserStore = defineStore('user', () => {
   // ===== State =====
-  
+
   /**
    * 使用者資訊
    * 後端使用 Cookie 管理認證，前端不需要儲存 token
@@ -34,7 +34,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   // ===== Getters =====
-  
+
   /**
    * 檢查使用者是否已驗證（已登入）
    * @returns {boolean} 如果使用者 ID 存在則返回 true
@@ -44,7 +44,7 @@ export const useUserStore = defineStore('user', () => {
   })
 
   // ===== Actions =====
-  
+
   /**
    * 登入動作
    * 更新使用者資訊（Cookie 由後端自動設定）
@@ -67,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
       console.error('登出 API 呼叫失敗:', error)
       // 即使 API 失敗，仍然清除前端狀態
     }
-    
+
     // 清除前端使用者資訊
     userInfo.value = {
       id: null,
@@ -90,24 +90,28 @@ export const useUserStore = defineStore('user', () => {
         // 呼叫後端 API 驗證 Cookie 並獲取使用者資料
         const response = await instance.get('/student/verify').catch((error: any) => {
           // 靜默處理 401 錯誤（未登入是正常狀態）
-          if (error.status === 401 || error.response?.status === 401) {
+          // 檢查多種可能的錯誤結構
+          if (error.status === 401 ||
+              error.response?.status === 401 ||
+              error.handled === true ||
+              error.silent === true) {
             return null
           }
           // 其他錯誤繼續拋出
           throw error
         })
-        
+
         // 如果沒有回應（401 未登入），直接返回
         if (!response) {
           return
         }
-        
+
         // 檢查回應資料是否有效
         if (!response.user) {
           console.warn('後端回應資料格式不正確:', response)
           throw new Error('無效的回應資料格式')
         }
-        
+
         // 更新使用者資訊
         userInfo.value = {
           id: response.user.id,
@@ -116,11 +120,11 @@ export const useUserStore = defineStore('user', () => {
           roles: response.roles || [],
           email: response.user.email
         }
-        
+
         console.log('使用者資訊初始化成功:', userInfo.value)
       } catch (error: any) {
         console.error('獲取使用者資訊失敗:', error)
-        
+
         // 如果是資料格式錯誤，清除使用者資訊
         if (error.message === '無效的回應資料格式') {
           userInfo.value = {
@@ -150,10 +154,10 @@ export const useUserStore = defineStore('user', () => {
   return {
     // State
     userInfo,
-    
+
     // Getters
     isAuthenticated,
-    
+
     // Actions
     login,
     logout,

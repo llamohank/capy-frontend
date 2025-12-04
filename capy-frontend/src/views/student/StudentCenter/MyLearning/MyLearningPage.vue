@@ -2,25 +2,23 @@
   <div class="my-learning-page">
     <!-- Header -->
     <div class="page-header">
-      <h1 class="page-title">My Learning(Course)</h1>
+      <h1 class="page-title">我的課程</h1>
       <div class="header-actions">
-        <el-button class="filter-btn" :icon="Filter" circle />
-        <el-button class="search-btn" :icon="Search" circle />
         <el-dropdown @command="handleFilterChange" trigger="click">
-          <el-button type="success" class="sort-btn">
-            <el-icon class="sort-icon"><DCaret /></el-icon>
-            Sort
+          <el-button type="primary" class="filter-status-btn">
+            <el-icon class="filter-icon"><Filter /></el-icon>
+            {{ currentFilterLabel }}
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="all" :class="{ active: currentFilter === 'all' }">
-                All
+              <el-dropdown-item command="all" :class="{ active: filterStatus === 'all' }">
+                全部狀態
               </el-dropdown-item>
-              <el-dropdown-item command="ongoing" :class="{ active: currentFilter === 'ongoing' }">
+              <el-dropdown-item command="in_progress" :class="{ active: filterStatus === 'in_progress' }">
                 進行中
               </el-dropdown-item>
-              <el-dropdown-item command="completed" :class="{ active: currentFilter === 'completed' }">
-                已結束
+              <el-dropdown-item command="completed" :class="{ active: filterStatus === 'completed' }">
+                已完課
               </el-dropdown-item>
             </el-dropdown-menu>
           </template>
@@ -71,14 +69,14 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Filter, Search, DCaret } from '@element-plus/icons-vue'
+import { Filter } from '@element-plus/icons-vue'
 import MyLearningCourseCard from '@/components/student/StudentCenter/MyLearning/MyLearningCourseCard.vue'
 import CourseRatingDialog from '@/components/student/StudentCenter/MyLearning/CourseRatingDialog.vue'
 import { enrollments } from '@/mockData'
 
 const router = useRouter()
 
-const currentFilter = ref('all')
+const filterStatus = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(6)
 
@@ -93,26 +91,50 @@ const initialComment = ref('')
 const allEnrollments = ref(enrollments)
 
 /**
+ * Current filter label for button display
+ */
+const currentFilterLabel = computed(() => {
+  const labels = {
+    all: '全部狀態',
+    in_progress: '進行中',
+    completed: '已完課'
+  }
+  return labels[filterStatus.value] || '全部狀態'
+})
+
+/**
  * Filtered enrollments based on current filter
+ * TODO: Replace with API call that includes status parameter
  */
 const filteredEnrollments = computed(() => {
   let enrollments = allEnrollments.value
 
-  if (currentFilter.value === 'ongoing') {
-    enrollments = enrollments.filter(e => e.status === 'ongoing')
-  } else if (currentFilter.value === 'completed') {
-    enrollments = enrollments.filter(e => e.status === 'completed')
+  if (filterStatus.value === 'in_progress') {
+    // Filter courses where completion_percentage < 100
+    enrollments = enrollments.filter(e => e.progress < 100)
+  } else if (filterStatus.value === 'completed') {
+    // Filter courses where completion_percentage = 100
+    enrollments = enrollments.filter(e => e.progress === 100)
   }
 
-  return enrollments
+  // TODO: Backend should handle sorting by last_watched_at DESC
+  // For now, sort by lastWatched if available
+  return enrollments.sort((a, b) => {
+    const dateA = a.lastWatched ? new Date(a.lastWatched) : new Date(0)
+    const dateB = b.lastWatched ? new Date(b.lastWatched) : new Date(0)
+    return dateB - dateA
+  })
 })
 
 /**
  * Handle filter change
+ * TODO: Call API with status parameter instead of client-side filtering
  */
 const handleFilterChange = (command) => {
-  currentFilter.value = command
+  filterStatus.value = command
   currentPage.value = 1
+  // TODO: Implement API call
+  // fetchEnrollments(filterStatus.value)
 }
 
 /**
@@ -187,22 +209,7 @@ const handleReviewSubmitted = (reviewData) => {
   align-items: center;
 }
 
-.filter-btn,
-.search-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e0e0e0;
-  background: white;
-  color: #666;
-}
-
-.filter-btn:hover,
-.search-btn:hover {
-  border-color: var(--capy-primary);
-  color: var(--capy-primary);
-}
-
-.sort-btn {
+.filter-status-btn {
   padding: 10px 20px;
   height: 40px;
   background: var(--capy-primary);
@@ -210,17 +217,17 @@ const handleReviewSubmitted = (reviewData) => {
   font-weight: 500;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.sort-btn:hover,
-.sort-btn:focus {
+.filter-status-btn:hover,
+.filter-status-btn:focus {
   background: var(--capy-primary-dark);
   border-color: var(--capy-primary-dark);
 }
 
-.sort-icon {
-  font-size: 14px;
+.filter-icon {
+  font-size: 16px;
 }
 
 /* Dropdown Menu */
@@ -302,13 +309,7 @@ const handleReviewSubmitted = (reviewData) => {
     font-size: 20px;
   }
 
-  .filter-btn,
-  .search-btn {
-    width: 36px;
-    height: 36px;
-  }
-
-  .sort-btn {
+  .filter-status-btn {
     padding: 8px 16px;
     height: 36px;
     font-size: 14px;

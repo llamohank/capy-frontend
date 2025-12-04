@@ -1,55 +1,58 @@
 /**
- * Capy Focus Theme - "Calm & Professional" 
- * 療癒自然風格，適合學習的色彩系統
+ * Capy Focus Theme - "River & Cloud Tech"
+ * 河流與雲端科技風格，清新水感的色彩系統
  */
 
 :root {
   /* ==================== 主要品牌色彩 ==================== */
-  
-  /* Primary Color - Teal (青綠色) */
-  --capy-primary: #00BFA5;
-  --capy-primary-rgb: 0, 191, 165;
-  
+
+  /* Primary Color - Sky Blue (天空藍) */
+  --capy-primary: #54CDF2;
+  --capy-primary-rgb: 84, 205, 242;
+  --capy-primary-dark: #0EA5E9;        /* 深藍 - 用於文字和 hover 狀態 */
+  --capy-primary-light: #E0F7FA;       /* 極淺藍 - 用於背景 */
+
   /* Element Plus Primary Color 覆寫 */
-  --el-color-primary: #00BFA5;
-  --el-color-primary-rgb: 0, 191, 165;
-  
+  --el-color-primary: #54CDF2;
+  --el-color-primary-rgb: 84, 205, 242;
+
   /* Primary Light Variants (用於 hover/active 狀態) */
-  --el-color-primary-light-1: #1ac9b3;
-  --el-color-primary-light-2: #33d3c1;
-  --el-color-primary-light-3: #4ddccf;
-  --el-color-primary-light-4: #66e6dd;
-  --el-color-primary-light-5: #80f0eb;
-  --el-color-primary-light-6: #99f4f0;
-  --el-color-primary-light-7: #b3f8f5;
-  --el-color-primary-light-8: #ccfbf9;
-  --el-color-primary-light-9: #e6fefe;
-  
+  --el-color-primary-light-1: #66d3f4;
+  --el-color-primary-light-2: #78d9f5;
+  --el-color-primary-light-3: #8adff7;
+  --el-color-primary-light-4: #9ce5f8;
+  --el-color-primary-light-5: #aeebfa;
+  --el-color-primary-light-6: #c0f1fb;
+  --el-color-primary-light-7: #d2f7fc;
+  --el-color-primary-light-8: #e4fdfe;
+  --el-color-primary-light-9: #f0feff;
+
   /* Primary Dark Variants (用於 active/pressed 狀態) */
-  --el-color-primary-dark-1: #00ac94;
-  --el-color-primary-dark-2: #009983;
-  
-  /* Secondary/Brand Color - Capy Brown (水豚棕) */
+  --el-color-primary-dark-1: #3bc1ed;
+  --el-color-primary-dark-2: #0EA5E9;
+
+  /* Secondary/Brand Color - Capy Brown (水豚棕) - 保持吉祥物特色 */
+  --capy-secondary: #A1887F;
   --capy-brand: #A1887F;
   --capy-brand-rgb: 161, 136, 127;
   --capy-brand-light: #b39a91;
   --capy-brand-lighter: #c5aca3;
   --capy-brand-dark: #8f766d;
-  
+
   /* ==================== 背景色彩 ==================== */
-  
+
   /* Background Colors */
   --capy-bg-base: #F5F7FA;           /* 主背景 - 淺灰藍 */
   --capy-bg-surface: #FFFFFF;        /* 卡片/容器背景 - 純白 */
   --capy-bg-elevated: #FAFBFC;       /* 懸浮元素背景 */
   --capy-bg-overlay: rgba(0, 0, 0, 0.5); /* 遮罩背景 */
-  
+
   /* Learning Mode - Dark Background */
   --capy-bg-learning: #1A1A1A;       /* 影片播放器深色背景 */
   --capy-bg-learning-elevated: #2A2A2A; /* 深色模式懸浮元素 */
-  
+
   /* ==================== 文字色彩 ==================== */
-  
+
   /* Text Colors */
   --capy-text-primary: #303133;      /* 主要文字 */
   --capy-text-regular: #606266;      /* 常規文字 */
@@ -57,32 +60,32 @@
   --capy-text-placeholder: #C0C4CC;  /* 佔位文字 */
   --capy-text-disabled: #C0C4CC;     /* 禁用文字 */
   --capy-text-inverse: #FFFFFF;      /* 反色文字（深色背景用） */
-  
+
   /* Element Plus Text Colors 覆寫 */
   --el-text-color-primary: #303133;
   --el-text-color-regular: #606266;
   --el-text-color-secondary: #909399;
   --el-text-color-placeholder: #C0C4CC;
   --el-text-color-disabled: #C0C4CC;
-  
+
   /* ==================== 邊框色彩 ==================== */
-  
+
   /* Border Colors */
   --capy-border-base: #DCDFE6;       /* 基礎邊框 */
   --capy-border-light: #E4E7ED;      /* 淺色邊框 */
   --capy-border-lighter: #EBEEF5;    /* 更淺邊框 */
   --capy-border-extra-light: #F2F6FC; /* 極淺邊框 */
   --capy-border-dark: #D4D7DE;       /* 深色邊框 */
-  
+
   /* Element Plus Border Colors 覆寫 */
   --el-border-color: #DCDFE6;
   --el-border-color-light: #E4E7ED;
   --el-border-color-lighter: #EBEEF5;
   --el-border-color-extra-light: #F2F6FC;
   --el-border-color-dark: #D4D7DE;
-  
+
   /* ==================== 功能性色彩 ==================== */
-  
+
   /* Success Color (保持 Element Plus 預設) */
   --capy-success: #67C23A;
   --el-color-success: #67C23A;
@@ -91,16 +94,16 @@
   --el-color-success-light-7: #d1edc4;
   --el-color-success-light-9: #f0f9eb;
   --el-color-success-dark-2: #529b2e;
-  
-  /* Warning Color */
-  --capy-warning: #E6A23C;
-  --el-color-warning: #E6A23C;
-  --el-color-warning-light-3: #eebe77;
-  --el-color-warning-light-5: #f3d19e;
-  --el-color-warning-light-7: #f8e3c5;
-  --el-color-warning-light-9: #fdf6ec;
-  --el-color-warning-dark-2: #b88230;
-  
+
+  /* Warning Color - 保持橘色作為強對比 CTA */
+  --capy-warning: #FB8C00;
+  --el-color-warning: #FB8C00;
+  --el-color-warning-light-3: #fca333;
+  --el-color-warning-light-5: #fdba66;
+  --el-color-warning-light-7: #fdd199;
+  --el-color-warning-light-9: #fef3e6;
+  --el-color-warning-dark-2: #c97000;
+
   /* Danger/Error Color */
   --capy-danger: #F56C6C;
   --el-color-danger: #F56C6C;
@@ -109,7 +112,7 @@
   --el-color-danger-light-7: #fcd3d3;
   --el-color-danger-light-9: #fef0f0;
   --el-color-danger-dark-2: #c45656;
-  
+
   /* Info Color */
   --capy-info: #909399;
   --el-color-info: #909399;
@@ -118,22 +121,22 @@
   --el-color-info-light-7: #dedfe0;
   --el-color-info-light-9: #f4f4f5;
   --el-color-info-dark-2: #73767a;
-  
+
   /* ==================== 陰影系統 ==================== */
-  
+
   --capy-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
   --capy-shadow-base: 0 2px 8px rgba(0, 0, 0, 0.08);
   --capy-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
   --capy-shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
   --capy-shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.18);
-  
+
   /* Element Plus Shadow 覆寫 */
   --el-box-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.08);
   --el-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   --el-box-shadow-dark: 0 8px 16px rgba(0, 0, 0, 0.15);
-  
+
   /* ==================== 圓角系統 ==================== */
-  
+
   --capy-radius-xs: 2px;
   --capy-radius-sm: 4px;
   --capy-radius-base: 6px;
@@ -141,34 +144,34 @@
   --capy-radius-lg: 12px;
   --capy-radius-xl: 16px;
   --capy-radius-circle: 50%;
-  
+
   /* Element Plus Radius 覆寫 */
   --el-border-radius-base: 6px;
   --el-border-radius-small: 4px;
   --el-border-radius-round: 20px;
   --el-border-radius-circle: 50%;
-  
+
   /* ==================== 間距系統 ==================== */
-  
+
   --capy-spacing-xs: 4px;
   --capy-spacing-sm: 8px;
   --capy-spacing-md: 16px;
   --capy-spacing-lg: 24px;
   --capy-spacing-xl: 32px;
   --capy-spacing-xxl: 48px;
-  
+
   /* ==================== 過渡動畫 ==================== */
-  
+
   --capy-transition-fast: 0.2s;
   --capy-transition-base: 0.3s;
   --capy-transition-slow: 0.5s;
-  
+
   /* Element Plus Transition 覆寫 */
   --el-transition-duration: 0.3s;
   --el-transition-duration-fast: 0.2s;
-  
+
   /* ==================== 字體系統 ==================== */
-  
+
   --capy-font-size-xs: 12px;
   --capy-font-size-sm: 13px;
   --capy-font-size-base: 14px;
@@ -177,12 +180,12 @@
   --capy-font-size-xl: 18px;
   --capy-font-size-xxl: 20px;
   --capy-font-size-title: 24px;
-  
+
   --capy-font-weight-normal: 400;
   --capy-font-weight-medium: 500;
   --capy-font-weight-semibold: 600;
   --capy-font-weight-bold: 700;
-  
+
   /* Element Plus Font 覆寫 */
   --el-font-size-extra-small: 12px;
   --el-font-size-small: 13px;
@@ -190,15 +193,15 @@
   --el-font-size-medium: 16px;
   --el-font-size-large: 18px;
   --el-font-size-extra-large: 20px;
-  
+
   /* ==================== 背景色覆寫 ==================== */
-  
+
   --el-bg-color: #FFFFFF;
   --el-bg-color-page: #F5F7FA;
   --el-bg-color-overlay: #FFFFFF;
-  
+
   /* ==================== 填充色覆寫 ==================== */
-  
+
   --el-fill-color-blank: #FFFFFF;
   --el-fill-color: #F0F2F5;
   --el-fill-color-light: #F5F7FA;

@@ -6,7 +6,7 @@
         <!-- Logo 左對齊 -->
         <div class="logo-section">
           <router-link to="/" class="logo-link">
-            <img src="/vite.svg" alt="Logo" class="logo-image" />
+            <!-- <img src="/vite.svg" alt="Logo" class="logo-image" /> -->
             <span class="logo-text">課程平台</span>
           </router-link>
         </div>
@@ -20,8 +20,8 @@
         <div class="user-section">
           <el-dropdown trigger="click">
             <div class="user-avatar-wrapper">
-              <el-avatar 
-                :size="36" 
+              <el-avatar
+                :size="36"
                 :src="userAvatar"
                 class="user-avatar"
               >

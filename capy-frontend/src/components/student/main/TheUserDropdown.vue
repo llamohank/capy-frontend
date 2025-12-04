@@ -22,14 +22,14 @@
           />
           <div class="user-info">
             <div class="user-nickname">{{ userStore.userInfo.nickname || '使用者' }}</div>
-            <div class="user-email">{{ userEmail }}</div>
+            <!-- <div class="user-email">{{ userEmail }}</div> -->
           </div>
         </div>
 
         <!-- Menu Items -->
         <div class="user-dropdown-items">
           <!-- My Learning -->
-          <div class="dropdown-item" @click="handleNavigation('/student-center')">
+          <div class="dropdown-item" @click="handleNavigation('/student')">
             <div class="item-icon">
               <el-icon><VideoPlay /></el-icon>
             </div>
@@ -37,7 +37,7 @@
           </div>
 
           <!-- Orders / Receipts -->
-          <div class="dropdown-item" @click="handleNavigation('/student-center/orders')">
+          <div class="dropdown-item" @click="handleNavigation('/student/orders')">
             <div class="item-icon">
               <el-icon><Tickets /></el-icon>
             </div>
@@ -47,13 +47,13 @@
           <!-- Role Switcher (Dynamic) -->
           <div
             v-if="showRoleSwitcher"
-            class="dropdown-item"
+            class="dropdown-item role-switcher-item"
             @click="handleRoleSwitch"
           >
-            <div class="item-icon">
+            <div class="item-icon role-switcher-icon">
               <el-icon><component :is="roleSwitcherIcon" /></el-icon>
             </div>
-            <span class="item-text">{{ roleSwitcherText }}</span>
+            <span class="item-text role-switcher-text">{{ roleSwitcherText }}</span>
           </div>
 
           <!-- Divider -->
@@ -90,7 +90,7 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 預設頭像
-const defaultAvatar = 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+const defaultAvatar = '/capybaraProfile.png'
 
 // 模擬使用者 Email（實際應該從 userStore 取得）
 const userEmail = computed(() => {
@@ -139,7 +139,7 @@ const roleSwitcherIcon = computed(() => {
 const roleSwitcherLink = computed(() => {
   const roles = userStore.userInfo.roles || []
   if (roles.includes('admin')) {
-    return '/admin/users'
+    return '/admin'
   } else if (roles.includes('instructor')) {
     return '/teacher/workspace'
   }
@@ -201,7 +201,7 @@ const handleLogout = async () => {
   gap: 12px;
   padding: 16px;
   border-bottom: 1px solid var(--el-border-color-lighter);
-  background-color: var(--el-bg-color);
+  background-color: #FAFAFA; /* 淺灰背景以區分 */
 }
 
 .user-info {
@@ -270,7 +270,29 @@ const handleLogout = async () => {
   font-weight: 500;
 }
 
+/* Role Switcher Special Styling */
+.role-switcher-item .role-switcher-icon {
+  background-color: rgba(0, 191, 165, 0.1); /* 淺 Teal 背景 */
+}
+
+.role-switcher-item .role-switcher-icon .el-icon {
+  color: #00BFA5; /* Primary Teal */
+}
+
+.role-switcher-item .role-switcher-text {
+  color: #00BFA5; /* Primary Teal 文字 */
+  font-weight: 600;
+}
+
+.role-switcher-item:hover .role-switcher-icon {
+  background-color: rgba(0, 191, 165, 0.15);
+}
+
 /* Logout Item Special Styling */
+.logout-item {
+  margin-top: 4px; /* 在分隔線後增加間距 */
+}
+
 .logout-item:hover .item-icon {
   background-color: var(--el-color-danger-light-9);
 }

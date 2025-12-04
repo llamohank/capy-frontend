@@ -8,7 +8,7 @@ const carouselRef = ref(null)
 const slides = ref([
   {
     id: 1,
-    url: "https://picsum.photos/id/1015/1200/600",
+    url: "/instruction/封面圖.png",
     badge: "精選課程",
     title: "Vue 3 完整開發指南",
     subtitle: "從零開始掌握現代前端框架",
@@ -27,7 +27,7 @@ const slides = ref([
     url: "https://picsum.photos/id/1018/1200/600",
     badge: "新課上架",
     title: "全端開發訓練營",
-    subtitle: "打造完整的 Web 應用",
+    subtitle: "從零開始，打造你的第一個職涯代表作",
     courseId: 3
   }
 ])
@@ -67,6 +67,9 @@ const setActiveSlide = (index) => {
         :class="{ 'is-active-slide': index === activeIndex }"
       >
         <div class="slide-container">
+          <!-- Dark Overlay for better text contrast -->
+          <div class="image-overlay"></div>
+
           <!-- Image -->
           <img
             :src="slide.url"
@@ -170,6 +173,25 @@ const setActiveSlide = (index) => {
   height: 100%;
   object-fit: cover;
   border-radius: var(--capy-radius-lg);
+  position: relative;
+}
+
+/* Dark overlay for better text readability */
+.image-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--capy-bg-overlay);
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Show overlay on active slide */
+.hero-carousel :deep(.el-carousel__item.is-active) .image-overlay {
+  opacity: 1;
 }
 
 /* Glassmorphism Content Overlay */
@@ -186,6 +208,7 @@ const setActiveSlide = (index) => {
   border-radius: var(--capy-radius-lg);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.6s ease-out;
+  z-index: 3;
 }
 
 @keyframes slideUp {
@@ -218,17 +241,21 @@ const setActiveSlide = (index) => {
   font-weight: var(--capy-font-weight-bold);
   color: white;
   margin: 0 0 var(--capy-spacing-sm) 0;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
   line-height: 1.3;
+  position: relative;
+  z-index: 2;
 }
 
 /* Subtitle */
 .slide-subtitle {
   font-size: var(--capy-font-size-base);
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.98);
   margin: 0 0 var(--capy-spacing-lg) 0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  line-height: 1.5;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  line-height: 1.6;
+  position: relative;
+  z-index: 2;
 }
 
 /* CTA Button */

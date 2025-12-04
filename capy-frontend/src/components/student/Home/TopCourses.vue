@@ -1,10 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Swiper, SwiperSlide } from 'swiper/vue'
-// 👇 1. 引入 Autoplay 模組
-import { Autoplay, Navigation } from 'swiper/modules';
-// import { Pagination, Navigation } from 'swiper/modules'
+import { Autoplay, Navigation } from 'swiper/modules'
 import { TrophyBase, ShoppingCart } from '@element-plus/icons-vue'
 import 'swiper/css'
 import 'swiper/css/pagination'
@@ -13,53 +11,16 @@ import 'swiper/css/navigation'
 const router = useRouter()
 const modules = [Autoplay, Navigation]
 
-
-const coursesData = ref([
-  {
-    id: 1,
-    img: "https://picsum.photos/400/225?1",
-    title: "Java 完整開發課程",
-    instructor: "張老師",
-    rating: 4.8,
-    price: 2990,
-    buycount: 1240,
-    tags: ["Java", "後端開發", "Spring"]
-  },
-  {
-    id: 2,
-    img: "https://picsum.photos/400/225?2",
-    title: "Python 數據分析實戰",
-    instructor: "李老師",
-    rating: 4.7,
-    price: 3490,
-    buycount: 980,
-    tags: ["Python", "數據分析", "機器學習"]
-  },
-  {
-    id: 3,
-    img: "https://picsum.photos/400/225?3",
-    title: "Vue3 前端框架精通",
-    instructor: "王老師",
-    rating: 4.9,
-    price: 2790,
-    buycount: 1560,
-    tags: ["Vue3", "前端開發"]
-  },
-  {
-    id: 4,
-    img: "https://picsum.photos/400/225?4",
-    title: "Spring Boot 微服務架構",
-    instructor: "陳老師",
-    rating: 4.6,
-    price: 3990,
-    buycount: 850,
-    tags: ["Spring Boot", "微服務", "Java"]
+// 接收從父組件傳來的課程資料
+const props = defineProps({
+  courses: {
+    type: Array,
+    default: () => []
   }
-])
+})
 
-const courses = computed(() =>
-  [...coursesData.value].sort((a, b) => b.buycount - a.buycount)
-)
+// 後端返回的格式已經是熱門課程，直接使用
+const displayCourses = computed(() => props.courses)
 
 const goToCourse = (id) => {
   router.push(`/course/${id}`)
@@ -68,33 +29,50 @@ const goToCourse = (id) => {
 const formatPrice = (price) => {
   return price.toLocaleString('zh-TW')
 }
+
+const formatCount = (count) => {
+  if (count == null) {
+    return '0'
+  }
+
+  const num = Number(count)
+  if (Number.isNaN(num)) {
+    return String(count)
+  }
+
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}k`
+  }
+  return num.toString()
+}
 </script>
 
 <template>
   <swiper
-    :loop="true"
+    :loop="displayCourses.length > 1"
     :slides-per-view="3"
     :centered-slides="false"
     :space-between="30"
     :navigation="true"
     :modules="modules"
     :autoplay="{
-      delay: 5000,                // 每 3 秒切換一次
-      disableOnInteraction: false, // 手動滑動後，自動播放「不會」停止 (重要!)
-      pauseOnMouseEnter: true     // 滑鼠移入時暫停 (提升 UX)
+      delay: 5000,
+      disableOnInteraction: false,
+      pauseOnMouseEnter: true
     }"
     :breakpoints="{
-      1024: { slidesPerView: 3, spaceBetween: 30 },
+      1280: { slidesPerView: 3, spaceBetween: 30 },
+      1024: { slidesPerView: 2, spaceBetween: 24 },
       768: { slidesPerView: 2, spaceBetween: 20 },
       480: { slidesPerView: 1, spaceBetween: 10 }
     }"
     class="course-swiper"
-  >
-    <swiper-slide v-for="course in courses" :key="course.id">
+  ><!-- Navigation Buttons -->
+    <swiper-slide v-for="course in displayCourses" :key="course.id">
       <div class="course-card" @click="goToCourse(course.id)">
         <!-- Image Area -->
         <div class="image-area">
-          <img :src="course.img" :alt="course.title" class="course-img" />
+          <img :src="course.coverImageUrl" :alt="course.title" class="course-img" />
 
           <!-- Bestseller Badge -->
           <div class="bestseller-badge">
@@ -118,16 +96,17 @@ const formatPrice = (price) => {
             </span>
           </div>
 
-          <p class="course-instructor">{{ course.instructor }}</p>
+          <p class="course-instructor">{{ course.instructorName }}</p>
 
           <div class="course-meta">
             <div class="rating">
               <el-rate
-                :model-value="course.rating"
+                :model-value="course.averageRating"
                 disabled
                 show-score
-                :score-template="`${course.rating}`"
+                :score-template="`${course.averageRating}`"
               />
+              <span class="rating-count">({{ formatCount(course.reviewCount) }})</span>
             </div>
 
             <div class="price-section">
@@ -137,12 +116,16 @@ const formatPrice = (price) => {
 
           <div class="purchase-info">
             <el-icon class="purchase-icon"><ShoppingCart /></el-icon>
-            <span class="purchase-count">{{ course.buycount }} 人購買</span>
+            <span class="purchase-count">{{ course.enrollmentCount }} 人購買</span>
           </div>
         </div>
       </div>
     </swiper-slide>
   </swiper>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+
+
 </template>
 
 <style scoped>
@@ -153,29 +136,62 @@ const formatPrice = (price) => {
   padding: 0 40px var(--capy-spacing-lg);
 }
 
+/* --- 1. 基礎樣式：玻璃擬態圓角方形按鈕 --- */
 .course-swiper :deep(.swiper-button-next),
 .course-swiper :deep(.swiper-button-prev) {
-  color: var(--capy-primary);
-  background: var(--capy-bg-surface);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  box-shadow: var(--capy-shadow-md);
-  transition: all var(--capy-transition-base);
-  cursor: pointer;
+  /* 尺寸與形狀 - 圓角方形與卡片和諧 */
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 12px !important; /* 圓角方形 */
+
+  /* 玻璃擬態效果 - 避免生硬遮擋 */
+  background-color: rgba(255, 255, 255, 0.85) !important; /* 半透明白底 */
+  backdrop-filter: blur(4px) !important; /* 玻璃模糊效果 */
+  -webkit-backdrop-filter: blur(4px) !important;
+  color: var(--capy-text-primary) !important; /* 深灰箭頭 */
+
+  /* 裝飾 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; /* 柔和陰影 */
+  border: 1px solid rgba(255, 255, 255, 0.5) !important; /* 半透明邊框 */
+
+  /* 定位 */
+  z-index: 10 !important;
+
+  /* 互動 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
 }
 
-.course-swiper :deep(.swiper-button-next):hover,
-.course-swiper :deep(.swiper-button-prev):hover {
-  background: var(--capy-primary);
-  color: white;
-  transform: scale(1.1);
-}
-
+/* --- 2. 調整箭頭圖示大小 - 更多呼吸空間 --- */
 .course-swiper :deep(.swiper-button-next):after,
 .course-swiper :deep(.swiper-button-prev):after {
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 16px !important; /* 縮小圖示，避免擁擠 */
+  font-weight: 700 !important;
+}
+
+/* --- 3. Hover 效果：實心白底 + 品牌色箭頭 --- */
+.course-swiper :deep(.swiper-button-next):hover,
+.course-swiper :deep(.swiper-button-prev):hover {
+  background-color: rgba(255, 255, 255, 1) !important; /* 實心白底 */
+  color: var(--capy-primary) !important; /* 品牌色箭頭 */
+  transform: scale(1.05) !important; /* 微微放大 */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important; /* 加深陰影 */
+  border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* --- 4. 點擊效果 (Active) --- */
+.course-swiper :deep(.swiper-button-next):active,
+.course-swiper :deep(.swiper-button-prev):active {
+  transform: scale(0.95) !important; /* 微縮回饋 */
+}
+
+/* --- 5. 定位調整 --- */
+.course-swiper :deep(.swiper-button-prev) {
+  left: 0 !important;
+}
+
+.course-swiper :deep(.swiper-button-next) {
+  right: 0 !important;
 }
 
 .course-card {
@@ -315,6 +331,17 @@ const formatPrice = (price) => {
   margin-left: 4px;
 }
 
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-count {
+  font-size: 13px;
+  color: #909399;
+}
+
 .price-section {
   display: flex;
   align-items: center;
@@ -346,6 +373,23 @@ const formatPrice = (price) => {
   font-weight: var(--capy-font-weight-medium);
 }
 
+/* Tablet Breakpoint */
+@media (max-width: 1024px) {
+  .course-swiper {
+    padding: 0 32px var(--capy-spacing-lg);
+  }
+
+  .course-card {
+    max-width: 100%;
+  }
+
+  .course-title {
+    font-size: var(--capy-font-size-base);
+    min-height: 42px;
+  }
+}
+
+/* Mobile Breakpoint */
 @media (max-width: 768px) {
   .course-swiper {
     padding: 0 20px var(--capy-spacing-md);
