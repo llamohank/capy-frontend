@@ -173,7 +173,7 @@ const studentRoutes = [
   {
     path: '/reset-password',
     name: 'resetPassword',
-    component: () => import('@/views/student/StudentCenter/Profile/ResetPassword.vue')
+    component: () => import('@/views/student/Auth&Register/ResetPassword.vue')
   },
 
   // ====================================
