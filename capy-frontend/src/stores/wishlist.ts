@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useCartStore } from './cart'
+import { useUserStore } from './user'
 
 /**
  * 願望清單項目介面
@@ -20,18 +21,27 @@ interface WishlistItem {
  */
 export const useWishlistStore = defineStore('wishlist', () => {
   // ==================== State ====================
-  
+
   /**
    * 願望清單項目列表
    */
   const items = ref<WishlistItem[]>([])
 
   // ==================== Getters ====================
-  
+
   /**
    * 願望清單項目數量
+   * 優先使用 user store 的數量（來自 API），如果沒有則使用本地數量
    */
-  const itemCount = computed(() => items.value.length)
+  const itemCount = computed(() => {
+    const userStore = useUserStore()
+    // 如果已登入且有 API 數據，使用 API 數據
+    if (userStore.isAuthenticated && userStore.wishlistQuantity > 0) {
+      return userStore.wishlistQuantity
+    }
+    // 否則使用本地願望清單數量
+    return items.value.length
+  })
 
   /**
    * 願望清單是否為空
@@ -48,7 +58,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
   })
 
   // ==================== Actions ====================
-  
+
   /**
    * 新增課程到願望清單
    * @param course 課程資訊
@@ -62,7 +72,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
   }) => {
     // 檢查課程是否已在願望清單中
     const existingItem = items.value.find(item => item.courseId === course.id)
-    
+
     if (existingItem) {
       console.warn('課程已在願望清單中')
       return false
@@ -88,7 +98,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
    */
   const removeItem = (courseId: number) => {
     const index = items.value.findIndex(item => item.courseId === courseId)
-    
+
     if (index !== -1) {
       items.value.splice(index, 1)
       saveToStorage()
@@ -120,13 +130,13 @@ export const useWishlistStore = defineStore('wishlist', () => {
    */
   const moveToCart = (courseId: number) => {
     const item = items.value.find(item => item.courseId === courseId)
-    
+
     if (!item) {
       return false
     }
 
     const cartStore = useCartStore()
-    
+
     // 新增到購物車
     const added = cartStore.addItem({
       id: item.courseId,
@@ -154,7 +164,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
   }
 
   // ==================== Persistence ====================
-  
+
   /**
    * 從 localStorage 載入願望清單
    */
@@ -183,12 +193,12 @@ export const useWishlistStore = defineStore('wishlist', () => {
   return {
     // State
     items,
-    
+
     // Getters
     itemCount,
     isEmpty,
     recentItems,
-    
+
     // Actions
     addItem,
     removeItem,

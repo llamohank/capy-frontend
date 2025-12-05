@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+// @ts-ignore - home.js 是 JavaScript 檔案
+import { getUserData } from '@/api/student/home.js'
 // @ts-ignore - http.js 是 JavaScript 檔案
 import instance from '@/utils/http.js'
 
@@ -8,11 +10,21 @@ import instance from '@/utils/http.js'
  * 對應後端 API 回傳的使用者資料結構
  */
 interface UserInfo {
-  id: number | null
+  userId: number | null
   nickname: string
-  avatar: string
-  roles: string[]  // 例如: ['STUDENT', 'INSTRUCTOR', 'ADMIN']
-  email?: string   // 選填：使用者電子郵件
+  email: string
+  avatarUrl: string
+  roles?: string[]  // 例如: ['STUDENT', 'INSTRUCTOR', 'ADMIN']
+}
+
+/**
+ * 用戶數據介面（包含購物車、願望清單、通知數量）
+ */
+interface UserData {
+  userInfo: UserInfo
+  cartQuantity: number
+  wishlistQuantity: number
+  notifyQuantity: number
 }
 
 /**
@@ -27,11 +39,26 @@ export const useUserStore = defineStore('user', () => {
    * 後端使用 Cookie 管理認證，前端不需要儲存 token
    */
   const userInfo = ref<UserInfo>({
-    id: null,
+    userId: null,
     nickname: '',
-    avatar: '',
-    roles: []
+    email: '',
+    avatarUrl: ''
   })
+
+  /**
+   * 購物車數量
+   */
+  const cartQuantity = ref<number>(0)
+
+  /**
+   * 願望清單數量
+   */
+  const wishlistQuantity = ref<number>(0)
+
+  /**
+   * 通知數量
+   */
+  const notifyQuantity = ref<number>(0)
 
   // ===== Getters =====
 
@@ -40,7 +67,7 @@ export const useUserStore = defineStore('user', () => {
    * @returns {boolean} 如果使用者 ID 存在則返回 true
    */
   const isAuthenticated = computed(() => {
-    return !!userInfo.value.id
+    return !!userInfo.value.userId
   })
 
   // ===== Actions =====
@@ -51,8 +78,13 @@ export const useUserStore = defineStore('user', () => {
    *
    * @param {UserInfo} user - 使用者資訊
    */
-  const login = (user: UserInfo) => {
+  const login = (user: UserInfo, quantities?: { cart?: number; wishlist?: number; notify?: number }) => {
     userInfo.value = user
+    if (quantities) {
+      cartQuantity.value = quantities.cart || 0
+      wishlistQuantity.value = quantities.wishlist || 0
+      notifyQuantity.value = quantities.notify || 0
+    }
   }
 
   /**
@@ -70,11 +102,14 @@ export const useUserStore = defineStore('user', () => {
 
     // 清除前端使用者資訊
     userInfo.value = {
-      id: null,
+      userId: null,
       nickname: '',
-      avatar: '',
-      roles: []
+      email: '',
+      avatarUrl: ''
     }
+    cartQuantity.value = 0
+    wishlistQuantity.value = 0
+    notifyQuantity.value = 0
   }
 
   /**
@@ -85,10 +120,10 @@ export const useUserStore = defineStore('user', () => {
    */
   const init = async () => {
     // 如果沒有使用者資訊，嘗試從後端獲取（透過 Cookie 驗證）
-    if (!userInfo.value.id) {
+    if (!userInfo.value.userId) {
       try {
         // 呼叫後端 API 驗證 Cookie 並獲取使用者資料
-        const response = await instance.get('/student/verify').catch((error: any) => {
+        const response = await getUserData().catch((error: any) => {
           // 靜默處理 401 錯誤（未登入是正常狀態）
           // 檢查多種可能的錯誤結構
           if (error.status === 401 ||
@@ -107,19 +142,26 @@ export const useUserStore = defineStore('user', () => {
         }
 
         // 檢查回應資料是否有效
-        if (!response.user) {
+        // http.js 攔截器已經返回 response.data，所以 response 本身就是 data
+        if (!response || !response.userInfo) {
           console.warn('後端回應資料格式不正確:', response)
           throw new Error('無效的回應資料格式')
         }
 
+        const data = response as UserData
+
         // 更新使用者資訊
         userInfo.value = {
-          id: response.user.id,
-          nickname: response.user.nickname,
-          avatar: response.user.avatarUrl || '',
-          roles: response.roles || [],
-          email: response.user.email
+          userId: data.userInfo.userId,
+          nickname: data.userInfo.nickname,
+          email: data.userInfo.email,
+          avatarUrl: data.userInfo.avatarUrl || ''
         }
+
+        // 更新數量資訊
+        cartQuantity.value = data.cartQuantity
+        wishlistQuantity.value = data.wishlistQuantity
+        notifyQuantity.value = data.notifyQuantity
 
         console.log('使用者資訊初始化成功:', userInfo.value)
       } catch (error: any) {
@@ -128,11 +170,14 @@ export const useUserStore = defineStore('user', () => {
         // 如果是資料格式錯誤，清除使用者資訊
         if (error.message === '無效的回應資料格式') {
           userInfo.value = {
-            id: null,
+            userId: null,
             nickname: '',
-            avatar: '',
-            roles: []
+            email: '',
+            avatarUrl: ''
           }
+          cartQuantity.value = 0
+          wishlistQuantity.value = 0
+          notifyQuantity.value = 0
         }
       }
     }
@@ -151,9 +196,22 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  /**
+   * 更新數量資訊
+   * @param quantities 數量資訊
+   */
+  const updateQuantities = (quantities: { cart?: number; wishlist?: number; notify?: number }) => {
+    if (quantities.cart !== undefined) cartQuantity.value = quantities.cart
+    if (quantities.wishlist !== undefined) wishlistQuantity.value = quantities.wishlist
+    if (quantities.notify !== undefined) notifyQuantity.value = quantities.notify
+  }
+
   return {
     // State
     userInfo,
+    cartQuantity,
+    wishlistQuantity,
+    notifyQuantity,
 
     // Getters
     isAuthenticated,
@@ -162,6 +220,7 @@ export const useUserStore = defineStore('user', () => {
     login,
     logout,
     init,
-    updateUserInfo
+    updateUserInfo,
+    updateQuantities
   }
 })

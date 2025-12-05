@@ -220,7 +220,10 @@ const initMockCartData = () => {
 }
 
 // 元件掛載時初始化
-onMounted(() => {
+onMounted(async () => {
+  // 初始化使用者資訊（會從 API 獲取購物車、願望清單、通知數量）
+  await userStore.init()
+
   // 先從 localStorage 載入
   cartStore.loadFromStorage()
 
@@ -289,8 +292,9 @@ const isApplicationPage = computed(() => {
  * 用於控制 "Become a Teacher" 按鈕的顯示
  */
 const isInstructor = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  return roles.includes('instructor') || roles.includes('INSTRUCTOR')
+  // 檢查使用者是否為講師（暫時返回 false，因為 API 響應中沒有 roles）
+  // TODO: 當後端 API 提供 roles 資訊時，更新此邏輯
+  return false
 })
 
 /**
@@ -429,15 +433,15 @@ const handleNotifications = () => {
   --el-button-border-color: rgba(255, 255, 255, 0.6); /* 較明顯的白色邊框 */
   --el-button-text-color: #ffffff;
 
-  /* Hover 狀態：實心白底 + Teal 文字 */
+  /* Hover 狀態：實心白底 + 主色文字 */
   --el-button-hover-bg-color: #ffffff; /* 實心白色 */
   --el-button-hover-border-color: #ffffff;
-  --el-button-hover-text-color: #00BFA5; /* Primary Teal */
+  --el-button-hover-text-color: var(--capy-primary); /* 主色天空藍 */
 
   /* Active 狀態 */
   --el-button-active-bg-color: #f5f5f5;
   --el-button-active-border-color: #ffffff;
-  --el-button-active-text-color: #00BFA5;
+  --el-button-active-text-color: var(--capy-primary);
 
   font-weight: 600; /* 半粗體，提升可讀性 */
   transition: all 0.3s ease;

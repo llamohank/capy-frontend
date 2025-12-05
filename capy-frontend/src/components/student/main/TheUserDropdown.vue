@@ -7,7 +7,7 @@
     <!-- Trigger: Avatar -->
     <el-avatar
       :size="40"
-      :src="userStore.userInfo.avatar || defaultAvatar"
+      :src="userStore.userInfo.avatarUrl || defaultAvatar"
       class="user-avatar-trigger"
     />
 
@@ -18,7 +18,7 @@
         <div class="user-dropdown-header">
           <el-avatar
             :size="48"
-            :src="userStore.userInfo.avatar || defaultAvatar"
+            :src="userStore.userInfo.avatarUrl || defaultAvatar"
           />
           <div class="user-info">
             <div class="user-nickname">{{ userStore.userInfo.nickname || '使用者' }}</div>
@@ -36,12 +36,28 @@
             <span class="item-text">我的學習</span>
           </div>
 
+          <!-- Wishlist -->
+          <div class="dropdown-item" @click="handleNavigation('/student/wishlist')">
+            <div class="item-icon">
+              <el-icon><Star /></el-icon>
+            </div>
+            <span class="item-text">願望清單</span>
+          </div>
+
           <!-- Orders / Receipts -->
           <div class="dropdown-item" @click="handleNavigation('/student/orders')">
             <div class="item-icon">
               <el-icon><Tickets /></el-icon>
             </div>
             <span class="item-text">訂單 / 收據</span>
+          </div>
+
+          <!-- Notifications -->
+          <div class="dropdown-item" @click="handleNavigation('/student/notifications')">
+            <div class="item-icon">
+              <el-icon><Bell /></el-icon>
+            </div>
+            <span class="item-text">通知</span>
           </div>
 
           <!-- Role Switcher (Dynamic) -->
@@ -82,7 +98,8 @@ import {
   Tickets,
   Switch,
   Monitor,
-  SwitchButton
+  SwitchButton,
+  Bell
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
@@ -92,31 +109,26 @@ const userStore = useUserStore()
 // 預設頭像
 const defaultAvatar = '/capybaraProfile.png'
 
-// 模擬使用者 Email（實際應該從 userStore 取得）
+// 使用者 Email（從 userStore 取得）
 const userEmail = computed(() => {
-  // TODO: 當 userStore 有 email 欄位時，改為 userStore.userInfo.email
-  return 'user@example.com'
+  return userStore.userInfo.email || 'user@example.com'
 })
 
 /**
  * 角色切換器顯示邏輯
  */
 const showRoleSwitcher = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  // 如果有 instructor 或 admin 角色，顯示切換器
-  return roles.includes('instructor') || roles.includes('admin')
+  // 暫時隱藏角色切換器，因為 API 響應中沒有 roles 資訊
+  // TODO: 當後端 API 提供 roles 資訊時，更新此邏輯
+  return false
 })
 
 /**
  * 角色切換器文字
  */
 const roleSwitcherText = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  if (roles.includes('admin')) {
-    return '管理員儀表板'
-  } else if (roles.includes('instructor')) {
-    return '切換到講師視圖'
-  }
+  // 暫時返回預設值
+  // TODO: 當後端 API 提供 roles 資訊時，更新此邏輯
   return '成為講師'
 })
 
@@ -124,12 +136,8 @@ const roleSwitcherText = computed(() => {
  * 角色切換器圖示
  */
 const roleSwitcherIcon = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  if (roles.includes('admin')) {
-    return Monitor
-  } else if (roles.includes('instructor')) {
-    return Switch
-  }
+  // 暫時返回預設圖示
+  // TODO: 當後端 API 提供 roles 資訊時，更新此邏輯
   return Switch
 })
 
@@ -137,12 +145,8 @@ const roleSwitcherIcon = computed(() => {
  * 角色切換器連結
  */
 const roleSwitcherLink = computed(() => {
-  const roles = userStore.userInfo.roles || []
-  if (roles.includes('admin')) {
-    return '/admin'
-  } else if (roles.includes('instructor')) {
-    return '/teacher/workspace'
-  }
+  // 暫時返回預設連結
+  // TODO: 當後端 API 提供 roles 資訊時，更新此邏輯
   return '/instructor/landing' // 成為講師的落地頁
 })
 

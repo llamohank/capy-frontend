@@ -96,7 +96,7 @@ const formatCount = (count) => {
             </span>
           </div>
 
-          <p class="course-instructor">{{ course.instructorName }}</p>
+          <p class="course-instructor">{{ course.instructorName }} 老師</p>
 
           <div class="course-meta">
             <div class="rating">

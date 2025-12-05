@@ -163,15 +163,14 @@ const handleRemoveItem = async (courseId) => {
       }
     )
 
-    const success = cartStore.removeItem(courseId)
+    // removeItem 現在是 async 函數，會呼叫後端 API
+    const success = await cartStore.removeItem(courseId)
 
     if (success) {
       ElMessage.success('已從購物車移除')
-    } else {
-      ElMessage.error('移除失敗')
     }
   } catch {
-    // 使用者取消操作
+    // 使用者取消操作或 API 錯誤（API 錯誤已在 store 中處理）
   }
 }
 
@@ -185,8 +184,16 @@ const handleCheckout = () => {
 
 // ==================== Lifecycle ====================
 
-// 載入購物車資料
-cartStore.loadFromStorage()
+// 載入購物車資料 - 優先從後端載入，失敗則從 localStorage 載入
+const loadCart = async () => {
+  const success = await cartStore.fetchCartList()
+  if (!success) {
+    // 如果後端載入失敗，從 localStorage 載入
+    cartStore.loadFromStorage()
+  }
+}
+
+loadCart()
 </script>
 
 <style scoped>

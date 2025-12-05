@@ -19,7 +19,7 @@
     </div>
 
     <!-- Teacher -->
-    <p class="course-teacher">by {{ course.instructorName || course.instructor_name || '未知講師' }}</p>
+    <p class="course-teacher">{{ course.instructorName || course.instructor_name || '未知' }} 老師</p>
 
     <!-- Rating -->
     <div class="course-rating">

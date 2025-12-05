@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { useUserStore } from './user'
 
 /**
  * 通知狀態管理 Store
@@ -7,7 +8,7 @@ import { ref, computed } from 'vue'
  */
 export const useNotificationStore = defineStore('notification', () => {
   // ===== State =====
-  
+
   /**
    * 通知列表
    * 包含所有通知項目
@@ -67,11 +68,18 @@ export const useNotificationStore = defineStore('notification', () => {
   ])
 
   // ===== Getters =====
-  
+
   /**
    * 未讀通知數量
+   * 優先使用 user store 的數量（來自 API），如果沒有則使用本地數量
    */
   const unreadCount = computed(() => {
+    const userStore = useUserStore()
+    // 如果已登入且有 API 數據，使用 API 數據
+    if (userStore.isAuthenticated && userStore.notifyQuantity > 0) {
+      return userStore.notifyQuantity
+    }
+    // 否則使用本地未讀通知數量
     return notifications.value.filter(n => !n.is_read).length
   })
 
@@ -84,7 +92,7 @@ export const useNotificationStore = defineStore('notification', () => {
   })
 
   // ===== Actions =====
-  
+
   /**
    * 標記所有通知為已讀
    */
@@ -93,7 +101,7 @@ export const useNotificationStore = defineStore('notification', () => {
     notifications.value.forEach(notification => {
       notification.is_read = true
     })
-    
+
     try {
       // TODO: 實際專案中應該呼叫 API
       // await instance.post('/notifications/mark-all-read')
@@ -111,10 +119,10 @@ export const useNotificationStore = defineStore('notification', () => {
   const markAsRead = async (id) => {
     const notification = notifications.value.find(n => n.id === id)
     if (!notification) return
-    
+
     // 先更新本地狀態
     notification.is_read = true
-    
+
     try {
       // TODO: 實際專案中應該呼叫 API
       // await instance.post(`/notifications/${id}/read`)
@@ -135,7 +143,7 @@ export const useNotificationStore = defineStore('notification', () => {
       // TODO: 實際專案中應該呼叫 API
       // const data = await instance.get('/notifications')
       // notifications.value = data
-      
+
       console.log('獲取通知列表 - 使用 Mock 資料')
     } catch (error) {
       console.error('獲取通知列表失敗:', error)
@@ -154,11 +162,11 @@ export const useNotificationStore = defineStore('notification', () => {
   return {
     // State
     notifications,
-    
+
     // Getters
     unreadCount,
     recentNotifications,
-    
+
     // Actions
     markAllAsRead,
     markAsRead,
