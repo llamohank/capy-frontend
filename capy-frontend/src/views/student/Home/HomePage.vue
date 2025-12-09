@@ -82,11 +82,17 @@ const fetchContinueLearningData = async () => {
 
     console.log('繼續學習 API 回應:', response)
 
-    if (response && Array.isArray(response)) {
+    if (Array.isArray(response)) {
+      // 有課程資料
       homeData.value.continueLearning = response
       console.log('繼續學習課程數量:', response.length)
       console.log('繼續學習課程資料:', response)
+    } else if (response === null) {
+      // 沒有課程（正常情況）
+      homeData.value.continueLearning = []
+      console.log('使用者尚未購買任何課程')
     } else {
+      // 異常情況
       console.warn('繼續學習 API 回應格式不符合預期:', response)
       homeData.value.continueLearning = []
     }
@@ -96,6 +102,7 @@ const fetchContinueLearningData = async () => {
     homeData.value.continueLearning = []
   }
 }
+
 // 組件掛載時獲取資料
 onMounted(async () => {
   await fetchHomeData()

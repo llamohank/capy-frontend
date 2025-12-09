@@ -49,9 +49,9 @@ export const fetchStudentProfile = () => {
  * @param {Object} params - 查詢參數
  * @param {number} [params.page=0] - 頁碼（從 0 開始）
  * @param {number} [params.size=10] - 每頁筆數
- * @param {('all'|'in_progress'|'completed')} [params.status='all'] - 課程狀態
+ * @param {('all'|'ongoing'|'completed')} [params.status='all'] - 課程狀態
  *   - 'all': 所有課程
- *   - 'in_progress': 進行中的課程（completionPercentage < 100）
+ *   - 'ongoing': 進行中的課程（completionPercentage < 100）
  *   - 'completed': 已完成的課程（completionPercentage = 100）
  * @param {string} [params.sort='lastWatch,desc'] - 排序方式
  *   - 'lastWatch,desc': 最近觀看時間（降序）
@@ -97,7 +97,7 @@ export const fetchStudentProfile = () => {
  * const inProgress = await fetchMyLearning({
  *   page: 0,
  *   size: 10,
- *   status: 'in_progress'
+ *   status: 'ongoing'
  * })
  *
  * @example
@@ -116,7 +116,7 @@ export const fetchMyLearning = (params = {}) => {
       page: params.page ?? 0,
       size: params.size ?? 10,
       status: params.status ?? 'all',
-      sort: params.sort ?? 'lastWatch,desc'
+      sort: params.sort ?? 'lastWatchedAt,desc'
     }
   })
 }
@@ -260,30 +260,61 @@ export const updateCourseRating = (progressId, data) => {
 }
 
 /**
- * 更新學生密碼
+ * 變更學生密碼
+ *
+ * API 規格：
+ * - 路徑：PUT /api/student/change-password
+ * - 需登入：必須帶上 JWT（cookie 或 Bearer），未登入會 401/403
+ * - Request Body（JSON，ChangePasswordRequestDto）：
+ *   - currentPassword（當前密碼）
+ *   - newPassword（新密碼；8–64 碼，需含大寫/小寫/數字，可包含特殊字元）
+ * - Response：Result<Void>，成功通常回 200，data 為 null
+ * - 密碼格式：^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-={}[]:;"'<>,.?/]{8,64}$
+ * - 錯誤情況：
+ *   - 當前密碼錯誤 → 400，訊息 "current password incorrect"
+ *   - 新密碼與當前密碼相同 → 400，訊息 "new password must be different from current password"
+ *   - 新密碼違反驗證（長度/強度） → 400，訊息取決於 Bean Validation
+ *   - 未登入/Token 失效 → 401/403
  *
  * @param {Object} data - 密碼資料
- * @param {string} data.currentPassword - 目前密碼
- * @param {string} data.newPassword - 新密碼
+ * @param {string} data.currentPassword - 當前密碼
+ * @param {string} data.newPassword - 新密碼（8-64碼，需含大寫/小寫/數字，可包含特殊字元，且必須與當前密碼不同）
  *
  * @returns {Promise<{
  *   success: boolean,
  *   code: number,
  *   message: string,
- *   data: string,
+ *   data: null,
  *   path: string
  * }>}
  *
  * @example
- * const result = await updateStudentPassword({
- *   currentPassword: 'oldPassword123',
- *   newPassword: 'newPassword456'
- * })
+ * // 變更密碼
+ * try {
+ *   const result = await changeStudentPassword({
+ *     currentPassword: 'OldPass123',
+ *     newPassword: 'NewPass456!'
+ *   })
+ *   console.log('密碼變更成功')
+ * } catch (error) {
+ *   if (error.response?.status === 400) {
+ *     const message = error.response?.data?.message
+ *     if (message?.includes('current password incorrect')) {
+ *       console.error('當前密碼錯誤')
+ *     } else if (message?.includes('must be different')) {
+ *       console.error('新密碼不能與當前密碼相同')
+ *     } else {
+ *       console.error('密碼格式不符合規則')
+ *     }
+ *   } else if (error.response?.status === 401 || error.response?.status === 403) {
+ *     console.error('未登入或 Token 失效，請重新登入')
+ *   }
+ * }
  */
-export const updateStudentPassword = (data) => {
+export const changeStudentPassword = (data) => {
   return request({
     url: '/student/change-password',
-    method: 'POST',
+    method: 'PUT',
     data
   })
 }
@@ -315,6 +346,33 @@ export const deleteStudentAccount = (data) => {
   })
 }
 
+/**
+ * 解綁定 Google 帳號
+ *
+ * @param {Object} data - 解綁定資料
+ * @param {string} data.password - 當前密碼（用於確認身份）
+ *
+ * @returns {Promise<{
+ *   success: boolean,
+ *   code: number,
+ *   message: string,
+ *   data: null,
+ *   path: string
+ * }>}
+ *
+ * @example
+ * const result = await unlinkGoogleAccount({
+ *   password: 'myPassword123'
+ * })
+ */
+export const unlinkGoogleAccount = (data) => {
+  return request({
+    url: '/student/account/unlinkGoogle',
+    method: 'POST',
+    data
+  })
+}
+
 // 匯出所有 API 函數
 export default {
   fetchStudentProfile,
@@ -323,6 +381,7 @@ export default {
   uploadStudentAvatar,
   submitCourseRating,
   updateCourseRating,
-  updateStudentPassword,
-  deleteStudentAccount
+  changeStudentPassword,
+  deleteStudentAccount,
+  unlinkGoogleAccount
 }

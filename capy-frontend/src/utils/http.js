@@ -24,8 +24,13 @@ instance.interceptors.response.use(
   (response) => {
     // 任何 2xx 的 HTTP 狀態碼，將會觸發此函數
     // 針對回應資料，做些什麼
-    // 安全地提取 data，避免 null/undefined 錯誤
-    return response.data?.data ?? response.data ?? null;
+    // 檢查是否有標準的後端回應格式 {success, code, data}
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      // 返回 data 欄位（可能是 null、陣列或物件）
+      return response.data.data;
+    }
+    // 如果不是標準格式，返回原始 response.data
+    return response.data ?? null;
   },
   (error) => {
     // 任何 2xx 之外的 HTTP 狀態碼，都會觸發此函數

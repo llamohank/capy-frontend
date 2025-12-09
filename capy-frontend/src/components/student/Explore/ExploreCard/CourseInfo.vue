@@ -24,11 +24,15 @@
     <!-- Rating -->
     <div class="course-rating">
       <el-rate
-        :model-value="course.averageRating"
+        :model-value="parseFloat(course.averageRating) || 0"
         disabled
-        show-score
-        :score-template="`${course.averageRating}`"
+        allow-half
+        :max="5"
+        :colors="['#E6A23C', '#E6A23C', '#E6A23C']"
+        void-color="#d0d0d0"
+        disabled-void-color="#d0d0d0"
       />
+      <span class="rating-score">{{ course.averageRating ? Number(course.averageRating).toFixed(1) : '0.0' }}</span>
       <span class="rating-count">({{ formatCount(course.reviewCount) }})</span>
     </div>
 
@@ -184,14 +188,21 @@ const handleTagClick = (tag, event) => {
   height: auto;
 }
 
-.course-rating :deep(.el-rate__text) {
+.rating-score {
   font-size: 14px;
   font-weight: 600;
   color: var(--capy-warning);
+  margin-left: 4px;
 }
 
-.course-rating :deep(.el-rate__icon) {
+/* 只對已填滿的星星設定橘色 */
+.course-rating :deep(.el-rate__icon.is-active) {
   color: var(--capy-warning);
+}
+
+/* 空星星使用灰色 */
+.course-rating :deep(.el-rate__icon:not(.is-active)) {
+  color: #d0d0d0;
 }
 
 .rating-count {

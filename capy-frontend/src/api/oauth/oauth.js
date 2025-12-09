@@ -145,3 +145,12 @@ export const bindGoogleAccount = ({ googleId, password }) => {
     password
   });
 };
+
+/**
+ * 登出 API
+ * 清除後端 Cookie 並結束使用者會話
+ * @returns {Promise}
+ */
+export const logout = () => {
+  return instance.post("/auth/logout");
+};

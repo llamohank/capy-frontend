@@ -272,21 +272,29 @@ const potentialIncome = computed(() => {
 
 // Animated Income (for smooth number transition)
 const animatedIncome = ref(0)
+let animationInterval = null
 
 // Watch for income changes and animate
 watch(potentialIncome, (newValue) => {
+  // Clear any existing animation
+  if (animationInterval) {
+    clearInterval(animationInterval)
+    animationInterval = null
+  }
+
   const duration = 500 // ms
   const steps = 30
   const stepValue = (newValue - animatedIncome.value) / steps
   const stepDuration = duration / steps
 
   let currentStep = 0
-  const interval = setInterval(() => {
+  animationInterval = setInterval(() => {
     if (currentStep >= steps) {
       animatedIncome.value = newValue
-      clearInterval(interval)
+      clearInterval(animationInterval)
+      animationInterval = null
     } else {
-      animatedIncome.value += stepValue
+      animatedIncome.value = Math.round(animatedIncome.value + stepValue)
       currentStep++
     }
   }, stepDuration)
@@ -643,7 +651,9 @@ section {
 .step-number {
   width: 48px;
   height: 48px;
-  border-radius: var(--capy-radius-circle);
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
   background-color: var(--capy-primary);
   color: white;
   display: flex;
@@ -651,6 +661,7 @@ section {
   justify-content: center;
   font-size: 24px;
   font-weight: var(--capy-font-weight-bold);
+  flex-shrink: 0;
 }
 
 .step-title {

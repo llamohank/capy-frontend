@@ -21,7 +21,7 @@
 
       <!-- Wishlist Button -->
       <WishlistButton
-        :is-wishlisted="course.isWishlisted"
+        :is-wishlisted="isWishlisted"
         @toggle="toggleWishlist"
       />
     </div>
@@ -32,11 +32,14 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useWishlistStore } from '@/stores/wishlist'
 import WishlistButton from '../FilterDrawer/WishlistButton.vue'
 import CourseInfo from './CourseInfo.vue'
 
 const router = useRouter()
+const wishlistStore = useWishlistStore()
 
 const props = defineProps({
   course: {
@@ -47,6 +50,21 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-wishlist', 'tag-click'])
 
+/**
+ * 判斷課程是否在願望清單中
+ * 優先使用後端提供的 isWishlisted，如果沒有則使用 wishlistStore 判斷
+ * computed 會自動追蹤 wishlistStore.items 的變化，無需額外 watch
+ */
+const isWishlisted = computed(() => {
+  // 如果後端有提供 isWishlisted 欄位，優先使用（適用於 WishlistPage）
+  if (props.course.isWishlisted !== undefined) {
+    return props.course.isWishlisted
+  }
+  // 否則使用 wishlistStore 判斷（實現跨頁面同步，適用於 ExplorePage）
+  // computed 會自動追蹤 wishlistStore.items 的變化並重新計算
+  return wishlistStore.hasItem(props.course.id)
+})
+
 const toggleWishlist = () => {
   emit('toggle-wishlist', props.course.id)
 }
@@ -56,7 +74,7 @@ const handleTagClick = (tag) => {
 }
 
 const goToCourseDetail = () => {
-  router.push(`/course/${props.course.id}`)
+  router.push(`/courses/${props.course.id}`)
 }
 </script>
 

@@ -2,8 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 // @ts-ignore - home.js 是 JavaScript 檔案
 import { getUserData } from '@/api/student/home.js'
-// @ts-ignore - http.js 是 JavaScript 檔案
-import instance from '@/utils/http.js'
+// @ts-ignore - oauth.js 是 JavaScript 檔案
+import { logout as logoutApi } from '@/api/oauth/oauth.js'
 
 /**
  * 使用者資訊介面
@@ -60,6 +60,11 @@ export const useUserStore = defineStore('user', () => {
    */
   const notifyQuantity = ref<number>(0)
 
+  /**
+   * 初始化 Promise（用於防止重複呼叫）
+   */
+  let initPromise: Promise<void> | null = null
+
   // ===== Getters =====
 
   /**
@@ -94,7 +99,7 @@ export const useUserStore = defineStore('user', () => {
   const logout = async () => {
     try {
       // 呼叫後端登出 API，清除 Cookie
-      await instance.post('/student/logout')
+      await logoutApi()
     } catch (error) {
       console.error('登出 API 呼叫失敗:', error)
       // 即使 API 失敗，仍然清除前端狀態
@@ -115,12 +120,23 @@ export const useUserStore = defineStore('user', () => {
   /**
    * 初始化使用者資訊
    * 當頁面重新整理時，透過 Cookie 驗證並獲取使用者資料
+   * 防止重複呼叫機制：如果正在初始化或已初始化，直接返回
    *
    * @returns {Promise<void>}
    */
   const init = async () => {
-    // 如果沒有使用者資訊，嘗試從後端獲取（透過 Cookie 驗證）
-    if (!userInfo.value.userId) {
+    // 如果正在初始化，返回同一個 Promise
+    if (initPromise) {
+      return initPromise
+    }
+
+    // 如果已經初始化過（有 userId），直接返回
+    if (userInfo.value.userId) {
+      return
+    }
+
+    // 建立初始化 Promise
+    initPromise = (async () => {
       try {
         // 呼叫後端 API 驗證 Cookie 並獲取使用者資料
         const response = await getUserData()
@@ -180,6 +196,13 @@ export const useUserStore = defineStore('user', () => {
           notifyQuantity.value = 0
         }
       }
+    })()
+
+    try {
+      await initPromise
+    } finally {
+      // 清除 Promise 引用，允許下次重新初始化（例如登出後再登入）
+      initPromise = null
     }
   }
 

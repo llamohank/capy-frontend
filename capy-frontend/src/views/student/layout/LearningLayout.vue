@@ -60,9 +60,12 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { User, Setting, SwitchButton } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 // 使用者資訊
 const userAvatar = ref('')
@@ -77,11 +80,17 @@ const courseTitle = computed(() => {
 /**
  * 處理登出
  */
-const handleLogout = () => {
-  // 清除使用者資訊
-  localStorage.removeItem('userToken')
-  // 導向登入頁
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await userStore.logout()
+    ElMessage.success('已成功登出')
+    await router.push('/login')
+  } catch (error) {
+    console.error('登出失敗:', error)
+    // 即使登出失敗，仍然導向登入頁
+    ElMessage.warning('登出時發生錯誤，但已清除本地狀態')
+    await router.push('/login')
+  }
 }
 </script>
 

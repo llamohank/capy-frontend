@@ -83,6 +83,9 @@
                   <el-icon><User /></el-icon>
                 </template>
               </el-input>
+              <div class="nickname-format-hint">
+                僅能包含中英文、數字、底線(_)、連接號(-)、句點(.)，不允許空白
+              </div>
             </el-form-item>
           </el-form>
         </div>
@@ -257,11 +260,12 @@ import {
   Delete,
   WarningFilled
 } from '@element-plus/icons-vue'
+import { validateNicknameFormat } from '@/utils/usernameValidator'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import StudentPasswordForm from './StudentPasswordForm.vue'
 import { bindGoogleAccount } from '@/api/oauth/oauth'
-import { fetchStudentProfile, updateStudentProfile, uploadStudentAvatar, updateStudentPassword, deleteStudentAccount } from '@/api/student/studentCenter.js'
+import { fetchStudentProfile, updateStudentProfile, uploadStudentAvatar, changeStudentPassword, deleteStudentAccount, unlinkGoogleAccount } from '@/api/student/studentCenter.js'
 
 // Props
 const props = defineProps({
@@ -365,6 +369,21 @@ const cleanupPreview = () => {
   pendingAvatarFile.value = null
 }
 
+// 暱稱格式驗證
+const validateNicknameFormatRule = (rule, value, callback) => {
+  if (!value) {
+    return callback()
+  }
+
+  // 使用統一的格式驗證函式
+  const formatValidation = validateNicknameFormat(value)
+  if (!formatValidation.valid) {
+    return callback(new Error(formatValidation.message))
+  }
+
+  callback()
+}
+
 // 暱稱唯一性驗證
 const validateNicknameUnique = async (rule, value, callback) => {
   if (!value) {
@@ -396,6 +415,7 @@ const rules = {
   nickname: [
     { required: true, message: '請輸入暱稱', trigger: 'blur' },
     { min: 2, max: 20, message: '暱稱長度應在 2 到 20 個字元之間', trigger: 'blur' },
+    { validator: validateNicknameFormatRule, trigger: 'blur' },
     { validator: validateNicknameUnique, trigger: 'blur' }
   ]
 }
@@ -641,13 +661,14 @@ const confirmBindWithPassword = async (googleId) => {
       password
     })
 
-    // 後端回應格式: { success, code, message, data: { googleLinked } }
-    if (response.success && response.data) {
+    // http.js 攔截器已經解包 response.data，所以 response 本身就是 data
+    // 檢查回應是否有效
+    if (response && (response.googleLinked !== undefined || response.success)) {
       ElMessage.success('Google 帳號綁定成功！')
 
       // 更新使用者資訊到 store
       userStore.updateUserInfo({
-        googleLinked: response.data.googleLinked
+        googleLinked: response.googleLinked ?? true
       })
 
       // 關閉對話框
@@ -658,7 +679,7 @@ const confirmBindWithPassword = async (googleId) => {
         window.location.reload()
       }, 500)
     } else {
-      throw new Error(response.message || '綁定失敗')
+      throw new Error('綁定失敗：回應格式不正確')
     }
 
   } catch (error) {
@@ -679,47 +700,103 @@ const confirmBindWithPassword = async (googleId) => {
 // Handle Unbind Google Account
 const handleUnbindGoogle = async () => {
   try {
-    // Show confirmation dialog
+    // 第一步：顯示確認對話框
     await ElMessageBox.confirm(
       '解除 Google 帳號連結後，您將無法使用 Google 快速登入。確定要繼續嗎？',
       '解除 Google 連結',
       {
         confirmButtonText: '確定解除',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
+        customClass: 'google-unbind-confirm-dialog'
       }
     )
 
-    // Call API to unbind Google account
-    const response = await fetch('/api/auth/google/unbind', {
-      method: 'POST',
-      credentials: 'include'
-    })
+    // 第二步：要求輸入密碼確認
+    const { value: password } = await ElMessageBox.prompt(
+      '為了安全起見，請輸入您的帳號密碼以確認解除 Google 帳號連結',
+      '確認密碼',
+      {
+        confirmButtonText: '確認解除',
+        cancelButtonText: '取消',
+        inputType: 'password',
+        inputPlaceholder: '請輸入密碼',
+        inputValidator: (value) => {
+          if (!value) {
+            return '請輸入密碼'
+          }
+          if (value.length < 8) {
+            return '密碼長度至少 8 個字元'
+          }
+          return true
+        },
+        inputErrorMessage: '密碼格式不正確',
+        customClass: 'google-unbind-password-dialog'
+      }
+    )
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || '解除連結失敗')
-    }
+    // 第三步：呼叫解綁定 API
+    bindingGoogle.value = true
+
+    await unlinkGoogleAccount({
+      password
+    })
 
     ElMessage.success('已成功解除 Google 帳號連結')
 
-    // Update user store to reflect the change
+    // 更新使用者資訊到 store
     userStore.updateUserInfo({
+      googleLinked: false,
       google_id: null,
       google_email: null
     })
 
-    // Close dialog and refresh
+    // 關閉對話框
     dialogVisible.value = false
 
-    // Reload the page to refresh all data
-    window.location.reload()
+    // 重新載入頁面以刷新所有資料
+    setTimeout(() => {
+      window.location.reload()
+    }, 500)
 
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('Unbind Google error:', error)
-      ElMessage.error(error.message || '解除連結失敗，請稍後再試')
+    if (error === 'cancel') {
+      ElMessage.info('已取消解除連結')
+    } else {
+      console.error('解除 Google 連結錯誤:', error)
+
+      // 處理不同的錯誤狀態
+      let errorMessage = '解除連結失敗，請稍後再試'
+
+      if (error.response) {
+        const status = error.response.status
+        const responseData = error.response.data
+
+        if (status === 401) {
+          // 密碼錯誤或登入過期
+          if (responseData?.message?.includes('password')) {
+            errorMessage = '密碼錯誤，請重新輸入'
+          } else {
+            errorMessage = '登入已過期，請重新登入'
+            // 導向登入頁
+            setTimeout(() => {
+              window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname)
+            }, 1500)
+          }
+        } else if (status === 409) {
+          // 未綁定 Google 帳號
+          errorMessage = '您尚未綁定 Google 帳號'
+        } else if (responseData?.message) {
+          errorMessage = responseData.message
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      ElMessage.error(errorMessage)
     }
+  } finally {
+    bindingGoogle.value = false
   }
 }
 
@@ -748,18 +825,57 @@ const handleUpdatePassword = async () => {
     // Get form data
     const passwordData = passwordFormRef.value.getFormData()
 
-    // 使用 API 函數更新密碼
-    await updateStudentPassword(passwordData)
+    // 使用新的 API 函數變更密碼
+    await changeStudentPassword(passwordData)
 
-    ElMessage.success('密碼更新成功')
+    ElMessage.success('密碼變更成功！建議您重新登入以確保安全。')
 
     // Reset form and go back to settings
     passwordFormRef.value.resetForm()
     currentView.value = 'settings'
 
+    // 關閉對話框
+    dialogVisible.value = false
+
   } catch (error) {
-    console.error('Password update error:', error)
-    ElMessage.error(error.message || '密碼更新失敗，請稍後再試')
+    console.error('Password change error:', error)
+
+    // 處理不同的錯誤狀態
+    let errorMessage = '密碼變更失敗，請稍後再試'
+
+    if (error.response) {
+      const status = error.response.status
+      const responseData = error.response.data
+
+      if (status === 400) {
+        // 根據後端錯誤訊息顯示對應提示
+        const message = responseData?.message || ''
+
+        if (message.includes('current password incorrect')) {
+          errorMessage = '當前密碼錯誤，請重新輸入'
+        } else if (message.includes('must be different from current password')) {
+          errorMessage = '新密碼不能與當前密碼相同，請設定不同的密碼'
+        } else if (message.includes('password') || message.includes('Password')) {
+          // 其他密碼相關錯誤（如格式不符）
+          errorMessage = responseData.message || '密碼格式不符合要求：需8-64碼，包含大小寫字母和數字，可使用特殊字元'
+        } else if (responseData?.message) {
+          errorMessage = responseData.message
+        } else {
+          errorMessage = '密碼格式不符合要求：需8-64碼，包含大小寫字母和數字，可使用特殊字元'
+        }
+      } else if (status === 401 || status === 403) {
+        // 未登入或 Token 失效
+        errorMessage = '登入已過期，請重新登入'
+        // 導向登入頁
+        setTimeout(() => {
+          window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname)
+        }, 1500)
+      }
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
+    ElMessage.error(errorMessage)
   } finally {
     updatingPassword.value = false
   }
@@ -1155,6 +1271,17 @@ onMounted(() => {
 
 .profile-form :deep(.el-input__prefix) {
   color: var(--capy-text-secondary);
+}
+
+/* 暱稱格式提示 */
+.nickname-format-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--capy-text-secondary);
+  padding: 6px 12px;
+  background: var(--capy-bg-base);
+  border-radius: var(--capy-radius-sm);
+  line-height: 1.4;
 }
 
 /* Footer */
@@ -1727,6 +1854,134 @@ onMounted(() => {
   .google-bind-password-prompt .el-button {
     width: 100%;
   }
+}
+
+/* Google Unbind Confirm Dialog - 使用主色 */
+.google-unbind-confirm-dialog {
+  max-width: 420px;
+  min-width: 380px;
+
+}
+
+.google-unbind-confirm-dialog .el-message-box__header {
+  padding: var(--capy-spacing-xl) var(--capy-spacing-xl) var(--capy-spacing-md);
+}
+
+.google-unbind-confirm-dialog .el-message-box__title {
+  font-size: 20px;
+  font-weight: var(--capy-font-weight-semibold);
+}
+
+.google-unbind-confirm-dialog .el-message-box__content {
+  padding: var(--capy-spacing-xl) var(--capy-spacing-xl);
+}
+
+.google-unbind-confirm-dialog .el-message-box__message {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--capy-text-primary);
+}
+
+/* Dialog 底部按鈕區塊 */
+.google-unbind-confirm-dialog .el-message-box__btns {
+  padding: var(--capy-spacing-lg) var(--capy-spacing-xl) var(--capy-spacing-xl);
+  gap: 12px; /* 使用具體數值或 var(--capy-spacing-md) */
+  display: flex;
+  justify-content: flex-end; /* 確保按鈕靠右，符合一般對話框習慣 */
+}
+
+.google-unbind-confirm-dialog .el-message-box__btns .el-button {
+  padding: 10px 24px; /* 稍微縮小一點 Padding，讓比例更協調 */
+  font-size: var(--capy-font-size-base); /* 14px，保持系統一致 */
+  min-width: 100px;
+  border-radius: var(--capy-radius-base); /* 確保圓角一致 */
+  font-weight: var(--capy-font-weight-medium); /* 500 */
+}
+
+.google-unbind-confirm-dialog .el-message-box__btns .el-button--primary {
+  /* 這裡雖是 primary class，但我們視覺上把它變成 Danger */
+  background-color: var(--capy-danger) !important;
+  border-color: var(--capy-danger) !important;
+  color: white !important;
+  transition: all var(--capy-transition-fast); /* 加入過渡動畫 */
+}
+
+.google-unbind-confirm-dialog .el-message-box__btns .el-button--primary:hover {
+  background-color: var(--el-color-danger-light-3) !important;
+  border-color: var(--el-color-danger-light-3) !important;
+  box-shadow: var(--capy-shadow-sm); /* 增加一點點懸浮感 */
+}
+
+.google-unbind-confirm-dialog .el-message-box__btns .el-button--primary:active {
+  background-color: var(--el-color-danger-dark-2) !important;
+  border-color: var(--el-color-danger-dark-2) !important;
+  transform: translateY(1px); /* 增加按壓感 */
+}
+
+/* Google Unbind Password Dialog - 使用主色 */
+.google-unbind-password-dialog {
+  max-width: 420px;
+  min-width: 380px;
+  --el-color-primary: var(--capy-danger); /* 💡 關鍵技巧：局部覆寫變數 */
+}
+
+/* 讓 Input 框 Focus 時也變成紅色，與按鈕呼應 */
+.google-unbind-password-dialog .el-input {
+  --el-input-focus-border-color: var(--capy-danger);
+}
+
+.google-unbind-password-dialog .el-message-box__header {
+  padding: var(--capy-spacing-lg) var(--capy-spacing-lg) var(--capy-spacing-sm);
+}
+
+.google-unbind-password-dialog .el-message-box__title {
+  font-size: 18px;
+  font-weight: var(--capy-font-weight-semibold);
+}
+
+.google-unbind-password-dialog .el-message-box__content {
+  padding: var(--capy-spacing-lg) var(--capy-spacing-lg);
+}
+
+.google-unbind-password-dialog .el-message-box__message {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--capy-text-primary);
+  margin-bottom: var(--capy-spacing-sm);
+}
+
+.google-unbind-password-dialog .el-message-box__input {
+  margin-top: var(--capy-spacing-xs);
+}
+
+.google-unbind-password-dialog .el-message-box__btns {
+ padding: var(--capy-spacing-md) var(--capy-spacing-lg) var(--capy-spacing-lg);
+  gap: 12px;
+  display: flex;
+  justify-content: flex-end; /* 確保按鈕靠右 */
+}
+
+.google-unbind-password-dialog .el-message-box__btns .el-button {
+  padding: 10px 24px;
+  font-size: 14px;
+  min-width: 100px;
+}
+
+.google-unbind-password-dialog .el-message-box__btns .el-button--primary {
+  background-color: var(--capy-danger) !important; /* #F56C6C */
+  border-color: var(--capy-danger) !important;
+  color: var(--capy-text-inverse) !important;
+  font-weight: 500;
+}
+
+.google-unbind-password-dialog .el-message-box__btns .el-button--primary:hover {
+  background-color: var(--el-color-danger-light-3) !important;
+  border-color: var(--el-color-danger-light-3) !important;
+}
+
+.google-unbind-password-dialog .el-message-box__btns .el-button--primary:active {
+  background-color: var(--el-color-danger-dark-2) !important;
+  border-color: var(--el-color-danger-dark-2) !important;
 }
 </style>
 

@@ -89,6 +89,26 @@
 
             <!-- 通知組 -->
             <div class="icon-group notification-group">
+              <!-- 連線狀態指示器 -->
+              <ConnectionStatusIndicator />
+
+              <!-- 音效設定按鈕 -->
+              <el-popover
+                placement="bottom"
+                :width="300"
+                trigger="click"
+              >
+                <template #reference>
+                  <el-button circle class="icon-button" :class="{ 'sound-enabled': notificationStore.isSoundEnabled, 'sound-disabled': !notificationStore.isSoundEnabled }">
+                    <el-icon>
+                      <component :is="notificationStore.isSoundEnabled ? 'Microphone' : 'TurnOff'" />
+                    </el-icon>
+                  </el-button>
+                </template>
+                <NotificationSoundSettings />
+              </el-popover>
+
+              <!-- 通知按鈕 -->
               <el-badge :value="notificationStore.unreadCount" :hidden="notificationStore.unreadCount === 0" class="icon-badge">
                 <TheNotificationPopover>
                   <template #trigger>
@@ -115,7 +135,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Reading, ShoppingCart, Star, Bell, Document, PriceTag } from '@element-plus/icons-vue'
+import { Search, Reading, ShoppingCart, Star, Bell, Document, PriceTag, Microphone, TurnOff } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
 import { useWishlistStore } from '@/stores/wishlist'
@@ -123,6 +143,8 @@ import { useNotificationStore } from '@/stores/notification'
 import TheCartDrawer from '@/components/student/cart/TheCartDrawer.vue'
 import TheWishlistPopover from '@/components/student/wishlist/TheWishlistPopover.vue'
 import TheNotificationPopover from '@/components/student/notifications/TheNotificationPopover.vue'
+import ConnectionStatusIndicator from '@/components/student/notifications/ConnectionStatusIndicator.vue'
+import NotificationSoundSettings from '@/components/student/notifications/NotificationSoundSettings.vue'
 import TheUserDropdown from '@/components/student/main/TheUserDropdown.vue'
 
 const router = useRouter()
@@ -181,12 +203,10 @@ const handleSelect = (item) => {
 onMounted(async () => {
   // 注意：userStore.init() 已在 App.vue 和 router 中呼叫，這裡不需要重複呼叫
 
-  // 只有在已登入時才載入願望清單模擬資料和通知
+  // 只有在已登入時才載入通知
   if (userStore.isAuthenticated) {
-    // 如果願望清單為空，載入模擬資料（僅用於開發測試）
-    if (wishlistStore.isEmpty && import.meta.env.DEV) {
-      initMockWishlistData()
-    }
+    // 從 localStorage 載入願望清單（快速顯示，不呼叫 API）
+    wishlistStore.loadFromStorage()
 
     // 載入通知資料
     notificationStore.fetchNotifications()
@@ -452,6 +472,24 @@ const handleNotifications = () => {
   height: 24px;
   background-color: rgba(255, 255, 255, 0.3); /* 半透明白色 */
   margin: 0 4px;
+}
+
+/* 音效按鈕啟用狀態 */
+.icon-button.sound-enabled {
+  --el-button-bg-color: rgba(103, 194, 58, 0.2);
+}
+
+.icon-button.sound-enabled:hover {
+  --el-button-hover-bg-color: rgba(103, 194, 58, 0.3);
+}
+
+/* 音效按鈕停用狀態 */
+.icon-button.sound-disabled {
+  --el-button-bg-color: rgba(144, 147, 153, 0.2);
+}
+
+.icon-button.sound-disabled:hover {
+  --el-button-hover-bg-color: rgba(144, 147, 153, 0.3);
 }
 
 @media (max-width: 768px) {

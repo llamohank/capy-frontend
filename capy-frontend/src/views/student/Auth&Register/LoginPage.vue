@@ -134,6 +134,9 @@
             <div v-show="nicknameValidation.message" :class="['validation-message', nicknameValidation.type]">
               {{ nicknameValidation.message || '&nbsp;' }}
             </div>
+            <div v-if="!nicknameValidation.message && registerForm.username" class="nickname-hint">
+              僅能包含中英文、數字、底線(_)、連接號(-)、句點(.)，不允許空白
+            </div>
           </div>
 
           <div class="form-group">
@@ -1037,6 +1040,17 @@ onMounted(() => {
 .validation-message.info {
   color: var(--capy-primary);
   background: var(--el-color-primary-light-9);
+}
+
+/* 暱稱格式提示 */
+.nickname-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--capy-text-secondary);
+  padding: 6px 12px;
+  background: var(--capy-bg-base);
+  border-radius: 6px;
+  line-height: 1.4;
 }
 
 /* 輸入框帶 icon */

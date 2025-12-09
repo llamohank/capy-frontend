@@ -47,7 +47,7 @@
         <el-breadcrumb separator="/" class="breadcrumb">
           <el-breadcrumb-item>All Courses</el-breadcrumb-item>
           <el-breadcrumb-item>
-            {{ breadcrumbText }} ({{ filteredCourses.length }} Courses)
+            {{ breadcrumbText }} ({{ coursesData.totalElements }} Courses)
           </el-breadcrumb-item>
         </el-breadcrumb>
 
@@ -65,8 +65,15 @@
           </el-tag>
         </div>
 
+        <!-- Loading State -->
+        <div v-if="loading" class="loading-wrapper">
+          <el-skeleton :rows="3" animated />
+          <el-skeleton :rows="3" animated />
+          <el-skeleton :rows="3" animated />
+        </div>
+
         <!-- Course Grid -->
-        <el-row :gutter="24" class="course-grid">
+        <el-row v-else :gutter="24" class="course-grid">
           <el-col
             v-for="course in paginatedCourses"
             :key="course.id"
@@ -87,17 +94,17 @@
 
         <!-- Empty State -->
         <el-empty
-          v-if="filteredCourses.length === 0"
+          v-if="!loading && coursesData.empty"
           description="No courses found"
           :image-size="200"
         />
 
         <!-- Pagination -->
-        <div v-if="filteredCourses.length > 0" class="pagination-wrapper">
+        <div v-if="!loading && !coursesData.empty" class="pagination-wrapper">
           <el-pagination
             v-model:current-page="currentPage"
             :page-size="pageSize"
-            :total="filteredCourses.length"
+            :total="coursesData.totalElements"
             layout="prev, pager, next"
             @current-change="handlePageChange"
           />
@@ -137,7 +144,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Filter } from '@element-plus/icons-vue'
 import ExploreHeader from '@/components/student/Explore/ExploreHeader.vue'
@@ -145,11 +152,14 @@ import ExploreCourseCard from '@/components/student/Explore/ExploreCard/ExploreC
 import CategoryTreeMulti from '@/components/student/Explore/FilterDrawer/CategoryTreeMulti.vue'
 import CategoryRadioGroup from '@/components/student/Explore/FilterDrawer/CategoryRadioGroup.vue'
 import RatingOptions from '@/components/student/Explore/FilterDrawer/RatingOptions.vue'
-import { exploreCourses, categories } from '@/mockData'
+import { categories } from '@/mockData'
 import { useWishlistStore } from '@/stores/wishlist'
+import { useUserStore } from '@/stores/user'
+import { searchCourses } from '@/api/student/explore'
 
 // Stores
 const wishlistStore = useWishlistStore()
+const userStore = useUserStore()
 
 // Responsive state
 const isMobile = ref(false)
@@ -160,6 +170,20 @@ const selectedCategories = ref([])
 const selectedRating = ref(0)
 const selectedTags = ref([])
 const searchQuery = ref('')
+const sortBy = ref('popular') // 'popular' or 'latest'
+
+// API 相關狀態
+const loading = ref(false)
+const coursesData = ref({
+  content: [],
+  number: 0,
+  size: 12,
+  totalElements: 0,
+  totalPages: 0,
+  first: true,
+  last: true,
+  empty: true
+})
 
 // 建立 category ID 到 name 的映射
 const buildCategoryIdToNameMap = () => {
@@ -178,25 +202,16 @@ const buildCategoryIdToNameMap = () => {
 
 const categoryIdToName = buildCategoryIdToNameMap()
 
-// Pagination states
+// Pagination states（後端分頁，從 1 開始顯示但 API 從 0 開始）
 const currentPage = ref(1)
-const pageSize = ref(8)
+const pageSize = ref(12)
 
-// 使用統一的課程資料，並轉換為元件需要的格式
-// 同時檢查每個課程是否在願望清單中
+// 直接使用後端的資料格式，不做欄位名稱轉換
+// ExploreCourseCard 和 CourseInfo 元件會使用這些欄位
 const allCourses = computed(() => {
-  return exploreCourses.map(course => ({
-    id: course.id,
-    title: course.title,
-    cover: course.cover_image_url,
-    teacher: course.instructor,
-    rating: course.rating,
-    ratingCount: course.reviewCount,
-    category: course.category,
-    tags: course.tags,
-    price: course.price,
-    originalPrice: course.originalPrice,
-    isWishlisted: wishlistStore.hasItem(course.id) // 從 wishlist store 檢查
+  return coursesData.value.content.map(course => ({
+    ...course, // 保留所有後端欄位
+    isWishlisted: wishlistStore.hasItem(course.id) // 添加願望清單狀態
   }))
 })
 
@@ -226,78 +241,82 @@ const breadcrumbText = computed(() => {
   return `${categoryNames[0]}, ${categoryNames[1]} +${categoryNames.length - 2} more`
 })
 
-// Computed: Filtered courses
-const filteredCourses = computed(() => {
-  let courses = allCourses.value
+// 後端已處理篩選，直接使用 API 回傳的資料
+const filteredCourses = computed(() => allCourses.value)
 
-  // Filter by categories (多選邏輯)
-  if (selectedCategories.value.length > 0) {
-    courses = courses.filter(course => {
-      // 取得課程的分類名稱
-      const selectedCategoryNames = selectedCategories.value
-        .map(id => categoryIdToName.get(id))
-        .filter(Boolean)
+// 後端已處理分頁，直接使用 API 回傳的資料
+const paginatedCourses = computed(() => allCourses.value)
 
-      // 檢查課程分類是否在選中的分類中
-      return selectedCategoryNames.some(name =>
-        course.category.includes(name) || name.includes(course.category)
-      )
-    })
+// 載入課程資料
+const loadCourses = async () => {
+  loading.value = true
+  try {
+    const params = {
+      page: currentPage.value - 1, // API 從 0 開始
+      size: pageSize.value,
+      sort: sortBy.value
+    }
+
+    // 關鍵字搜尋
+    if (searchQuery.value) {
+      params.keyword = searchQuery.value
+    }
+
+    // 分類篩選（只取第一個分類，因為後端只支援單一 categoryId）
+    if (selectedCategories.value.length > 0) {
+      params.categoryId = selectedCategories.value[0]
+    }
+
+    // 評分篩選
+    if (selectedRating.value > 0) {
+      params.maxRating = selectedRating.value
+    }
+
+    const result = await searchCourses(params)
+    coursesData.value = result
+  } catch (error) {
+    console.error('載入課程失敗:', error)
+    ElMessage.error('載入課程失敗，請稍後再試')
+    // 設定空資料
+    coursesData.value = {
+      content: [],
+      number: 0,
+      size: 12,
+      totalElements: 0,
+      totalPages: 0,
+      first: true,
+      last: true,
+      empty: true
+    }
+  } finally {
+    loading.value = false
   }
-
-  // Filter by rating
-  if (selectedRating.value > 0) {
-    courses = courses.filter(course => course.rating >= selectedRating.value)
-  }
-
-  // Filter by tags
-  if (selectedTags.value.length > 0) {
-    courses = courses.filter(course =>
-      selectedTags.value.some(tag => course.tags.includes(tag))
-    )
-  }
-
-  // Filter by search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    courses = courses.filter(course =>
-      course.title.toLowerCase().includes(query) ||
-      course.teacher.toLowerCase().includes(query) ||
-      course.tags.some(tag => tag.toLowerCase().includes(query))
-    )
-  }
-
-  return courses
-})
-
-// Computed: dPaginate courses
-const paginatedCourses = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredCourses.value.slice(start, end)
-})
+}
 
 // Methods
 const handleCategoryFilterChange = (payload) => {
-  // 當分類過濾變更時，可以在這裡處理 API 請求
   console.log('Category filter changed:', payload)
   currentPage.value = 1
+  loadCourses()
 }
 
 const handleSearch = (query) => {
   searchQuery.value = query
   currentPage.value = 1
+  loadCourses()
 }
 
 const handleTagClick = (tag) => {
-  // 如果 tag 還沒被選中，則加入
-  if (!selectedTags.value.includes(tag)) {
-    selectedTags.value.push(tag)
-    currentPage.value = 1
-  }
+  // Tag 篩選功能等後端 API 支援後再實作
+  // 目前將 tag 轉換為關鍵字搜尋（因為後端 keyword 會搜尋 tags）
+  searchQuery.value = tag
+  currentPage.value = 1
+  loadCourses()
+  ElMessage.info(`搜尋標籤：${tag}`)
 }
 
 const removeTag = (tag) => {
+  // Tag 篩選功能等後端 API 支援後再實作
   const index = selectedTags.value.indexOf(tag)
   if (index > -1) {
     selectedTags.value.splice(index, 1)
@@ -305,35 +324,28 @@ const removeTag = (tag) => {
   currentPage.value = 1
 }
 
-const toggleWishlist = (courseId) => {
-  const course = exploreCourses.find(c => c.id === courseId)
+const toggleWishlist = async (courseId) => {
+  const course = coursesData.value.content.find(c => c.id === courseId)
   if (!course) return
 
   // 檢查是否已在願望清單中
   if (wishlistStore.hasItem(courseId)) {
-    // 從願望清單移除
-    const success = wishlistStore.removeItem(courseId)
-    if (success) {
-      ElMessage.success('已從願望清單移除')
-    }
+    // 從願望清單移除（會呼叫後端 API）
+    await wishlistStore.removeItem(courseId)
   } else {
-    // 加入願望清單
-    const success = wishlistStore.addItem({
+    // 加入願望清單（會呼叫後端 API）
+    await wishlistStore.addItem({
       id: courseId,
       title: course.title,
-      instructor: course.instructor,
+      instructor: course.instructorName,
       price: course.price,
-      cover_image_url: course.cover_image_url
+      cover_image_url: course.coverImageUrl
     })
-    if (success) {
-      ElMessage.success('已加入願望清單')
-    } else {
-      ElMessage.warning('此課程已在願望清單中')
-    }
   }
 }
 
 const handlePageChange = () => {
+  loadCourses()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -342,11 +354,35 @@ const checkMobile = () => {
   isMobile.value = window.innerWidth < 768
 }
 
-onMounted(() => {
+// 監聽篩選條件變化
+watch([selectedCategories, selectedRating, sortBy], () => {
+  currentPage.value = 1
+  loadCourses()
+}, { deep: true })
+
+onMounted(async () => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
-  // 載入願望清單資料
+
+  // 先從 localStorage 載入願望清單資料（快速顯示）
   wishlistStore.loadFromStorage()
+
+  // 載入課程資料
+  await loadCourses()
+
+  // 如果已登入，從後端載入最新資料
+  const userStore = useUserStore()
+  if (userStore.isAuthenticated) {
+    try {
+      await wishlistStore.loadWishlistFromAPI({
+        page: 0,
+        size: 100, // 載入較多項目以便檢查課程是否在願望清單中
+        sort: 'id,desc'
+      })
+    } catch (error) {
+      console.error('載入願望清單失敗:', error)
+    }
+  }
 })
 
 onUnmounted(() => {
@@ -358,6 +394,13 @@ onUnmounted(() => {
 .explore-page {
   min-height: 100vh;
   background: #FCF9F4;
+}
+
+.loading-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
 }
 
 .main-container {

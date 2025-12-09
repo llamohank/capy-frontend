@@ -34,12 +34,12 @@
             <el-icon><Lock /></el-icon>
           </template>
         </el-input>
-        
+
         <!-- Password Strength Meter -->
         <div v-if="passwordForm.newPassword" class="password-strength">
           <div class="strength-bar">
-            <div 
-              class="strength-fill" 
+            <div
+              class="strength-fill"
               :class="`strength-${passwordStrength.level}`"
               :style="{ width: `${passwordStrength.percentage}%` }"
             ></div>
@@ -70,7 +70,7 @@
         <ul class="requirement-list">
           <li :class="{ valid: requirements.length }">
             <el-icon><CircleCheck v-if="requirements.length" /><CircleClose v-else /></el-icon>
-            至少 8 個字元
+            8-64 個字元
           </li>
           <li :class="{ valid: requirements.uppercase }">
             <el-icon><CircleCheck v-if="requirements.uppercase" /><CircleClose v-else /></el-icon>
@@ -85,6 +85,9 @@
             包含數字
           </li>
         </ul>
+        <div class="password-hint">
+          可使用字母、數字及特殊字元 !@#$%^&*()_+-={}[]:;"'&lt;&gt;,.?/
+        </div>
       </div>
     </el-form>
   </div>
@@ -109,7 +112,7 @@ const passwordForm = reactive({
 
 // Password Requirements
 const requirements = computed(() => ({
-  length: passwordForm.newPassword.length >= 8,
+  length: passwordForm.newPassword.length >= 8 && passwordForm.newPassword.length <= 64,
   uppercase: /[A-Z]/.test(passwordForm.newPassword),
   lowercase: /[a-z]/.test(passwordForm.newPassword),
   number: /[0-9]/.test(passwordForm.newPassword)
@@ -153,10 +156,18 @@ const validateNewPassword = (rule, value, callback) => {
     callback(new Error('請輸入新密碼'))
   } else if (value.length < 8) {
     callback(new Error('密碼長度至少為 8 個字元'))
+  } else if (value.length > 64) {
+    callback(new Error('密碼長度不能超過 64 個字元'))
   } else if (!requirements.value.uppercase || !requirements.value.lowercase || !requirements.value.number) {
     callback(new Error('密碼必須包含大小寫字母和數字'))
   } else {
-    callback()
+    // 驗證是否只包含允許的字元（字母、數字、特殊字元）
+    const allowedCharsRegex = /^[A-Za-z\d!@#$%^&*()_+\-={}[\]:;"'<>,.?/]+$/
+    if (!allowedCharsRegex.test(value)) {
+      callback(new Error('密碼包含不允許的字元'))
+    } else {
+      callback()
+    }
   }
 }
 
@@ -328,6 +339,15 @@ defineExpose({
   font-size: 16px;
 }
 
+.password-hint {
+  margin-top: var(--capy-spacing-sm);
+  padding-top: var(--capy-spacing-sm);
+  border-top: 1px solid var(--capy-border-light);
+  font-size: var(--capy-font-size-xs);
+  color: var(--capy-text-placeholder);
+  line-height: 1.5;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .password-form :deep(.el-form-item__label) {
@@ -335,7 +355,7 @@ defineExpose({
     text-align: left;
     margin-bottom: var(--capy-spacing-xs);
   }
-  
+
   .password-form :deep(.el-form-item__content) {
     margin-left: 0 !important;
   }

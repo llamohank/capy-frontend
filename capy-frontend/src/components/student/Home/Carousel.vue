@@ -35,7 +35,7 @@ const slides = ref([
 const activeIndex = ref(0)
 
 const goToCourse = (courseId) => {
-  router.push(`/course/${courseId}`)
+  router.push(`/courses/${courseId}`)
 }
 
 const handleChange = (index) => {

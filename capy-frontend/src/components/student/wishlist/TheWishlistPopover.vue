@@ -16,8 +16,16 @@
 
     <!-- Popover 內容 -->
     <div class="wishlist-popover-content">
+      <!-- Loading 狀態 -->
+      <div v-if="loading" class="loading-state">
+        <el-icon class="is-loading" :size="32" color="#409EFF">
+          <Loading />
+        </el-icon>
+        <p class="loading-text">載入中...</p>
+      </div>
+
       <!-- 空願望清單狀態 -->
-      <div v-if="wishlistStore.isEmpty" class="empty-wishlist">
+      <div v-else-if="wishlistStore.items.length === 0" class="empty-wishlist">
         <div class="empty-icon">
           <el-icon :size="48" color="#C0C4CC">
             <Star />
@@ -90,31 +98,39 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Star, ShoppingCart, Picture } from '@element-plus/icons-vue'
+import { Star, ShoppingCart, Picture, Loading } from '@element-plus/icons-vue'
 import { useWishlistStore } from '@/stores/wishlist'
+import { useUserStore } from '@/stores/user'
 
 // ==================== Composables ====================
 
 const router = useRouter()
 const wishlistStore = useWishlistStore()
+const userStore = useUserStore()
 
 // ==================== State ====================
 
 const visible = ref(false)
+const loading = ref(false)
 
 // ==================== Methods ====================
 
 /**
  * 將項目加入購物車
  */
-const handleAddToCart = (courseId) => {
+const handleAddToCart = async (courseId) => {
   const success = wishlistStore.moveToCart(courseId)
-  
+
   if (success) {
     ElMessage.success('已加入購物車')
+
+    // 如果已登入，重新載入願望清單以更新數量
+    if (userStore.isAuthenticated) {
+      await loadRecentWishlist()
+    }
   } else {
     ElMessage.warning('此課程已在購物車中')
   }
@@ -135,10 +151,47 @@ const closePopover = () => {
   visible.value = false
 }
 
+/**
+ * 載入最近的願望清單項目（用於 popover 顯示）
+ * 使用簡版 API，避免覆蓋 WishlistPage 的完整資料
+ */
+const loadRecentWishlist = async () => {
+  if (!userStore.isAuthenticated) {
+    return
+  }
+
+  try {
+    loading.value = true
+    console.log('開始載入願望清單...')
+
+    // 使用簡版 API，不會覆蓋其他頁面的完整資料
+    await wishlistStore.loadWishlistItems()
+
+    console.log('願望清單載入完成，項目數量:', wishlistStore.items.length)
+    console.log('願望清單項目:', wishlistStore.items)
+  } catch (error) {
+    console.error('載入願望清單失敗:', error)
+    ElMessage.error('載入願望清單失敗')
+  } finally {
+    loading.value = false
+  }
+}
+
 // ==================== Lifecycle ====================
 
 // 載入願望清單資料
-wishlistStore.loadFromStorage()
+onMounted(() => {
+  // 只從 localStorage 載入（快速顯示，不呼叫 API）
+  wishlistStore.loadFromStorage()
+})
+
+// 監聽 popover 開啟，載入最新資料
+watch(visible, async (newVal) => {
+  // 只在 popover 開啟時載入
+  if (newVal && userStore.isAuthenticated) {
+    await loadRecentWishlist()
+  }
+})
 </script>
 
 <style scoped>
@@ -148,6 +201,23 @@ wishlistStore.loadFromStorage()
   max-height: 500px;
   display: flex;
   flex-direction: column;
+}
+
+/* ==================== Loading 狀態 ==================== */
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--capy-spacing-xl) var(--capy-spacing-md);
+  text-align: center;
+}
+
+.loading-text {
+  margin-top: var(--capy-spacing-md);
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-secondary);
 }
 
 /* ==================== 空願望清單狀態 ==================== */

@@ -2,26 +2,23 @@
   <div class="orders-page">
     <!-- Header -->
     <div class="page-header">
-      <h1 class="page-title">Purchased history</h1>
+      <h1 class="page-title">訂單記錄</h1>
     </div>
 
     <!-- Filters -->
     <div class="filters-section">
       <el-dropdown @command="handleSortChange" trigger="click">
         <el-button class="filter-btn">
-          Sort by: {{ sortLabels[currentSort] }}
+          排序：{{ sortLabels[currentSort] }}
           <el-icon class="el-icon--right"><ArrowDown /></el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="date" :class="{ active: currentSort === 'date' }">
-              Date
+            <el-dropdown-item command="newest" :class="{ active: currentSort === 'newest' }">
+              由新到舊
             </el-dropdown-item>
-            <el-dropdown-item command="price" :class="{ active: currentSort === 'price' }">
-              Price
-            </el-dropdown-item>
-            <el-dropdown-item command="title" :class="{ active: currentSort === 'title' }">
-              Title
+            <el-dropdown-item command="oldest" :class="{ active: currentSort === 'oldest' }">
+              由舊到新
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -29,36 +26,44 @@
 
       <el-dropdown @command="handleStatusFilter" trigger="click">
         <el-button class="filter-btn">
-          Filter by: {{ statusLabels[currentStatus] }}
+          狀態：{{ statusLabels[currentStatus] }}
           <el-icon class="el-icon--right"><ArrowDown /></el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="all" :class="{ active: currentStatus === 'all' }">
-              All Status
+              全部狀態
             </el-dropdown-item>
             <el-dropdown-item command="paid" :class="{ active: currentStatus === 'paid' }">
-              Paid
+              已付款
             </el-dropdown-item>
             <el-dropdown-item command="pending" :class="{ active: currentStatus === 'pending' }">
-              Pending
+              待付款
             </el-dropdown-item>
             <el-dropdown-item command="failed" :class="{ active: currentStatus === 'failed' }">
-              Failed
+              付款失敗
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <el-icon class="loading-icon" :size="60">
+        <Loading />
+      </el-icon>
+      <p>載入訂單中...</p>
+    </div>
+
     <!-- Empty State -->
     <el-empty
-      v-if="filteredOrders.length === 0"
-      description="No orders found"
+      v-else-if="allOrders.length === 0"
+      description="尚無訂單記錄"
       :image-size="150"
     >
       <el-button type="primary" @click="goToExplore">
-        Start Shopping
+        開始購物
       </el-button>
     </el-empty>
 
@@ -72,7 +77,7 @@
         <!-- Order Header -->
         <div class="order-header">
           <div class="order-info">
-            <span class="order-id">Order ID: #{{ order.id }}</span>
+            <span class="order-id">訂單編號：#{{ order.id }}</span>
             <span class="order-date">{{ formatDate(order.orderDate) }}</span>
           </div>
           <el-tag
@@ -98,7 +103,7 @@
             />
             <div class="course-details">
               <h3 class="course-title">{{ item.title }}</h3>
-              <p class="course-instructor">Instructor: {{ item.instructor }}</p>
+              <p class="course-instructor">講師：{{ item.instructor }}</p>
             </div>
             <div class="course-price">
               NT$ {{ item.price.toFixed(2) }}
@@ -109,7 +114,7 @@
         <!-- Order Footer -->
         <div class="order-footer">
           <div class="order-total">
-            <span class="total-label">Total Amount:</span>
+            <span class="total-label">總金額：</span>
             <span class="total-amount">NT$ {{ order.totalAmount.toFixed(2) }}</span>
           </div>
           <div class="order-actions">
@@ -118,7 +123,7 @@
               size="small"
               @click="viewReceipt(order)"
             >
-              View Receipt
+              查看收據
             </el-button>
             <el-button
               v-if="order.status === 'pending'"
@@ -126,7 +131,7 @@
               size="small"
               @click="proceedPayment(order)"
             >
-              Complete Payment
+              完成付款
             </el-button>
           </div>
         </div>
@@ -134,11 +139,11 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="filteredOrders.length > 0" class="pagination-wrapper">
+    <div v-if="totalElements > 0" class="pagination-wrapper">
       <el-pagination
         v-model:current-page="currentPage"
         :page-size="pageSize"
-        :total="filteredOrders.length"
+        :total="totalElements"
         layout="prev, pager, next"
         @current-change="handlePageChange"
       />
@@ -147,88 +152,136 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowDown } from '@element-plus/icons-vue'
-import { orders } from '@/mockData'
+import { ElMessage } from 'element-plus'
+import { ArrowDown, Loading } from '@element-plus/icons-vue'
+import { getOrdersList } from '@/api/student/orders'
 
 const router = useRouter()
 
 // State
-const currentSort = ref('date')
+const currentSort = ref('newest')
 const currentStatus = ref('all')
 const currentPage = ref(1)
 const pageSize = ref(5)
+const loading = ref(false)
+const allOrders = ref([])
+const totalElements = ref(0)
+const totalPages = ref(0)
 
 const sortLabels = {
-  date: 'Date',
-  price: 'Price',
-  title: 'Title'
+  newest: '由新到舊',
+  oldest: '由舊到新'
 }
 
 const statusLabels = {
-  all: 'All Status',
-  paid: 'Paid',
-  pending: 'Pending',
-  failed: 'Failed'
+  all: '全部狀態',
+  paid: '已付款',
+  pending: '待付款',
+  failed: '付款失敗'
 }
-
-// 使用統一的訂單資料
-const allOrders = ref(orders)
 
 // Computed
 const filteredOrders = computed(() => {
-  let orders = [...allOrders.value]
-  
-  // Filter by status
-  if (currentStatus.value !== 'all') {
-    orders = orders.filter(order => order.status === currentStatus.value)
-  }
-  
-  // Sort
-  orders.sort((a, b) => {
-    switch (currentSort.value) {
-      case 'date':
-        return new Date(b.orderDate) - new Date(a.orderDate)
-      case 'price':
-        return b.totalAmount - a.totalAmount
-      case 'title':
-        return a.items[0].title.localeCompare(b.items[0].title)
-      default:
-        return 0
-    }
-  })
-  
-  return orders
+  return allOrders.value
 })
 
 const paginatedOrders = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredOrders.value.slice(start, end)
+  return allOrders.value
 })
 
 // Methods
+/**
+ * 載入訂單列表
+ */
+const loadOrders = async () => {
+  try {
+    loading.value = true
+
+    // 呼叫 API 取得訂單列表
+    // 注意：currentPage 是 1-based，但 API 需要 0-based
+    // 當狀態為 'all' 時，不傳遞 status 參數，讓後端回傳全部訂單
+    const status = currentStatus.value === 'all' ? undefined : currentStatus.value
+    const response = await getOrdersList(
+      status,
+      currentPage.value - 1,
+      pageSize.value
+    )
+
+    // 後端回傳的資料在 data 欄位中
+    const pageData = response.data || response
+
+    if (pageData && pageData.content) {
+      // 轉換後端欄位名稱為前端使用的名稱
+      allOrders.value = pageData.content.map(order => ({
+        id: order.orderId,
+        orderDate: order.createdAt,
+        status: order.status,
+        totalAmount: typeof order.totalAmount === 'string'
+          ? parseFloat(order.totalAmount)
+          : order.totalAmount,
+        transactionId: order.transactionId || null,
+        items: order.items.map(item => ({
+          courseId: item.courseId,
+          title: item.courseTitle,
+          instructor: item.instructorName,
+          cover: item.coverImageUrl,
+          price: item.price
+        }))
+      }))
+
+      totalElements.value = pageData.totalElements
+      totalPages.value = pageData.totalPages
+    } else {
+      allOrders.value = []
+      totalElements.value = 0
+      totalPages.value = 0
+    }
+
+  } catch (error) {
+    console.error('載入訂單失敗:', error)
+
+    if (error.response) {
+      ElMessage.error(error.response.data?.message || '載入訂單失敗，請稍後再試')
+    } else {
+      ElMessage.error('載入訂單失敗，請稍後再試')
+    }
+
+    allOrders.value = []
+    totalElements.value = 0
+    totalPages.value = 0
+  } finally {
+    loading.value = false
+  }
+}
+
 const handleSortChange = (command) => {
   currentSort.value = command
   currentPage.value = 1
+  loadOrders()
 }
 
 const handleStatusFilter = (command) => {
   currentStatus.value = command
   currentPage.value = 1
+  loadOrders()
 }
 
 const handlePageChange = () => {
+  loadOrders()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('zh-TW', {
     year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
   })
 }
 
@@ -242,7 +295,7 @@ const getStatusType = (status) => {
 }
 
 const goToCourse = (courseId) => {
-  router.push(`/course/${courseId}`)
+  router.push(`/courses/${courseId}`)
 }
 
 const goToExplore = () => {
@@ -250,19 +303,86 @@ const goToExplore = () => {
 }
 
 const viewReceipt = (order) => {
-  console.log('View receipt for order:', order.id)
-  // 實際應該打開收據頁面或下載 PDF
+  console.log('查看收據，訂單 ID:', order.id)
+  // TODO: 實際應該打開收據頁面或下載 PDF
+  ElMessage.info('收據功能開發中')
 }
 
-const proceedPayment = (order) => {
-  console.log('Proceed payment for order:', order.id)
-  // 實際應該導向付款頁面
+const proceedPayment = async (order) => {
+  console.log('重新付款，訂單 ID:', order.id)
+  try {
+    ElMessage.info('正在準備付款頁面...')
+    const { getOrderDetails, getEcpayCheckout } = await import('@/api/student/orders')
+
+    // 取得 ECPay 付款資訊
+    const ecpayResponse = await getEcpayCheckout(order.id)
+    const ecpayData = ecpayResponse.data || ecpayResponse
+
+    if (!ecpayData || !ecpayData.actionUrl || !ecpayData.formFields) {
+      throw new Error('付款資訊取得失敗')
+    }
+
+    // 動態建立並提交表單到 ECPay
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = ecpayData.actionUrl
+    form.style.display = 'none'
+
+    Object.entries(ecpayData.formFields).forEach(([key, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = key
+      input.value = value
+      form.appendChild(input)
+    })
+
+    document.body.appendChild(form)
+    form.submit()
+  } catch (error) {
+    console.error('重新付款失敗:', error)
+    ElMessage.error('重新付款失敗，請稍後再試')
+  }
 }
+
+// Lifecycle
+onMounted(() => {
+  loadOrders()
+})
 </script>
 
 <style scoped>
 .orders-page {
   padding: 0;
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  text-align: center;
+}
+
+.loading-icon {
+  color: #4CAF50;
+  animation: rotate 1.5s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-state p {
+  margin-top: 16px;
+  font-size: 16px;
+  color: #666;
 }
 
 /* Header */

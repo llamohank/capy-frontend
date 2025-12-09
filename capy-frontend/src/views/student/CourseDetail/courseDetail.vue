@@ -43,9 +43,6 @@
           :rating-distribution="course.ratingDistribution"
           :reviews="course.reviews"
         />
-
-        <!-- Related Courses -->
-        <RelatedCourses :courses="relatedCourses" />
       </el-main>
 
       <!-- Right Sidebar -->
@@ -93,163 +90,137 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { List, Download, Clock } from '@element-plus/icons-vue'
+import { ElMessage, ElLoading } from 'element-plus'
 import CourseContent from '@/components/student/CourseDetail/CourseContent.vue'
 import CourseIntro from '@/components/student/CourseDetail/CourseIntro.vue'
 import InstructorCard from '@/components/student/CourseDetail/InstructorCard.vue'
 import RatingsReviews from '@/components/student/CourseDetail/RatingsReviews.vue'
-import RelatedCourses from '@/components/student/CourseDetail/RelatedCourses.vue'
+import {
+  fetchCourseDetail,
+  calculateTotalDuration,
+  formatRatingDistribution,
+  extractLearningPoints
+} from '@/api/student/courseDetail'
 
 const route = useRoute()
+const router = useRouter()
 
-// Mock course data
-const course = ref({
-  id: 1,
-  title: 'Mastering Python Programming: From Beginner to Advanced',
-  description: 'Unlock the power of Python with this comprehensive course, covering everything from basic syntax to advanced concepts like data structures, algorithms, and web development. Learn by doing with hands-on projects and real-world examples.',
-  cover: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800',
-  price: 4000,
-  duration: '22h',
-  sections: 10,
-  attachments: 20,
-  totalLength: '22 hours on-demand video',
-  resources: 20,
-  rating: 4.7,
-  totalReviews: 1234,
-  ratingDistribution: {
-    5: 40,
-    4: 30,
-    3: 15,
-    2: 10,
-    1: 5
-  },
-  instructor: {
-    name: 'Dr. Alex Turner',
-    title: 'Experienced Python Developer and Instructor',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200',
-    bio: 'Dr. Turner has over 10 years of experience in software development and has taught thousands of students online. He is passionate about making complex topics accessible and enjoyable to learn.'
-  },
-  learningPoints: [
-    '掌握 Python 基礎語法和核心概念',
-    '理解物件導向程式設計 (OOP) 原則',
-    '學習資料結構和演算法的實作',
-    '建立 REST API 和 Web 應用程式',
-    '使用 Python 進行資料處理和分析',
-    '實作機器學習基礎專案',
-    '掌握檔案處理和資料庫操作',
-    '部署 Python 應用程式到生產環境'
-  ],
-  contentSections: [
-    {
-      name: 'Introduction to Python',
-      lessons: [
-        { title: 'Getting Started (1h 30m)', duration: '1h 30m', preview: true },
-        { title: 'Basic Syntax (2h)', duration: '2h', preview: true },
-        { title: 'Setting up the Environment (1h 15m)', duration: '1h 15m', preview: false }
-      ]
-    },
-    {
-      name: 'Data Types and Variables',
-      lessons: [
-        { title: 'Numbers and Strings', duration: '45m', preview: false },
-        { title: 'Lists and Tuples', duration: '1h', preview: false },
-        { title: 'Dictionaries and Sets', duration: '50m', preview: false }
-      ]
-    },
-    {
-      name: 'Control Flow Statements',
-      lessons: [
-        { title: 'If-Else Conditions', duration: '40m', preview: false },
-        { title: 'Loops: For and While', duration: '55m', preview: false },
-        { title: 'Break and Continue', duration: '30m', preview: false }
-      ]
-    },
-    {
-      name: 'Functions and Modules',
-      lessons: [
-        { title: 'Defining Functions', duration: '1h', preview: false },
-        { title: 'Lambda Functions', duration: '35m', preview: false },
-        { title: 'Importing Modules', duration: '45m', preview: false }
-      ]
-    },
-    {
-      name: 'Object-Oriented Programming',
-      lessons: [
-        { title: 'Classes and Objects', duration: '1h 20m', preview: false },
-        { title: 'Inheritance', duration: '50m', preview: false },
-        { title: 'Polymorphism', duration: '45m', preview: false }
-      ]
-    },
-    {
-      name: 'Data Structures and Algorithms',
-      lessons: [
-        { title: 'Arrays and Linked Lists', duration: '1h 10m', preview: false },
-        { title: 'Stacks and Queues', duration: '55m', preview: false },
-        { title: 'Trees and Graphs', duration: '1h 30m', preview: false }
-      ]
-    },
-    {
-      name: 'File Handling and I/O',
-      lessons: [
-        { title: 'Reading Files', duration: '40m', preview: false },
-        { title: 'Writing Files', duration: '35m', preview: false },
-        { title: 'Working with CSV and JSON', duration: '1h', preview: false }
-      ]
-    },
-    {
-      name: 'Working with Databases',
-      lessons: [
-        { title: 'SQL Basics', duration: '1h 15m', preview: false },
-        { title: 'Connecting to Databases', duration: '50m', preview: false },
-        { title: 'CRUD Operations', duration: '1h', preview: false }
-      ]
-    },
-    {
-      name: 'Web Development with Python',
-      lessons: [
-        { title: 'Introduction to Flask', duration: '1h 20m', preview: false },
-        { title: 'Building REST APIs', duration: '1h 30m', preview: false },
-        { title: 'Deploying Applications', duration: '1h', preview: false }
-      ]
-    },
-    {
-      name: 'Advanced Topics and Projects',
-      lessons: [
-        { title: 'Machine Learning Basics', duration: '1h 45m', preview: false },
-        { title: 'Data Visualization', duration: '1h 10m', preview: false },
-        { title: 'Final Project', duration: '2h', preview: false }
-      ]
+// 載入狀態
+const loading = ref(false)
+const error = ref(null)
+
+// API 回應的原始資料
+const courseData = ref(null)
+
+// 計算屬性：將 API 資料轉換為元件需要的格式
+const course = computed(() => {
+  if (!courseData.value || !courseData.value.courseInfo) {
+    return {
+      id: null,
+      title: '',
+      description: '',
+      cover: '',
+      price: 0,
+      duration: '0h',
+      sections: 0,
+      attachments: 0,
+      totalLength: '0 hours on-demand video',
+      resources: 0,
+      rating: 0,
+      totalReviews: 0,
+      ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      instructor: {
+        name: '',
+        title: '',
+        avatar: '',
+        bio: ''
+      },
+      learningPoints: [],
+      contentSections: [],
+      reviews: []
     }
-  ],
-  reviews: [
-    {
-      id: 1,
-      name: 'Sophia Carter',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-      date: '1 month ago',
-      rating: 5,
-      text: 'This course is fantastic! The instructor explains complex concepts clearly, and the hands-on projects are really helpful for applying what I\'ve learned. I\'ve gone from knowing nothing about Python to feeling confident in my ability to build applications.'
+  }
+
+  const { courseInfo } = courseData.value
+  const { course: courseBasic, sections, rateTable, userReviews } = courseInfo
+
+  // 計算總時長
+  const totalDurationMinutes = calculateTotalDuration(sections || [])
+  const totalHours = Math.floor(totalDurationMinutes / 60)
+  const totalMinutes = totalDurationMinutes % 60
+
+  return {
+    id: courseBasic?.courseId,
+    title: courseBasic?.title || '',
+    description: courseBasic?.description || '',
+    cover: courseBasic?.coverImageUrl || 'https://via.placeholder.com/800x400?text=Course+Image',
+    price: courseBasic?.price || 0,
+    duration: `${totalHours}h ${totalMinutes}m`,
+    sections: courseBasic?.totalSections || 0,
+    attachments: 0, // API 未提供此欄位
+    totalLength: `${totalHours} hours ${totalMinutes} minutes on-demand video`,
+    resources: 0, // API 未提供此欄位
+    rating: rateTable?.averageRating || 0,
+    totalReviews: rateTable?.reviewCount || 0,
+    ratingDistribution: formatRatingDistribution(rateTable),
+    instructor: {
+      id: courseBasic?.instructor?.instructorId,
+      name: courseBasic?.instructor?.instructorName || '',
+      title: `${courseBasic?.instructor?.totalCourses || 0} 門課程 • ${courseBasic?.instructor?.totalStudents || 0} 位學生`,
+      avatar: courseBasic?.instructor?.avatarUrl || 'https://via.placeholder.com/200?text=Instructor',
+      bio: courseBasic?.instructor?.bio || ''
     },
-    {
-      id: 2,
-      name: 'Ethan Bennett',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      date: '2 months ago',
-      rating: 4,
-      text: 'The course content is comprehensive and well-structured. While the pace might be a bit fast for complete beginners, the instructor provides plenty of resources and support to help you keep up. Overall, a great course for anyone looking to master Python.'
-    },
-    {
-      id: 3,
-      name: 'Olivia Hayes',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-      date: '3 months ago',
-      rating: 5,
-      text: 'Absolutely loved this course! The instructor\'s passion for Python is contagious, and the course materials are top-notch. I especially appreciated the focus on practical applications and real-world scenarios. Highly recommended!'
-    }
-  ]
+    // 使用課程描述作為學習重點
+    learningPoints: extractLearningPoints(sections),
+    contentSections: (sections || []).map(section => ({
+      name: section.title,
+      sectionId: section.sectionId,
+      displayOrder: section.displayOrder,
+      lessons: (section.lessons || []).map(lesson => ({
+        id: lesson.lessonId,
+        title: lesson.lessonTitle,
+        duration: `${lesson.lessonDurationMinutes}m`,
+        preview: lesson.freePreview,
+        description: lesson.description,
+        displayOrder: lesson.displayOrder
+      }))
+    })),
+    // 使用後端提供的評論資料
+    reviews: (userReviews || []).map(review => ({
+      id: review.rateId,
+      name: review.userName,
+      avatar: review.userAvatarUrl || 'https://via.placeholder.com/100?text=User',
+      date: formatReviewDate(review.createdAt),
+      rating: review.rating,
+      text: review.comment
+    }))
+  }
 })
+
+/**
+ * 格式化評論日期
+ */
+const formatReviewDate = (dateString) => {
+  if (!dateString) return ''
+
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffTime = Math.abs(now - date)
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  if (diffDays < 30) {
+    return `${diffDays} days ago`
+  } else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30)
+    return `${months} month${months > 1 ? 's' : ''} ago`
+  } else {
+    const years = Math.floor(diffDays / 365)
+    return `${years} year${years > 1 ? 's' : ''} ago`
+  }
+}
 
 // Mock related courses
 const relatedCourses = ref([
@@ -286,9 +257,56 @@ const handlePreview = (previewInfo) => {
   alert(`試看影片：\n章節 ${previewInfo.sectionIndex + 1}\n課程 ${previewInfo.lessonIndex + 1}`)
 }
 
+/**
+ * 載入課程詳情資料
+ */
+const loadCourseDetail = async () => {
+  const courseId = route.params.id
+
+  if (!courseId) {
+    ElMessage.error('課程 ID 不存在')
+    router.push('/explore')
+    return
+  }
+
+  loading.value = true
+  error.value = null
+
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '載入課程資料中...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    console.log('🔄 開始載入課程詳情，ID:', courseId)
+    const data = await fetchCourseDetail(courseId)
+    console.log('✅ 課程詳情載入成功:', data)
+
+    courseData.value = data
+
+  } catch (err) {
+    console.error('❌ 載入課程詳情失敗:', err)
+    error.value = err.message || '載入課程資料失敗'
+
+    // 根據錯誤類型顯示不同訊息
+    if (err.message === '課程未上架或不存在') {
+      ElMessage.error('此課程未上架或不存在')
+      // 延遲後導向探索頁
+      setTimeout(() => {
+        router.push('/explore')
+      }, 2000)
+    } else {
+      ElMessage.error('載入課程資料失敗，請稍後再試')
+    }
+  } finally {
+    loading.value = false
+    loadingInstance.close()
+  }
+}
+
 onMounted(() => {
-  // In a real app, fetch course data based on route.params.id
-  console.log('Course ID:', route.params.id)
+  loadCourseDetail()
 })
 </script>
 

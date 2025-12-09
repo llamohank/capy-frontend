@@ -1,0 +1,141 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景電路板圖案 -->
+  <g class="circuit-background" opacity="0.2">
+    <!-- 電路線 -->
+    <path d="M50,100 L100,100 L100,150 L150,150" stroke="#54CDF2" stroke-width="2" fill="none"/>
+    <path d="M200,80 L250,80 L250,120 L300,120" stroke="#54CDF2" stroke-width="2" fill="none"/>
+    <path d="M80,200 L130,200 L130,240" stroke="#54CDF2" stroke-width="2" fill="none"/>
+    <path d="M270,180 L320,180 L320,220" stroke="#54CDF2" stroke-width="2" fill="none"/>
+    
+    <!-- 電路節點 -->
+    <circle cx="100" cy="100" r="4" fill="#54CDF2"/>
+    <circle cx="150" cy="150" r="4" fill="#54CDF2"/>
+    <circle cx="250" cy="80" r="4" fill="#54CDF2"/>
+    <circle cx="300" cy="120" r="4" fill="#54CDF2"/>
+    <circle cx="130" cy="200" r="4" fill="#54CDF2"/>
+    <circle cx="320" cy="180" r="4" fill="#54CDF2"/>
+  </g>
+
+  <!-- 工程師水豚 -->
+  <g class="engineer-capybara">
+    <!-- 身體 -->
+    <ellipse cx="200" cy="170" rx="58" ry="48" fill="#A1887F"/>
+    
+    <!-- 肚子 -->
+    <ellipse cx="200" cy="180" rx="42" ry="32" fill="#BCAAA4"/>
+    
+    <!-- 腿 -->
+    <ellipse cx="178" cy="205" rx="13" ry="20" fill="#8D6E63"/>
+    <ellipse cx="222" cy="205" rx="13" ry="20" fill="#8D6E63"/>
+    
+    <!-- 腳掌 -->
+    <ellipse cx="178" cy="220" rx="11" ry="7" fill="#6D4C41"/>
+    <ellipse cx="222" cy="220" rx="11" ry="7" fill="#6D4C41"/>
+    
+    <!-- 頭部 -->
+    <ellipse cx="200" cy="130" rx="42" ry="37" fill="#A1887F"/>
+    
+    <!-- 工程師安全帽 -->
+    <g class="hard-hat">
+      <!-- 帽子主體 -->
+      <ellipse cx="200" cy="105" rx="38" ry="14" fill="#FB8C00"/>
+      <path d="M162,105 Q162,90 200,85 Q238,90 238,105" fill="#FB8C00"/>
+      
+      <!-- 帽簷 -->
+      <ellipse cx="200" cy="105" rx="42" ry="10" fill="#F57C00"/>
+      
+      <!-- 帽子條紋 -->
+      <rect x="195" y="90" width="10" height="15" fill="#FFFFFF" opacity="0.3" rx="2"/>
+    </g>
+    
+    <!-- 耳朵 -->
+    <ellipse cx="175" cy="115" rx="11" ry="17" fill="#8D6E63"/>
+    <ellipse cx="225" cy="115" rx="11" ry="17" fill="#8D6E63"/>
+    <ellipse cx="175" cy="120" rx="6" ry="10" fill="#BCAAA4"/>
+    <ellipse cx="225" cy="120" rx="6" ry="10" fill="#BCAAA4"/>
+    
+    <!-- 疲憊的眼睛 -->
+    <g class="tired-eyes">
+      <ellipse cx="188" cy="130" rx="6" ry="4" fill="#3E2723"/>
+      <ellipse cx="212" cy="130" rx="6" ry="4" fill="#3E2723"/>
+      <!-- 眼袋 -->
+      <path d="M182,135 Q188,137 194,135" stroke="#8D6E63" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M206,135 Q212,137 218,135" stroke="#8D6E63" stroke-width="1.5" fill="none" opacity="0.5"/>
+    </g>
+    
+    <!-- 鼻子 -->
+    <ellipse cx="200" cy="138" rx="7" ry="5" fill="#6D4C41"/>
+    
+    <!-- 疲憊的嘴巴 -->
+    <path d="M193,145 Q200,143 207,145" stroke="#6D4C41" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- 工具箱 -->
+  <g class="toolbox" transform="translate(130, 230)">
+    <rect x="0" y="0" width="50" height="30" fill="#F56C6C" rx="3"/>
+    <rect x="2" y="2" width="46" height="26" fill="#EF5350" rx="2"/>
+    <!-- 工具箱把手 -->
+    <path d="M15,0 Q25,-8 35,0" stroke="#C62828" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- 十字標記 -->
+    <line x1="25" y1="10" x2="25" y2="22" stroke="#FFFFFF" stroke-width="2"/>
+    <line x1="19" y1="16" x2="31" y2="16" stroke="#FFFFFF" stroke-width="2"/>
+  </g>
+
+  <!-- 扳手工具 -->
+  <g class="wrench" transform="translate(240, 180) rotate(-30)">
+    <rect x="0" y="0" width="8" height="40" fill="#90A4AE" rx="2"/>
+    <rect x="-4" y="35" width="16" height="12" fill="#78909C" rx="2"/>
+    <circle cx="4" cy="41" r="3" fill="#546E7A"/>
+  </g>
+
+  <!-- 斷掉的插頭和電線 -->
+  <g class="broken-plug">
+    <!-- 電線左側 -->
+    <path d="M80,260 Q100,250 120,255" stroke="#424242" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M82,262 Q100,252 118,257" stroke="#616161" stroke-width="2" fill="none"/>
+    
+    <!-- 插頭左側 -->
+    <rect x="115" y="250" width="20" height="15" fill="#424242" rx="2"/>
+    <circle cx="120" cy="257" r="2" fill="#FFD54F"/>
+    <circle cx="130" cy="257" r="2" fill="#FFD54F"/>
+    
+    <!-- 電線右側 -->
+    <path d="M280,260 Q260,250 240,255" stroke="#424242" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M278,262 Q260,252 242,257" stroke="#616161" stroke-width="2" fill="none"/>
+    
+    <!-- 插座右側 -->
+    <rect x="245" y="250" width="20" height="15" fill="#424242" rx="2"/>
+    <rect x="248" y="253" width="4" height="9" fill="#37474F" rx="1"/>
+    <rect x="258" y="253" width="4" height="9" fill="#37474F" rx="1"/>
+    
+    <!-- 火花效果 -->
+    <g class="sparks" opacity="0.8">
+      <circle cx="180" cy="255" r="3" fill="#FFD54F"/>
+      <circle cx="190" cy="250" r="2" fill="#FFA726"/>
+      <circle cx="185" cy="260" r="2" fill="#FF9800"/>
+      <line x1="175" y1="255" x2="170" y2="250" stroke="#FFD54F" stroke-width="2"/>
+      <line x1="195" y1="255" x2="200" y2="250" stroke="#FFD54F" stroke-width="2"/>
+      <line x1="180" y1="265" x2="180" y2="270" stroke="#FFA726" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- 警告標誌 -->
+  <g class="warning-sign" transform="translate(300, 100)">
+    <polygon points="0,30 15,0 30,30" fill="#FB8C00" stroke="#F57C00" stroke-width="2"/>
+    <polygon points="3,28 15,3 27,28" fill="#FFA726"/>
+    <text x="15" y="22" text-anchor="middle" font-size="16" font-weight="bold" fill="#FFFFFF">!</text>
+  </g>
+
+  <!-- 煙霧效果 -->
+  <g class="smoke" opacity="0.4">
+    <ellipse cx="180" cy="240" rx="15" ry="8" fill="#90A4AE"/>
+    <ellipse cx="190" cy="235" rx="12" ry="6" fill="#B0BEC5"/>
+    <ellipse cx="175" cy="235" rx="10" ry="5" fill="#CFD8DC"/>
+  </g>
+
+  <!-- 汗滴 -->
+  <g class="sweat-drops">
+    <ellipse cx="170" cy="125" rx="3" ry="5" fill="#54CDF2" opacity="0.6"/>
+    <ellipse cx="230" cy="125" rx="3" ry="5" fill="#54CDF2" opacity="0.6"/>
+  </g>
+</svg>

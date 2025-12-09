@@ -46,7 +46,7 @@ defineProps({
 const router = useRouter()
 
 const goToCourse = (courseId) => {
-  router.push(`/course/${courseId}`)
+  router.push(`/courses/${courseId}`)
 }
 </script>
 

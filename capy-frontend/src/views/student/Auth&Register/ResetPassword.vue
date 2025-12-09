@@ -58,15 +58,12 @@
             />
           </div>
 
-<<<<<<< HEAD
-=======
           <!-- 密碼強度提示 -->
           <div v-if="passwordStrengthMessage"
                :class="['password-hint', passwordHintClass]">
             <el-icon><InfoFilled /></el-icon>
             <span>{{ passwordStrengthMessage }}</span>
           </div>
->>>>>>> Ian/Student/UIUX
 
           <el-button
             type="primary"
@@ -102,8 +99,6 @@ const newPassword = ref('');
 const confirmPassword = ref('');
 const isLoading = ref(false);
 
-<<<<<<< HEAD
-=======
 // 密碼強度提示和驗證
 const passwordStrengthMessage = computed(() => {
   if (!newPassword.value) return '';
@@ -147,7 +142,6 @@ const passwordHintClass = computed(() => {
   if (message.startsWith('✓')) return 'hint-success';
   return 'hint-info';
 });
->>>>>>> Ian/Student/UIUX
 
 // 驗證密碼
 const validatePasswords = () => {
@@ -161,21 +155,9 @@ const validatePasswords = () => {
     return false;
   }
 
-<<<<<<< HEAD
-  // 檢查是否包含小寫字母
-  if (!/[a-z]/.test(newPassword.value)) {
-    ElMessage.error('密碼必須包含至少一個小寫字母 (a-z)');
-    return false;
-  }
-
-  // 檢查是否包含數字
-  if (!/[0-9]/.test(newPassword.value)) {
-    ElMessage.error('密碼必須包含至少一個數字 (0-9)');
-=======
   // 檢查密碼是否符合強制要求
   if (!isPasswordValid.value) {
     ElMessage.error('密碼必須包含大寫字母、小寫字母和數字');
->>>>>>> Ian/Student/UIUX
     return false;
   }
 
@@ -361,11 +343,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-<<<<<<< HEAD
-  font-size: 13px;
-  color: #666;
-  transition: all 0.3s ease;
-=======
   padding: 12px 14px;
   border-radius: 8px;
   margin-bottom: 24px;
@@ -387,7 +364,6 @@ onMounted(() => {
 .password-hint.hint-info {
   background: #dbeafe;
   color: #2563eb;
->>>>>>> Ian/Student/UIUX
 }
 
 .requirement-item.optional {

@@ -65,7 +65,7 @@
     <!-- Copyright Bar -->
     <div class="copyright-bar">
       <div class="footer-container">
-        <p class="copyright-text">© 2024 CapyCourse. All rights reserved.</p>
+        <p class="copyright-text">© 2025 CapyCourse. All rights reserved.</p>
       </div>
     </div>
   </footer>

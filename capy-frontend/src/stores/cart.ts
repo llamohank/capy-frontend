@@ -213,6 +213,39 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   /**
+   * 將購物車項目移至願望清單
+   * @param courseId 課程 ID
+   */
+  const moveToWishlist = async (courseId: number) => {
+    const item = items.value.find(item => item.courseId === courseId)
+
+    if (!item) {
+      return false
+    }
+
+    // 動態導入 wishlist store 以避免循環依賴
+    const { useWishlistStore } = await import('./wishlist')
+    const wishlistStore = useWishlistStore()
+
+    // 新增到願望清單
+    const added = await wishlistStore.addItem({
+      id: item.courseId,
+      title: item.title,
+      instructor: item.instructor,
+      price: item.price,
+      cover_image_url: item.coverImageUrl
+    })
+
+    // 如果成功加入願望清單，從購物車移除
+    if (added) {
+      await removeItem(courseId)
+      return true
+    }
+
+    return false
+  }
+
+  /**
    * 格式化價格（TWD）
    * @param price 價格
    */
@@ -266,6 +299,7 @@ export const useCartStore = defineStore('cart', () => {
     removeItem,
     clearCart,
     hasItem,
+    moveToWishlist,
     formatPrice,
     loadFromStorage,
     saveToStorage

@@ -4,12 +4,15 @@ import { useRouter } from 'vue-router'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Autoplay, Navigation } from 'swiper/modules'
 import { TrophyBase, ShoppingCart } from '@element-plus/icons-vue'
+import { useWishlistStore } from '@/stores/wishlist'
+import { ElMessage } from 'element-plus'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 
 const router = useRouter()
 const modules = [Autoplay, Navigation]
+const wishlistStore = useWishlistStore()
 
 // 接收從父組件傳來的課程資料
 const props = defineProps({
@@ -23,7 +26,7 @@ const props = defineProps({
 const displayCourses = computed(() => props.courses)
 
 const goToCourse = (id) => {
-  router.push(`/course/${id}`)
+  router.push(`/courses/${id}`)
 }
 
 const formatPrice = (price) => {
@@ -44,6 +47,49 @@ const formatCount = (count) => {
     return `${(num / 1000).toFixed(1)}k`
   }
   return num.toString()
+}
+
+/**
+ * 切換願望清單狀態
+ */
+const toggleWishlist = async (event, courseId) => {
+  event.stopPropagation() // 防止觸發卡片點擊事件
+
+  try {
+    const course = props.courses.find(c => c.id === courseId)
+    if (!course) {
+      console.error('找不到課程:', courseId)
+      return
+    }
+
+    // 檢查是否已在願望清單中
+    const isInWishlist = wishlistStore.hasItem(courseId)
+
+    if (isInWishlist) {
+      // 從願望清單移除（store 內部會顯示訊息）
+      await wishlistStore.removeItem(courseId)
+    } else {
+      // 加入願望清單（store 內部會顯示訊息）
+      await wishlistStore.addItem({
+        id: course.id,
+        title: course.title,
+        instructor: course.instructorName,
+        price: course.price,
+        cover_image_url: course.coverImageUrl
+      })
+    }
+  } catch (error) {
+    console.error('切換願望清單失敗:', error)
+    // 只在發生錯誤時顯示訊息
+    ElMessage.error('操作失敗，請稍後再試')
+  }
+}
+
+/**
+ * 檢查課程是否在願望清單中
+ */
+const isInWishlist = (courseId) => {
+  return wishlistStore.hasItem(courseId)
 }
 </script>
 
@@ -79,6 +125,26 @@ const formatCount = (count) => {
             <el-icon><TrophyBase /></el-icon>
             <span>熱銷</span>
           </div>
+
+          <!-- Wishlist Button -->
+          <div
+            class="wishlist-btn"
+            @click="toggleWishlist($event, course.id)"
+            :class="{ 'is-wishlisted': isInWishlist(course.id) }"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              :fill="isInWishlist(course.id) ? '#ff4757' : 'none'"
+              :stroke="isInWishlist(course.id) ? '#ff4757' : '#fff'"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </div>
         </div>
 
         <!-- Course Info -->
@@ -101,11 +167,15 @@ const formatCount = (count) => {
           <div class="course-meta">
             <div class="rating">
               <el-rate
-                :model-value="course.averageRating"
+                :model-value="parseFloat(course.averageRating) || 0"
                 disabled
-                show-score
-                :score-template="`${course.averageRating}`"
+                allow-half
+                :max="5"
+                :colors="['#E6A23C', '#E6A23C', '#E6A23C']"
+                void-color="#d0d0d0"
+                disabled-void-color="#d0d0d0"
               />
+              <span class="rating-score">{{ course.averageRating ? Number(course.averageRating).toFixed(1) : '0.0' }}</span>
               <span class="rating-count">({{ formatCount(course.reviewCount) }})</span>
             </div>
 
@@ -255,6 +325,40 @@ const formatCount = (count) => {
   z-index: 2;
 }
 
+/* Wishlist Button */
+.wishlist-btn {
+  position: absolute;
+  top: var(--capy-spacing-sm);
+  left: var(--capy-spacing-sm);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 3;
+  opacity: 0;
+}
+
+.course-card:hover .wishlist-btn {
+  opacity: 1;
+}
+
+.wishlist-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+.wishlist-btn.is-wishlisted {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.95);
+}
+
 .course-content {
   padding: var(--capy-spacing-md);
   flex: 1;
@@ -321,10 +425,19 @@ const formatCount = (count) => {
 
 .rating :deep(.el-rate__icon) {
   font-size: 14px;
+}
+
+/* 只對已填滿的星星設定橘色 */
+.rating :deep(.el-rate__icon.is-active) {
   color: var(--capy-warning);
 }
 
-.rating :deep(.el-rate__text) {
+/* 空星星使用灰色 */
+.rating :deep(.el-rate__icon:not(.is-active)) {
+  color: #d0d0d0;
+}
+
+.rating-score {
   font-size: var(--capy-font-size-sm);
   font-weight: var(--capy-font-weight-semibold);
   color: var(--capy-warning);

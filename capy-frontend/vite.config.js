@@ -61,4 +61,9 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  server: {
+    // 啟用 SPA History Mode 支援
+    // 將所有找不到的路徑都導向 index.html，讓 Vue Router 處理
+    historyApiFallback: true
+  }
 });

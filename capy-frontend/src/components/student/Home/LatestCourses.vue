@@ -2,12 +2,17 @@
 import { computed } from 'vue'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Autoplay, Navigation } from 'swiper/modules'
+import { useRouter } from 'vue-router'
+import { useWishlistStore } from '@/stores/wishlist'
+import { ElMessage } from 'element-plus'
 import ExploreCourseCard from '@/components/student/Explore/ExploreCard/ExploreCourseCard.vue'
 import 'swiper/css'
 import 'swiper/css/pagination'
 import 'swiper/css/navigation'
 
 const modules = [Autoplay, Navigation]
+const router = useRouter()
+const wishlistStore = useWishlistStore()
 
 // 接收從父組件傳來的課程資料
 const props = defineProps({
@@ -20,14 +25,49 @@ const props = defineProps({
 // 後端返回的格式已經是最新課程，直接使用
 const displayCourses = computed(() => props.courses)
 
-const toggleWishlist = (courseId) => {
-  console.log('Toggle wishlist for course:', courseId)
-  // TODO: 實作願望清單功能
+/**
+ * 切換願望清單狀態
+ */
+const toggleWishlist = async (courseId) => {
+  try {
+    const course = props.courses.find(c => c.id === courseId)
+    if (!course) {
+      console.error('找不到課程:', courseId)
+      return
+    }
+
+    // 檢查是否已在願望清單中
+    const isInWishlist = wishlistStore.hasItem(courseId)
+
+    if (isInWishlist) {
+      // 從願望清單移除（store 內部會顯示訊息）
+      await wishlistStore.removeItem(courseId)
+    } else {
+      // 加入願望清單（store 內部會顯示訊息）
+      await wishlistStore.addItem({
+        id: course.id,
+        title: course.title,
+        instructor: course.instructorName,
+        price: course.price,
+        cover_image_url: course.coverImageUrl
+      })
+    }
+  } catch (error) {
+    console.error('切換願望清單失敗:', error)
+    // 只在發生錯誤時顯示訊息
+    ElMessage.error('操作失敗，請稍後再試')
+  }
 }
 
+/**
+ * 處理標籤點擊
+ */
 const handleTagClick = (tag) => {
-  console.log('Tag clicked:', tag)
-  // TODO: 導航到探索頁面並篩選該標籤
+  // 導航到探索頁面並篩選該標籤
+  router.push({
+    path: '/explore',
+    query: { tag }
+  })
 }
 </script>
 

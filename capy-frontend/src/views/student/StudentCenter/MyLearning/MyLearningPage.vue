@@ -14,7 +14,7 @@
               <el-dropdown-item command="all" :class="{ active: filterStatus === 'all' }">
                 全部狀態
               </el-dropdown-item>
-              <el-dropdown-item command="in_progress" :class="{ active: filterStatus === 'in_progress' }">
+              <el-dropdown-item command="ongoing" :class="{ active: filterStatus === 'ongoing' }">
                 進行中
               </el-dropdown-item>
               <el-dropdown-item command="completed" :class="{ active: filterStatus === 'completed' }">
@@ -77,17 +77,18 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Filter, Loading } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useStudentCenterStore } from '@/stores/studentCenter'
 import MyLearningCourseCard from '@/components/student/StudentCenter/MyLearning/MyLearningCourseCard.vue'
 import CourseRatingDialog from '@/components/student/StudentCenter/MyLearning/CourseRatingDialog.vue'
-import { fetchStudentProfile } from '@/api/student/Studentcenter'
 
 const router = useRouter()
+const studentCenterStore = useStudentCenterStore()
 
 // 狀態管理
 const filterStatus = ref('all')
 const currentPage = ref(1)
-const pageSize = ref(5) // 與後端一致
-const loading = ref(false)
+const pageSize = ref(10)
+const sortBy = ref('lastWatch,desc')
 
 // Rating dialog state
 const showRatingDialog = ref(false)
@@ -96,10 +97,13 @@ const selectedCourseInfo = ref(null)
 const initialRating = ref(0)
 const initialComment = ref('')
 
-// 使用與後端一致的資料結構
-const myLearningContent = ref([])
-const totalElements = ref(0)
-const totalPages = ref(0)
+/**
+ * 從 store 獲取資料
+ */
+const myLearningContent = computed(() => studentCenterStore.myLearning.content)
+const totalElements = computed(() => studentCenterStore.myLearning.totalElements)
+const totalPages = computed(() => studentCenterStore.myLearning.totalPages)
+const loading = computed(() => studentCenterStore.myLearningLoading)
 
 /**
  * Current filter label for button display
@@ -107,7 +111,7 @@ const totalPages = ref(0)
 const currentFilterLabel = computed(() => {
   const labels = {
     all: '全部狀態',
-    in_progress: '進行中',
+    ongoing: '進行中',
     completed: '已完課'
   }
   return labels[filterStatus.value] || '全部狀態'
@@ -117,22 +121,16 @@ const currentFilterLabel = computed(() => {
  * 載入我的學習資料
  */
 const loadMyLearning = async () => {
-  loading.value = true
   try {
-    const response = await fetchStudentProfile()
-    const myLearning = response.myLearning
-
-    // 使用後端的資料結構
-    myLearningContent.value = myLearning.content || []
-    totalElements.value = myLearning.totalElements || 0
-    totalPages.value = myLearning.totalPages || 0
-
-    console.log('我的學習資料:', myLearningContent.value)
+    await studentCenterStore.loadMyLearning({
+      page: currentPage.value - 1, // 後端從 0 開始
+      size: pageSize.value,
+      status: filterStatus.value,
+      sort: sortBy.value
+    })
   } catch (error) {
     console.error('載入我的學習資料失敗:', error)
     ElMessage.error('載入課程失敗，請稍後再試')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -142,8 +140,7 @@ const loadMyLearning = async () => {
 const handleFilterChange = (command) => {
   filterStatus.value = command
   currentPage.value = 1
-  // TODO: 實作篩選邏輯（可能需要後端支援）
-  // loadMyLearning()
+  loadMyLearning()
 }
 
 /**
@@ -152,15 +149,14 @@ const handleFilterChange = (command) => {
 const handlePageChange = (page) => {
   currentPage.value = page
   window.scrollTo({ top: 0, behavior: 'smooth' })
-  // TODO: 實作分頁邏輯（需要後端支援分頁參數）
-  // loadMyLearning()
+  loadMyLearning()
 }
 
 /**
  * Navigate to course learning page
  */
 const goToCourse = (courseId) => {
-  router.push(`/course/${courseId}`)
+  router.push(`/courses/${courseId}`)
 }
 
 /**
@@ -182,21 +178,35 @@ const handleOpenRateDialog = ({ course, initialRating: rating }) => {
 /**
  * Handle review submitted
  */
-const handleReviewSubmitted = (reviewData) => {
-  // 更新本地資料
-  const course = myLearningContent.value.find(c => c.progressId === selectedProgressId.value)
-  if (course) {
-    course.rating = reviewData.rating
-    course.rateComment = reviewData.comment
+const handleReviewSubmitted = async (reviewData) => {
+  try {
+    // 判斷是新增還是更新評分
+    const course = myLearningContent.value.find(c => c.progressId === selectedProgressId.value)
+    const isUpdate = course && course.rating !== null && course.rating !== undefined
+
+    if (isUpdate) {
+      await studentCenterStore.updateRating(selectedProgressId.value, {
+        rating: reviewData.rating,
+        comment: reviewData.comment
+      })
+    } else {
+      await studentCenterStore.submitRating(selectedProgressId.value, {
+        rating: reviewData.rating,
+        comment: reviewData.comment
+      })
+    }
+
+    // Reset dialog state
+    selectedProgressId.value = null
+    selectedCourseInfo.value = null
+    initialRating.value = 0
+    initialComment.value = ''
+
+    ElMessage.success(isUpdate ? '評價已更新' : '評價已提交')
+  } catch (error) {
+    console.error('提交評價失敗:', error)
+    ElMessage.error('提交評價失敗，請稍後再試')
   }
-
-  // Reset dialog state
-  selectedProgressId.value = null
-  selectedCourseInfo.value = null
-  initialRating.value = 0
-  initialComment.value = ''
-
-  ElMessage.success('評價已提交')
 }
 
 // 組件掛載時載入資料

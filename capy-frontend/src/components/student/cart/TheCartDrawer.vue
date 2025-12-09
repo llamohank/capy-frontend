@@ -50,16 +50,19 @@
             <p class="item-instructor">{{ item.instructor }}</p>
           </div>
 
-          <!-- 價格和刪除按鈕 -->
+          <!-- 價格和操作按鈕 -->
           <div class="item-actions">
             <div class="item-price">{{ cartStore.formatPrice(item.price) }}</div>
-            <el-button
-              type="danger"
-              :icon="Delete"
-              circle
-              size="small"
-              @click="handleRemoveItem(item.courseId)"
-            />
+            <div class="action-buttons">
+              <el-button
+                type="danger"
+                :icon="Delete"
+                circle
+                size="small"
+                @click="handleRemoveItem(item.courseId)"
+                title="移除"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -86,14 +89,60 @@
       </div>
     </template>
   </el-drawer>
+
+  <!-- 移除確認對話框 -->
+  <el-dialog
+    v-model="dialogVisible"
+    title="移除課程"
+    width="400px"
+    :before-close="handleCloseDialog"
+    class="remove-course-dialog"
+  >
+    <div class="dialog-content">
+      <p class="dialog-message">您想要如何處理這門課程？</p>
+
+      <div class="dialog-actions">
+        <!-- 移至願望清單按鈕 -->
+        <el-button
+          type="primary"
+          class="action-button wishlist-button"
+          @click="handleMoveToWishlist"
+        >
+          <el-icon class="button-icon">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+              <path fill="currentColor" d="M923 283.6a260.04 260.04 0 0 0-56.9-82.8 264.4 264.4 0 0 0-84-55.5A265.34 265.34 0 0 0 679.7 125c-49.3 0-97.4 13.5-139.2 39-10 6.1-19.5 12.8-28.5 20.1-9-7.3-18.5-14-28.5-20.1-41.8-25.5-89.9-39-139.2-39-35.5 0-69.9 6.8-102.4 20.3-31.4 13-59.7 31.7-84 55.5a258.44 258.44 0 0 0-56.9 82.8c-13.9 32.3-21 66.6-21 101.9 0 33.3 6.8 68 20.3 103.3 11.3 29.5 27.5 60.1 48.2 91 32.8 48.9 77.9 99.9 133.9 151.6 92.8 85.7 184.7 144.9 188.6 147.3l23.7 15.2c10.5 6.7 24 6.7 34.5 0l23.7-15.2c3.9-2.5 95.7-61.6 188.6-147.3 56-51.7 101.1-102.7 133.9-151.6 20.7-30.9 37-61.5 48.2-91 13.5-35.3 20.3-70 20.3-103.3.1-35.3-7-69.6-20.9-101.9z"/>
+            </svg>
+          </el-icon>
+          <span>移至願望清單</span>
+        </el-button>
+
+        <!-- 直接刪除按鈕 -->
+        <el-button
+          type="danger"
+          class="action-button delete-button"
+          @click="handleDirectRemove"
+        >
+          <el-icon class="button-icon">
+            <Delete />
+          </el-icon>
+          <span>直接刪除</span>
+        </el-button>
+      </div>
+    </div>
+
+    <template #footer>
+      <el-button @click="handleCloseDialog">取消</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { ShoppingCart, Delete, Picture } from '@element-plus/icons-vue'
 import { useCartStore } from '@/stores/cart'
+import { useWishlistStore } from '@/stores/wishlist'
 
 // ==================== Props & Emits ====================
 
@@ -110,10 +159,13 @@ const emit = defineEmits(['update:modelValue'])
 
 const router = useRouter()
 const cartStore = useCartStore()
+const wishlistStore = useWishlistStore()
 
 // ==================== State ====================
 
 const visible = ref(props.modelValue)
+const dialogVisible = ref(false)
+const currentRemovingCourseId = ref(null)
 
 // ==================== Watchers ====================
 
@@ -149,29 +201,77 @@ const goToExplore = () => {
 }
 
 /**
- * 移除購物車項目
+ * 開啟移除確認對話框
  */
-const handleRemoveItem = async (courseId) => {
-  try {
-    await ElMessageBox.confirm(
-      '確定要從購物車中移除此課程嗎？',
-      '確認移除',
-      {
-        confirmButtonText: '確定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
+const handleRemoveItem = (courseId) => {
+  currentRemovingCourseId.value = courseId
+  dialogVisible.value = true
+}
 
-    // removeItem 現在是 async 函數，會呼叫後端 API
-    const success = await cartStore.removeItem(courseId)
+/**
+ * 移至願望清單
+ */
+const handleMoveToWishlist = async () => {
+  if (!currentRemovingCourseId.value) return
+
+  try {
+    // 找到購物車中的課程資訊
+    const item = cartStore.items.find(item => item.courseId === currentRemovingCourseId.value)
+
+    if (!item) {
+      ElMessage.error('找不到課程資訊')
+      return
+    }
+
+    // 加入願望清單
+    const added = await wishlistStore.addItem({
+      id: item.courseId,
+      title: item.title,
+      instructor: item.instructor,
+      price: item.price,
+      cover_image_url: item.coverImageUrl
+    })
+
+    if (added) {
+      // 從購物車移除（不顯示訊息，因為 wishlist.addItem 已經顯示了）
+      await cartStore.removeItem(currentRemovingCourseId.value)
+    }
+
+    // 關閉對話框
+    dialogVisible.value = false
+    currentRemovingCourseId.value = null
+  } catch (error) {
+    console.error('移至願望清單失敗:', error)
+  }
+}
+
+/**
+ * 直接刪除
+ */
+const handleDirectRemove = async () => {
+  if (!currentRemovingCourseId.value) return
+
+  try {
+    const success = await cartStore.removeItem(currentRemovingCourseId.value)
 
     if (success) {
       ElMessage.success('已從購物車移除')
     }
-  } catch {
-    // 使用者取消操作或 API 錯誤（API 錯誤已在 store 中處理）
+
+    // 關閉對話框
+    dialogVisible.value = false
+    currentRemovingCourseId.value = null
+  } catch (error) {
+    console.error('移除失敗:', error)
   }
+}
+
+/**
+ * 關閉對話框
+ */
+const handleCloseDialog = () => {
+  dialogVisible.value = false
+  currentRemovingCourseId.value = null
 }
 
 /**
@@ -387,6 +487,110 @@ loadCart()
 
   .item-price {
     font-size: var(--capy-font-size-base);
+  }
+}
+
+/* ==================== 移除確認對話框樣式 ==================== */
+
+.dialog-content {
+  padding: var(--capy-spacing-md) 0;
+}
+
+.dialog-message {
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-secondary);
+  text-align: center;
+  margin: 0 0 var(--capy-spacing-lg) 0;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: var(--capy-spacing-md);
+}
+
+.action-button {
+  flex: 1;
+  height: 48px;
+  font-size: var(--capy-font-size-base);
+  font-weight: var(--capy-font-weight-medium);
+  border-radius: var(--capy-radius-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.button-icon {
+  font-size: 18px;
+}
+
+/* 願望清單按鈕 - 使用品牌主色 */
+.wishlist-button {
+  background-color: var(--capy-primary);
+  border-color: var(--capy-primary);
+  color: white;
+}
+
+.wishlist-button:hover {
+  background-color: #3db8de;
+  border-color: #3db8de;
+}
+
+.wishlist-button:active {
+  background-color: #2da3c9;
+  border-color: #2da3c9;
+}
+
+/* 刪除按鈕 - 使用危險色 */
+.delete-button {
+  background-color: var(--capy-danger);
+  border-color: var(--capy-danger);
+  color: white;
+}
+
+.delete-button:hover {
+  background-color: #f45454;
+  border-color: #f45454;
+}
+
+.delete-button:active {
+  background-color: #e03c3c;
+  border-color: #e03c3c;
+}
+
+/* 對話框全局樣式 */
+:deep(.remove-course-dialog) {
+  border-radius: var(--capy-radius-lg);
+}
+
+:deep(.remove-course-dialog .el-dialog__header) {
+  padding: var(--capy-spacing-lg);
+  border-bottom: 1px solid var(--capy-border-lighter);
+}
+
+:deep(.remove-course-dialog .el-dialog__title) {
+  font-size: var(--capy-font-size-lg);
+  font-weight: var(--capy-font-weight-semibold);
+  color: var(--capy-text-primary);
+}
+
+:deep(.remove-course-dialog .el-dialog__body) {
+  padding: var(--capy-spacing-lg);
+}
+
+:deep(.remove-course-dialog .el-dialog__footer) {
+  padding: var(--capy-spacing-md) var(--capy-spacing-lg);
+  border-top: 1px solid var(--capy-border-lighter);
+}
+
+/* 響應式 */
+@media (max-width: 768px) {
+  .dialog-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
   }
 }
 </style>

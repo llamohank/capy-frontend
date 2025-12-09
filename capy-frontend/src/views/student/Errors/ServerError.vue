@@ -1,27 +1,27 @@
 <template>
-  <div class="not-found-page">
-    <div class="not-found-container">
-      <!-- 404 水豚插圖 -->
+  <div class="server-error-page">
+    <div class="server-error-container">
+      <!-- 500 水豚插圖 -->
       <div class="illustration-wrapper">
         <img
-          src="@/assets/images/error/404-capy.svg"
-          alt="404 - 找不到頁面"
+          src="@/assets/images/error/500-capy.svg"
+          alt="500 - 伺服器錯誤"
           class="capy-illustration"
         />
       </div>
 
       <!-- 錯誤內容卡片 -->
       <div class="error-card">
-        <!-- 404 錯誤代碼 -->
-        <div class="error-code">404</div>
+        <!-- 500 錯誤代碼 -->
+        <div class="error-code">500</div>
 
         <!-- 標題 -->
-        <h1 class="error-title">找不到這條河流</h1>
+        <h1 class="error-title">伺服器正在休息</h1>
 
         <!-- 描述 -->
         <p class="error-description">
-          這頁面似乎已經漂流走了，或者您輸入了錯誤的座標。<br>
-          請檢查網址或回到首頁重新探索。
+          我們的工程師水豚正在搶修管線中，可能是不小心踢到了插頭。<br>
+          請稍後再試，或聯絡客服人員。
         </p>
 
         <!-- 操作按鈕 -->
@@ -29,23 +29,23 @@
           <el-button
             type="primary"
             size="large"
-            @click="goHome"
+            @click="handleRefresh"
           >
             <el-icon class="button-icon">
-              <HomeFilled />
+              <Refresh />
             </el-icon>
-            游回首頁
+            重新整理
           </el-button>
 
           <el-button
             text
             size="large"
-            @click="goBack"
+            @click="handleContactSupport"
           >
             <el-icon class="button-icon">
-              <Back />
+              <Service />
             </el-icon>
-            返回上一頁
+            聯絡客服
           </el-button>
         </div>
       </div>
@@ -54,29 +54,27 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { HomeFilled, Back } from '@element-plus/icons-vue'
-
-const router = useRouter()
+import { Refresh, Service } from '@element-plus/icons-vue'
 
 /**
- * 返回首頁
+ * 重新整理頁面
  */
-const goHome = () => {
-  router.push('/')
+const handleRefresh = () => {
+  window.location.reload()
 }
 
 /**
- * 返回上一頁
+ * 聯絡客服
  */
-const goBack = () => {
-  router.go(-1)
+const handleContactSupport = () => {
+  // 可以改為實際的客服頁面路徑或客服系統
+  window.location.href = 'mailto:support@capycourse.com'
 }
 </script>
 
 <style scoped>
 /* 主容器 - 使用專案背景色 */
-.not-found-page {
+.server-error-page {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -85,7 +83,7 @@ const goBack = () => {
   padding: var(--capy-spacing-lg);
 }
 
-.not-found-container {
+.server-error-container {
   max-width: 600px;
   width: 100%;
   display: flex;
@@ -98,7 +96,7 @@ const goBack = () => {
 .illustration-wrapper {
   width: 100%;
   max-width: 400px;
-  animation: float 3s ease-in-out infinite;
+  animation: shake 0.5s ease-in-out infinite alternate;
 }
 
 .capy-illustration {
@@ -108,13 +106,19 @@ const goBack = () => {
   filter: drop-shadow(var(--capy-shadow-md));
 }
 
-/* 浮動動畫 */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
+/* 抖動動畫 - 模擬故障效果 */
+@keyframes shake {
+  0% {
+    transform: translateX(0) rotate(0deg);
   }
-  50% {
-    transform: translateY(-15px);
+  25% {
+    transform: translateX(-2px) rotate(-0.5deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(0.5deg);
+  }
+  100% {
+    transform: translateX(0) rotate(0deg);
   }
 }
 
@@ -133,15 +137,28 @@ const goBack = () => {
   box-shadow: var(--capy-shadow-md);
 }
 
-/* 404 錯誤代碼 - 使用主色調 */
+/* 500 錯誤代碼 - 使用危險色 */
 .error-code {
   font-size: 96px;
   font-weight: var(--capy-font-weight-bold);
-  color: var(--capy-primary);
+  color: var(--capy-danger);
   line-height: 1;
   margin-bottom: var(--capy-spacing-md);
-  text-shadow: 0 4px 8px rgba(84, 205, 242, 0.2);
+  text-shadow: 0 4px 8px rgba(245, 108, 108, 0.2);
   letter-spacing: -2px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* 脈衝動畫 - 強調錯誤 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
 }
 
 /* 標題 - 使用主要文字色 */
@@ -207,11 +224,11 @@ const goBack = () => {
 
 /* 響應式設計 - 平板 */
 @media (max-width: 768px) {
-  .not-found-page {
+  .server-error-page {
     padding: var(--capy-spacing-md);
   }
 
-  .not-found-container {
+  .server-error-container {
     gap: var(--capy-spacing-lg);
   }
 
@@ -248,7 +265,7 @@ const goBack = () => {
 
 /* 響應式設計 - 手機 */
 @media (max-width: 480px) {
-  .not-found-page {
+  .server-error-page {
     padding: var(--capy-spacing-sm);
   }
 
@@ -280,6 +297,10 @@ const goBack = () => {
 /* 動畫優化 - 減少動畫以提升性能 */
 @media (prefers-reduced-motion: reduce) {
   .illustration-wrapper {
+    animation: none;
+  }
+
+  .error-code {
     animation: none;
   }
 

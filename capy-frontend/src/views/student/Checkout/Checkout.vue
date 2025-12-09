@@ -195,6 +195,7 @@ import {
   InfoFilled
 } from '@element-plus/icons-vue'
 import { useCartStore } from '@/stores/cart'
+import { createOrder, getEcpayCheckout } from '@/api/student/orders'
 
 // ==================== Composables ====================
 
@@ -345,44 +346,78 @@ const handleCheckout = async () => {
   try {
     isCheckingOut.value = true
 
-    // 準備訂單資料
-    const orderData = {
-      courseIds: selectedItemIds.value,
-      totalAmount: selectedTotal.value
+    // 步驟 1: 建立訂單
+    ElMessage.info('正在建立訂單...')
+    const orderResponse = await createOrder(selectedItemIds.value)
+
+    // 後端回傳的 orderId 在 data 欄位中
+    const orderId = orderResponse.data || orderResponse
+
+    if (!orderId) {
+      throw new Error('訂單建立失敗：未取得訂單 ID')
     }
 
-    // TODO: 呼叫 API POST /api/orders
-    // const response = await fetch('/api/orders', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify(orderData)
-    // })
+    console.log('訂單建立成功，訂單 ID:', orderId)
 
-    // 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 步驟 2: 取得 ECPay 付款表單資訊（指定信用卡付款）
+    ElMessage.info('正在準備付款頁面...')
+    const ecpayResponse = await getEcpayCheckout(orderId, 'Credit')
 
-    console.log('訂單資料:', orderData)
+    // 後端回傳的資料在 data 欄位中
+    const ecpayData = ecpayResponse.data || ecpayResponse
 
-    ElMessage.success('訂單建立成功！')
-
-    // 從購物車移除已結帳的項目
-    for (const courseId of selectedItemIds.value) {
-      await cartStore.removeItem(courseId)
+    if (!ecpayData || !ecpayData.actionUrl || !ecpayData.formFields) {
+      throw new Error('付款資訊取得失敗')
     }
 
-    // 清空選擇列表
-    selectedItemIds.value = []
+    console.log('ECPay 付款資訊:', ecpayData)
 
-    // 導向訂單頁面
-    router.push({ name: 'Orders' })
+    // 步驟 3: 動態建立並提交表單到 ECPay
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = ecpayData.actionUrl
+    form.style.display = 'none'
+
+    // 將所有表單欄位加入 form
+    Object.entries(ecpayData.formFields).forEach(([key, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = key
+      input.value = value
+      form.appendChild(input)
+    })
+
+    // 將表單加入 DOM 並提交
+    document.body.appendChild(form)
+
+    ElMessage.success('訂單建立成功！即將跳轉到付款頁面...')
+
+    // 延遲一下讓使用者看到訊息
+    setTimeout(() => {
+      form.submit()
+      // 注意：表單提交後會跳轉到 ECPay，所以不需要清理 DOM
+    }, 500)
+
   } catch (error) {
     console.error('結帳失敗:', error)
-    ElMessage.error('結帳失敗，請稍後再試')
-  } finally {
+
+    // 根據錯誤類型顯示不同訊息
+    if (error.response) {
+      // API 回傳錯誤
+      const errorMsg = error.response.data?.message || '結帳失敗，請稍後再試'
+      ElMessage.error(errorMsg)
+    } else if (error.message) {
+      // 自定義錯誤訊息
+      ElMessage.error(error.message)
+    } else {
+      // 未知錯誤
+      ElMessage.error('結帳失敗，請稍後再試')
+    }
+
     isCheckingOut.value = false
   }
+  // 注意：不在 finally 中設置 isCheckingOut = false
+  // 因為表單提交後會跳轉頁面，不需要恢復狀態
 }
 
 // ==================== Lifecycle ====================

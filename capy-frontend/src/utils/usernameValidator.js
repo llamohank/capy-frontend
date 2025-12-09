@@ -60,7 +60,8 @@ export const VALIDATION_MESSAGES = {
   AVAILABLE: '✓ 這個暱稱可以使用',
   TAKEN: '✗ 這個暱稱已被使用，請換一個',
   ERROR: '暫時無法驗證暱稱，請稍後再試',
-  INVALID_FORMAT: '暱稱格式不正確'
+  INVALID_FORMAT: '暱稱格式不正確',
+  INVALID_CHARACTERS: '暱稱僅能包含中英文、數字、底線(_)、連接號(-)、句點(.)，且不允許空白'
 };
 
 /**
@@ -82,6 +83,27 @@ export function validateNicknameFormat(nickname) {
     return {
       valid: false,
       message: VALIDATION_MESSAGES.EMPTY,
+      type: 'error'
+    };
+  }
+
+  // 檢查是否包含空白字元
+  if (/\s/.test(trimmedNickname)) {
+    return {
+      valid: false,
+      message: VALIDATION_MESSAGES.INVALID_CHARACTERS,
+      type: 'error'
+    };
+  }
+
+  // 檢查字元規則：只允許中英文、數字、底線(_)、連接號(-)、句點(.)
+  // \p{L} 匹配任何語言的字母（包含中文）
+  // \p{N} 匹配任何語言的數字
+  const validCharPattern = /^[\p{L}\p{N}_\-.]+$/u;
+  if (!validCharPattern.test(trimmedNickname)) {
+    return {
+      valid: false,
+      message: VALIDATION_MESSAGES.INVALID_CHARACTERS,
       type: 'error'
     };
   }

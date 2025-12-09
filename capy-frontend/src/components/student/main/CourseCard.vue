@@ -25,7 +25,7 @@ const props = defineProps({
 const goToCourseDetail = () => {
   // 如果課程有 id，則跳轉到詳情頁
   if (props.course.id) {
-    router.push(`/course/${props.course.id}`)
+    router.push(`/courses/${props.course.id}`)
   }
 }
 </script>

@@ -1,0 +1,100 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 河流背景 -->
+  <g class="river-background">
+    <!-- 河流波浪 -->
+    <path d="M0,180 Q100,160 200,180 T400,180 L400,300 L0,300 Z" fill="#E0F7FA" opacity="0.3"/>
+    <path d="M0,200 Q100,185 200,200 T400,200 L400,300 L0,300 Z" fill="#B3E5FC" opacity="0.4"/>
+    <path d="M0,220 Q100,210 200,220 T400,220 L400,300 L0,300 Z" fill="#81D4FA" opacity="0.5"/>
+  </g>
+
+  <!-- 漂流的葉子裝飾 -->
+  <g class="floating-leaves" opacity="0.6">
+    <ellipse cx="80" cy="190" rx="8" ry="4" fill="#A1887F" transform="rotate(-20 80 190)"/>
+    <ellipse cx="320" cy="210" rx="8" ry="4" fill="#A1887F" transform="rotate(15 320 210)"/>
+    <ellipse cx="150" cy="235" rx="6" ry="3" fill="#8D6E63" transform="rotate(-30 150 235)"/>
+  </g>
+
+  <!-- 困惑的水豚 -->
+  <g class="confused-capybara">
+    <!-- 身體 -->
+    <ellipse cx="200" cy="160" rx="55" ry="45" fill="#A1887F"/>
+    
+    <!-- 肚子 -->
+    <ellipse cx="200" cy="170" rx="40" ry="30" fill="#BCAAA4"/>
+    
+    <!-- 腿 -->
+    <ellipse cx="180" cy="190" rx="12" ry="18" fill="#8D6E63"/>
+    <ellipse cx="220" cy="190" rx="12" ry="18" fill="#8D6E63"/>
+    
+    <!-- 腳掌 -->
+    <ellipse cx="180" cy="205" rx="10" ry="6" fill="#6D4C41"/>
+    <ellipse cx="220" cy="205" rx="10" ry="6" fill="#6D4C41"/>
+    
+    <!-- 頭部 -->
+    <ellipse cx="200" cy="120" rx="40" ry="35" fill="#A1887F"/>
+    
+    <!-- 耳朵 -->
+    <ellipse cx="178" cy="100" rx="10" ry="16" fill="#8D6E63"/>
+    <ellipse cx="222" cy="100" rx="10" ry="16" fill="#8D6E63"/>
+    <ellipse cx="178" cy="105" rx="5" ry="9" fill="#BCAAA4"/>
+    <ellipse cx="222" cy="105" rx="5" ry="9" fill="#BCAAA4"/>
+    
+    <!-- 困惑的眼睛 -->
+    <g class="left-eye">
+      <ellipse cx="188" cy="118" rx="6" ry="7" fill="#3E2723"/>
+      <ellipse cx="190" cy="116" rx="2" ry="2" fill="#FFFFFF"/>
+    </g>
+    <g class="right-eye">
+      <ellipse cx="212" cy="118" rx="6" ry="7" fill="#3E2723"/>
+      <ellipse cx="214" cy="116" rx="2" ry="2" fill="#FFFFFF"/>
+    </g>
+    
+    <!-- 困惑的眉毛 -->
+    <path d="M182,112 Q185,108 190,110" stroke="#3E2723" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M218,112 Q215,108 210,110" stroke="#3E2723" stroke-width="2" fill="none" stroke-linecap="round"/>
+    
+    <!-- 鼻子 -->
+    <ellipse cx="200" cy="128" rx="7" ry="5" fill="#6D4C41"/>
+    
+    <!-- 嘴巴（困惑表情）-->
+    <path d="M195,135 Q200,133 205,135" stroke="#6D4C41" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- 問號裝飾 -->
+  <g class="question-marks">
+    <text x="140" y="80" font-size="32" fill="#54CDF2" opacity="0.7" font-weight="bold">?</text>
+    <text x="250" y="70" font-size="24" fill="#54CDF2" opacity="0.5" font-weight="bold">?</text>
+    <text x="160" y="50" font-size="20" fill="#54CDF2" opacity="0.4" font-weight="bold">?</text>
+  </g>
+
+  <!-- 救生圈 -->
+  <g class="life-ring" transform="translate(280, 140)">
+    <circle cx="0" cy="0" r="25" fill="#FB8C00"/>
+    <circle cx="0" cy="0" r="18" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+    <circle cx="0" cy="0" r="15" fill="#FB8C00"/>
+    <!-- 救生圈條紋 -->
+    <rect x="-3" y="-25" width="6" height="10" fill="#FFFFFF" rx="2"/>
+    <rect x="-3" y="15" width="6" height="10" fill="#FFFFFF" rx="2"/>
+    <rect x="-25" y="-3" width="10" height="6" fill="#FFFFFF" rx="2"/>
+    <rect x="15" y="-3" width="10" height="6" fill="#FFFFFF" rx="2"/>
+  </g>
+
+  <!-- 漂流的木板 -->
+  <g class="drifting-plank" opacity="0.8">
+    <rect x="90" y="240" width="80" height="12" fill="#8D6E63" rx="2"/>
+    <rect x="95" y="242" width="70" height="8" fill="#A1887F" rx="1"/>
+    <!-- 木紋 -->
+    <line x1="100" y1="244" x2="100" y2="248" stroke="#6D4C41" stroke-width="1" opacity="0.5"/>
+    <line x1="120" y1="244" x2="120" y2="248" stroke="#6D4C41" stroke-width="1" opacity="0.5"/>
+    <line x1="140" y1="244" x2="140" y2="248" stroke="#6D4C41" stroke-width="1" opacity="0.5"/>
+    <line x1="160" y1="244" x2="160" y2="248" stroke="#6D4C41" stroke-width="1" opacity="0.5"/>
+  </g>
+
+  <!-- 水花效果 -->
+  <g class="water-splash" opacity="0.4">
+    <circle cx="100" cy="210" r="3" fill="#54CDF2"/>
+    <circle cx="110" cy="215" r="2" fill="#54CDF2"/>
+    <circle cx="290" cy="225" r="3" fill="#54CDF2"/>
+    <circle cx="300" cy="220" r="2" fill="#54CDF2"/>
+  </g>
+</svg>

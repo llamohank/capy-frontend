@@ -15,7 +15,7 @@ export const checkNickname = (nickname) => {
   }
 
   // 呼叫後端 API: GET /checkNickname?value=xxx
-  return instance.get("/student/checkNickname", {
+  return instance.get("/auth/checkNickname", {
     params: {
       value: trimmedNickname
     }

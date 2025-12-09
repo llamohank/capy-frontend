@@ -9,10 +9,10 @@
     <div class="dialog-content">
       <!-- Course Info -->
       <div v-if="courseInfo" class="course-info-section">
-        <img :src="courseInfo.cover_image_url" :alt="courseInfo.title" class="course-thumbnail" />
+        <img :src="courseInfo.coverImageUrl" :alt="courseInfo.courseTitle" class="course-thumbnail" />
         <div class="course-details">
-          <h4 class="course-title">{{ courseInfo.title }}</h4>
-          <p class="course-instructor">{{ courseInfo.instructor_name }}</p>
+          <h4 class="course-title">{{ courseInfo.courseTitle }}</h4>
+          <p class="course-instructor">{{ courseInfo.instructorName }}</p>
         </div>
       </div>
 
@@ -149,25 +149,7 @@ const handleSubmit = async () => {
   submitting.value = true
 
   try {
-    // TODO: Replace with actual API call
-    // const response = await fetch(`/api/courses/${props.courseInfo.id}/reviews`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Authorization': `Bearer ${token}`
-    //   },
-    //   body: JSON.stringify({
-    //     rating: rating.value,
-    //     comment: comment.value
-    //   })
-    // })
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    ElMessage.success('評論提交成功！')
-    
-    // Emit event with review data
+    // Emit event with review data - 父組件會處理 API 呼叫
     emit('review-submitted', {
       rating: rating.value,
       comment: comment.value
