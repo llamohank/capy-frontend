@@ -1,7 +1,7 @@
 import axios from "@/utils/http";
 //course
 export const getCourseList = () => {
-  return axios.get("/teacher/courses/courseList");
+  return axios.get("/teacher/courses/course-list");
 };
 export const getCategory = () => {
   return axios.get("/teacher/courses/categories");

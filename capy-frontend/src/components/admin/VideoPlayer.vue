@@ -5,8 +5,8 @@ import VideoPlayer from "@llamohank/custom-shaka-player";
 import samplevideo from "@/assets/sample.mp4";
 const videoPlayerRef = ref(null);
 // let videoWidth = computed(() => videoPlayerRef.value?.videoWidth);
-let videoHeight = computed(() => videoPlayerRef.value?.videoHeight);
-let videoDuration = computed(() => videoPlayerRef.value?.duration);
+const videoHeight = computed(() => videoPlayerRef.value?.videoHeight);
+const videoDuration = computed(() => videoPlayerRef.value?.duration);
 let player = null;
 onMounted(async () => {
   init();
@@ -16,9 +16,11 @@ onMounted(async () => {
 const play = async (src) => {
   // await player.play(samplevideo);
   await player.play(src);
-  videoDuration = videoPlayerRef.value.duration;
+  // videoDuration = videoPlayerRef.value.duration;
+  console.log(videoHeight.value);
   // videoWidth = videoPlayerRef.value.videoWidth;
-  videoHeight = videoPlayerRef.value.videoHeight;
+  console.log(videoDuration.value);
+  // videoHeight = videoPlayerRef.value.videoHeight;
 };
 const init = async () => {
   player = new VideoPlayer(videoPlayerRef.value, videoPlayerRef.value.parentElement, {

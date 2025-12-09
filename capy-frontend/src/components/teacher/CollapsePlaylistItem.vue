@@ -53,7 +53,7 @@ const handleSaveLesson = async (data) => {
   data.request.sectionId = props.sectionInfo.sectionId;
   if (!isEditLesson.value) {
     // data.request.lessonId=1
-    data.request.displayOrder = props.sectionInfo.lessons.length + 1;
+    data.request.displayOrder = props.sectionInfo.lessons.length;
   }
   console.log(data);
   const fd = new FormData();
@@ -61,8 +61,11 @@ const handleSaveLesson = async (data) => {
     "uploadRequest",
     new Blob([JSON.stringify(data.request)], { type: "application/json" })
   );
-  fd.append("attachments", data.fileList);
-  console.log(fd);
+  for (let i = 0; i < data.fileList.length; i++) {
+    fd.append("attachments", data.fileList[i]);
+  }
+
+  // console.log(fd);
   if (!isEditLesson.value) {
     const res = await createLesson(fd);
     console.log(res);

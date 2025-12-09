@@ -36,17 +36,21 @@ const dialogVisible = computed({
   },
 });
 const formModel = ref({ ...props.lessonInfo, videoUrl: props.videoUrl });
+
 const requestData = computed(() => {
   return {
     ...formModel.value,
     lessonDescription: formModel.value.description,
-    rawVideoHeight: videoPlayerRef.value.videoHeight,
-    fileSize: 55,
-    durationSeconds: videoPlayerRef.value.videoDuration,
+    videoMeta: videoMeta.value,
     attachmentOps: attachmentOps.value,
   };
 });
 const videoPlayerRef = ref(null);
+const videoMeta = ref({
+  rawVideoHeight: videoPlayerRef.value?.videoHeight,
+  fileSize: null,
+  durationSeconds: videoPlayerRef.value?.videoDuration,
+});
 const videoUploadRef = ref(null);
 const handleVideoExceed = (file) => {
   videoUploadRef.value.clearFiles();
@@ -56,7 +60,7 @@ const handleVideoExceed = (file) => {
 };
 const handleVideoChange = (file) => {
   formModel.value.videoUrl = URL.createObjectURL(file.raw);
-  requestData.value.fileSize = file.raw.size;
+  videoMeta.value.fileSize = file.raw.size;
 };
 
 watch(
@@ -68,8 +72,8 @@ watch(
       // console.log(videoPlayerRef.value);
       await videoPlayerRef.value.init();
       await videoPlayerRef.value.play(newVal);
-      requestData.value.rawVideoHight = videoPlayerRef.value.videoHeight;
-      requestData.value.durationSeconds = videoPlayerRef.value.videoDuration;
+      videoMeta.value.rawVideoHeight = videoPlayerRef.value.videoHeight;
+      videoMeta.value.durationSeconds = videoPlayerRef.value.videoDuration;
       // console.log(requestData.value.videoHeight);
       // console.log(videoPlayerRef.value.videoHeight);
       return;
