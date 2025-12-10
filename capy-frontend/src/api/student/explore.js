@@ -4,6 +4,8 @@
  * 這個模組提供課程探索相關的 API 服務
  * 包含：
  * 1. 搜尋課程 - GET /api/search
+ * 2. 取得分類樹 - GET /explore/categories
+ * 3. 取得所有標籤 - GET /explore/tags
  */
 
 import request from '@/utils/http'
@@ -72,7 +74,7 @@ import request from '@/utils/http'
  */
 export const searchCourses = (params = {}) => {
   return request({
-    url: '/search',
+    url: '/explore/search',
     method: 'GET',
     params: {
       keyword: params.keyword,
@@ -99,7 +101,85 @@ export const searchCourses = (params = {}) => {
   })
 }
 
+/**
+ * 2. 取得分類樹（無需登入）
+ * GET /explore/categories
+ *
+ * @returns {Promise<Array>} 回傳分類樹陣列
+ *
+ * @example
+ * const categories = await getCategories()
+ *
+ * @returns {Promise<Array>} 回應結構：
+ * [
+ *   {
+ *     id: number,
+ *     name: string,
+ *     parentCategoryId: number | null,
+ *     displayOrder: number,
+ *     children: [
+ *       {
+ *         id: number,
+ *         name: string,
+ *         parentCategoryId: number,
+ *         displayOrder: number,
+ *         children: []
+ *       }
+ *     ]
+ *   }
+ * ]
+ */
+export const getCategories = () => {
+  return request({
+    url: '/explore/categories',
+    method: 'GET'
+  }).then(response => {
+    // http.js 攔截器已經提取了 response.data
+    // 後端返回的結構是 { code: 200, msg: "ok", data: [...] }
+    // 攔截器會自動提取 data 欄位
+    return response || []
+  }).catch(error => {
+    console.error('取得分類樹失敗:', error)
+    return []
+  })
+}
+
+/**
+ * 3. 取得所有標籤（無需登入）
+ * GET /explore/tags
+ *
+ * @returns {Promise<Array>} 回傳標籤陣列
+ *
+ * @example
+ * const tags = await getTags()
+ *
+ * @returns {Promise<Array>} 回應結構：
+ * [
+ *   {
+ *     id: number,
+ *     name: string,
+ *     usageCount: number
+ *   }
+ * ]
+ */
+export const getTags = () => {
+  return request({
+    url: '/explore/tags',
+    method: 'GET'
+  }).then(response => {
+    // http.js 攔截器已經提取了 response.data
+    // 後端返回的結構是 { code: 200, msg: "ok", data: [...] }
+    // 攔截器會自動提取 data 欄位
+    return response || []
+  }).catch(error => {
+    console.error('取得標籤列表失敗:', error)
+    return []
+  })
+}
+
 // 匯出所有 API 函數
 export default {
-  searchCourses
+  searchCourses,
+  getCategories,
+  getTags
 }

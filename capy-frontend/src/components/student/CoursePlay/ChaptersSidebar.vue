@@ -4,6 +4,14 @@
     <div class="sidebar-header">
       <div class="header-content">
         <h3 class="sidebar-title">課程內容</h3>
+        <!-- 收合按鈕 -->
+        <el-button
+          class="collapse-btn"
+          :icon="DArrowRight"
+          circle
+          size="small"
+          @click="handleToggleSidebar"
+        />
       </div>
 
       <!-- 整體進度條 -->
@@ -16,7 +24,7 @@
           :percentage="progressPercentage"
           :stroke-width="8"
           :show-text="false"
-          color="#67C23A"
+          :color="progressColor"
         />
       </div>
     </div>
@@ -103,14 +111,12 @@ import {
   Lock,
   VideoPlay,
   Clock,
-  CaretRight
+  CaretRight,
+  DArrowRight
 } from '@element-plus/icons-vue'
 
 /**
  * Props 定義
- * @property {Array} chapters - 章節列表
- * @property {string} currentLessonId - 當前播放的單元 ID
- * @property {boolean} collapsible - 是否可收合
  */
 const props = defineProps({
   chapters: {
@@ -121,17 +127,25 @@ const props = defineProps({
   currentLessonId: {
     type: String,
     default: ''
+  },
+  isCollapsed: {
+    type: Boolean,
+    default: false
   }
 })
 
 /**
  * Emits 定義
- * @event lesson-click - 點擊單元 (lesson)
  */
-const emit = defineEmits(['lesson-click'])
+const emit = defineEmits(['lesson-click', 'toggle-sidebar'])
 
 // 狀態
 const activeChapters = ref([])
+
+/**
+ * 進度條顏色
+ */
+const progressColor = computed(() => '#54CDF2')
 
 /**
  * 計算總單元數
@@ -161,8 +175,6 @@ const progressPercentage = computed(() => {
 
 /**
  * 取得章節的單元數量
- * @param {Object} chapter - 章節物件
- * @returns {number} 單元數量
  */
 const getChapterLessonCount = (chapter) => {
   return chapter.lessons.length
@@ -170,8 +182,6 @@ const getChapterLessonCount = (chapter) => {
 
 /**
  * 格式化時長
- * @param {number} seconds - 秒數
- * @returns {string} 格式化後的時長
  */
 const formatDuration = (seconds) => {
   const hours = Math.floor(seconds / 3600)
@@ -186,13 +196,19 @@ const formatDuration = (seconds) => {
 
 /**
  * 處理單元點擊
- * @param {Object} lesson - 單元物件
  */
 const handleLessonClick = (lesson) => {
   if (lesson.isLocked) {
     return
   }
   emit('lesson-click', lesson)
+}
+
+/**
+ * 處理側邊欄切換
+ */
+const handleToggleSidebar = () => {
+  emit('toggle-sidebar')
 }
 
 /**
@@ -224,7 +240,6 @@ watch(() => props.currentLessonId, () => {
 .chapters-sidebar {
   height: 100%;
   background-color: #ffffff;
-  border-left: 1px solid #DCDFE6;
   display: flex;
   flex-direction: column;
   transition: all 0.3s ease;
@@ -248,6 +263,24 @@ watch(() => props.currentLessonId, () => {
       color: #303133;
       margin: 0;
     }
+
+    .collapse-btn {
+      background-color: #54CDF2;
+      border-color: #54CDF2;
+      color: #ffffff;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #3db8d9;
+        border-color: #3db8d9;
+        transform: scale(1.1);
+      }
+
+      &:active {
+        background-color: #2da3c4;
+        border-color: #2da3c4;
+      }
+    }
   }
 
   .progress-section {
@@ -265,7 +298,7 @@ watch(() => props.currentLessonId, () => {
       .progress-stats {
         font-size: 14px;
         font-weight: 600;
-        color: #67C23A;
+        color: #54CDF2;
       }
     }
   }
@@ -292,7 +325,7 @@ watch(() => props.currentLessonId, () => {
     font-weight: 600;
 
     &:hover {
-      background-color: #ecf5ff;
+      background-color: #f0feff;
     }
   }
 
@@ -307,7 +340,7 @@ watch(() => props.currentLessonId, () => {
     width: 100%;
 
     .chapter-icon {
-      color: #409EFF;
+      color: #54CDF2;
       font-size: 18px;
     }
 
@@ -342,8 +375,8 @@ watch(() => props.currentLessonId, () => {
   }
 
   &.is-active {
-    background-color: #ecf5ff;
-    border-left: 3px solid #409EFF;
+    background-color: #f0feff;
+    border-left: 3px solid #54CDF2;
   }
 
   &.is-completed {
@@ -373,11 +406,11 @@ watch(() => props.currentLessonId, () => {
       }
 
       &.locked {
-        color: #E6A23C;
+        color: #FB8C00;
       }
 
       &.playing {
-        color: #409EFF;
+        color: #54CDF2;
       }
     }
 
@@ -427,7 +460,7 @@ watch(() => props.currentLessonId, () => {
 
     .playing-icon {
       font-size: 20px;
-      color: #409EFF;
+      color: #54CDF2;
       animation: pulse 1.5s ease-in-out infinite;
     }
   }

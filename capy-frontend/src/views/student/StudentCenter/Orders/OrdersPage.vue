@@ -77,21 +77,23 @@
         <!-- Order Header -->
         <div class="order-header">
           <div class="order-info">
-            <span class="order-id">訂單編號：#{{ order.id }}</span>
-            <span class="order-date">{{ formatDate(order.orderDate) }}</span>
+            <div class="order-meta">
+              <span class="order-id">#{{ order.id }}</span>
+              <span class="order-date">{{ formatDate(order.orderDate) }}</span>
+            </div>
           </div>
           <el-tag
             :type="getStatusType(order.status)"
             class="order-status"
           >
-            {{ order.status.toUpperCase() }}
+            {{ getStatusLabel(order.status) }}
           </el-tag>
         </div>
 
-        <!-- Order Items -->
+        <!-- Order Items (Truncated) -->
         <div class="order-items">
           <div
-            v-for="item in order.items"
+            v-for="item in order.items.slice(0, 2)"
             :key="item.courseId"
             class="order-item"
             @click="goToCourse(item.courseId)"
@@ -106,24 +108,30 @@
               <p class="course-instructor">講師：{{ item.instructor }}</p>
             </div>
             <div class="course-price">
-              NT$ {{ item.price.toFixed(2) }}
+              NT$ {{ item.price.toLocaleString('zh-TW') }}
             </div>
+          </div>
+
+          <!-- More Items Indicator -->
+          <div v-if="order.items.length > 2" class="more-items-indicator">
+            <el-icon><MoreFilled /></el-icon>
+            <span>還有 {{ order.items.length - 2 }} 門課程</span>
           </div>
         </div>
 
         <!-- Order Footer -->
         <div class="order-footer">
           <div class="order-total">
-            <span class="total-label">總金額：</span>
-            <span class="total-amount">NT$ {{ order.totalAmount.toFixed(2) }}</span>
+            <span class="total-label">總金額</span>
+            <span class="total-amount">NT$ {{ order.totalAmount.toLocaleString('zh-TW') }}</span>
           </div>
           <div class="order-actions">
             <el-button
-              v-if="order.transactionId"
+              plain
               size="small"
-              @click="viewReceipt(order)"
+              @click="openOrderDetails(order)"
             >
-              查看收據
+              查看詳情
             </el-button>
             <el-button
               v-if="order.status === 'pending'"
@@ -148,6 +156,88 @@
         @current-change="handlePageChange"
       />
     </div>
+
+    <!-- Order Details Modal -->
+    <el-dialog
+      v-model="showDetailsDialog"
+      title="訂單詳情"
+      width="600px"
+      :close-on-click-modal="false"
+      class="order-details-dialog"
+    >
+      <div v-if="selectedOrder" class="order-details-content">
+        <!-- Receipt Header -->
+        <div class="receipt-header">
+          <div class="receipt-title">
+            <h2>數位收據</h2>
+            <p class="receipt-subtitle">Digital Receipt</p>
+          </div>
+          <div class="receipt-meta">
+            <div class="meta-row">
+              <span class="meta-label">訂單編號</span>
+              <span class="meta-value">#{{ selectedOrder.id }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">訂單狀態</span>
+              <el-tag
+                :type="getStatusType(selectedOrder.status)"
+                size="small"
+              >
+                {{ getStatusLabel(selectedOrder.status) }}
+              </el-tag>
+            </div>
+            <div v-if="selectedOrder.transactionId" class="meta-row">
+              <span class="meta-label">金流序號</span>
+              <span class="meta-value transaction-id">{{ selectedOrder.transactionId }}</span>
+            </div>
+            <div v-if="selectedOrder.paidAt" class="meta-row">
+              <span class="meta-label">付款時間</span>
+              <span class="meta-value">{{ formatDate(selectedOrder.paidAt) }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">建立時間</span>
+              <span class="meta-value">{{ formatDate(selectedOrder.orderDate) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Receipt Items -->
+        <div class="receipt-items">
+          <h3 class="section-title-student">購買項目</h3>
+          <div class="items-list">
+            <div
+              v-for="item in selectedOrder.items"
+              :key="item.courseId"
+              class="receipt-item"
+            >
+              <img
+                :src="item.cover"
+                :alt="item.title"
+                class="item-cover"
+              />
+              <div class="item-info">
+                <h4 class="item-title">{{ item.title }}</h4>
+                <p class="item-instructor">講師：{{ item.instructor }}</p>
+              </div>
+              <div class="item-price">
+                NT$ {{ item.price.toLocaleString('zh-TW') }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Receipt Total -->
+        <div class="receipt-divider"></div>
+        <div class="receipt-total">
+          <span class="total-label">總金額</span>
+          <span class="total-value">NT$ {{ selectedOrder.totalAmount.toLocaleString('zh-TW') }}</span>
+        </div>
+      </div>
+
+      <template #footer>
+        <el-button @click="showDetailsDialog = false">關閉</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -155,7 +245,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowDown, Loading } from '@element-plus/icons-vue'
+import { ArrowDown, Loading, MoreFilled } from '@element-plus/icons-vue'
 import { getOrdersList } from '@/api/student/orders'
 
 const router = useRouter()
@@ -169,6 +259,8 @@ const loading = ref(false)
 const allOrders = ref([])
 const totalElements = ref(0)
 const totalPages = ref(0)
+const showDetailsDialog = ref(false)
+const selectedOrder = ref(null)
 
 const sortLabels = {
   newest: '由新到舊',
@@ -217,6 +309,7 @@ const loadOrders = async () => {
       allOrders.value = pageData.content.map(order => ({
         id: order.orderId,
         orderDate: order.createdAt,
+        paidAt: order.paidAt,
         status: order.status,
         totalAmount: typeof order.totalAmount === 'string'
           ? parseFloat(order.totalAmount)
@@ -294,18 +387,26 @@ const getStatusType = (status) => {
   return types[status] || 'info'
 }
 
+const getStatusLabel = (status) => {
+  const labels = {
+    paid: '已付款',
+    pending: '待付款',
+    failed: '付款失敗'
+  }
+  return labels[status] || status.toUpperCase()
+}
+
+const openOrderDetails = (order) => {
+  selectedOrder.value = order
+  showDetailsDialog.value = true
+}
+
 const goToCourse = (courseId) => {
   router.push(`/courses/${courseId}`)
 }
 
 const goToExplore = () => {
   router.push('/explore')
-}
-
-const viewReceipt = (order) => {
-  console.log('查看收據，訂單 ID:', order.id)
-  // TODO: 實際應該打開收據頁面或下載 PDF
-  ElMessage.info('收據功能開發中')
 }
 
 const proceedPayment = async (order) => {
@@ -449,14 +550,16 @@ onMounted(() => {
 
 .order-card {
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 12px;
+  border: 1px solid var(--capy-border-lighter);
+  border-radius: var(--capy-radius-md);
   overflow: hidden;
   transition: all 0.3s;
+  box-shadow: var(--capy-shadow-sm);
 }
 
 .order-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--capy-shadow-md);
+  transform: translateY(-2px);
 }
 
 /* Order Header */
@@ -475,15 +578,21 @@ onMounted(() => {
   gap: 4px;
 }
 
+.order-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .order-id {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--capy-text-secondary);
 }
 
 .order-date {
-  font-size: 12px;
-  color: #666;
+  font-size: 13px;
+  color: var(--capy-text-secondary);
 }
 
 .order-status {
@@ -533,7 +642,7 @@ onMounted(() => {
 .course-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--capy-text-primary);
   margin: 0 0 6px 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -549,8 +658,25 @@ onMounted(() => {
 .course-price {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--capy-text-primary);
   flex-shrink: 0;
+}
+
+/* More Items Indicator */
+.more-items-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  background: var(--capy-bg-base);
+  border-radius: var(--capy-radius-sm);
+  color: var(--capy-text-secondary);
+  font-size: 14px;
+}
+
+.more-items-indicator .el-icon {
+  color: var(--capy-primary);
 }
 
 /* Order Footer */
@@ -571,13 +697,13 @@ onMounted(() => {
 
 .total-label {
   font-size: 14px;
-  color: #666;
+  color: var(--capy-text-secondary);
 }
 
 .total-amount {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--capy-warning);
 }
 
 .order-actions {
@@ -695,5 +821,171 @@ onMounted(() => {
   .course-instructor {
     font-size: 12px;
   }
+}
+
+/* Order Details Modal Styles */
+.order-details-dialog :deep(.el-dialog__header) {
+  border-bottom: 1px solid var(--capy-border-lighter);
+  padding: 20px 24px;
+}
+
+.order-details-dialog :deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+}
+
+.order-details-dialog :deep(.el-dialog__body) {
+  padding: 0;
+}
+
+.order-details-content {
+  padding: 24px;
+}
+
+/* Receipt Header */
+.receipt-header {
+  margin-bottom: 24px;
+}
+
+.receipt-title h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--capy-text-primary);
+  margin: 0 0 4px 0;
+}
+
+.receipt-subtitle {
+  font-size: 14px;
+  color: var(--capy-text-tertiary);
+  margin: 0 0 16px 0;
+}
+
+.receipt-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--capy-bg-base);
+  border-radius: var(--capy-radius-sm);
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-label {
+  font-size: 14px;
+  color: var(--capy-text-secondary);
+}
+
+.meta-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+}
+
+.transaction-id {
+  font-family: monospace;
+  color: var(--capy-primary);
+}
+
+/* Receipt Items */
+.receipt-items {
+  margin-bottom: 24px;
+}
+
+.section-title-student {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+  margin: 0 0 16px 0;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.receipt-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--capy-bg-base);
+  border-radius: var(--capy-radius-sm);
+}
+
+.item-cover {
+  width: 80px;
+  height: 45px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+  margin: 0 0 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-instructor {
+  font-size: 12px;
+  color: var(--capy-text-secondary);
+  margin: 0;
+}
+
+.item-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+  flex-shrink: 0;
+}
+
+/* Receipt Total */
+.receipt-divider {
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--capy-border-lighter) 0,
+    var(--capy-border-lighter) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  margin: 24px 0;
+}
+
+.receipt-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--capy-bg-base);
+  border-radius: var(--capy-radius-sm);
+}
+
+.receipt-total .total-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--capy-text-primary);
+}
+
+.receipt-total .total-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--capy-primary);
 }
 </style>

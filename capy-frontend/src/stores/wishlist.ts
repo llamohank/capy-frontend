@@ -516,7 +516,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
    * 將願望清單項目移至購物車
    * @param courseId 課程 ID
    */
-  const moveToCart = (courseId: number) => {
+  const moveToCart = async (courseId: number) => {
     const item = items.value.find(item => item.courseId === courseId)
 
     if (!item) {
@@ -525,8 +525,8 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
     const cartStore = useCartStore()
 
-    // 新增到購物車
-    const added = cartStore.addItem({
+    // 新增到購物車（等待非同步操作完成）
+    const added = await cartStore.addItem({
       id: item.courseId,
       title: item.title,
       instructor: item.instructor,
@@ -536,7 +536,7 @@ export const useWishlistStore = defineStore('wishlist', () => {
 
     // 如果成功加入購物車，從願望清單移除
     if (added) {
-      removeItem(courseId)
+      await removeItem(courseId)
       return true
     }
 

@@ -29,6 +29,17 @@ const goToCourse = (id) => {
   router.push(`/courses/${id}`)
 }
 
+/**
+ * 點擊標籤跳轉到 Explore 頁面進行搜尋
+ */
+const handleTagClick = (event, tagName) => {
+  event.stopPropagation() // 防止觸發卡片點擊事件
+  router.push({
+    path: '/explore',
+    query: { keyword: tagName }
+  })
+}
+
 const formatPrice = (price) => {
   return price.toLocaleString('zh-TW')
 }
@@ -157,6 +168,7 @@ const isInWishlist = (courseId) => {
               v-for="(tag, index) in course.tags"
               :key="index"
               class="tag-item"
+              @click="handleTagClick($event, tag)"
             >
               {{ tag }}
             </span>
@@ -176,7 +188,7 @@ const isInWishlist = (courseId) => {
                 disabled-void-color="#d0d0d0"
               />
               <span class="rating-score">{{ course.averageRating ? Number(course.averageRating).toFixed(1) : '0.0' }}</span>
-              <span class="rating-count">({{ formatCount(course.reviewCount) }})</span>
+              <span class="rating-count">({{ formatCount(course.reviewCount) }})則評論</span>
             </div>
 
             <div class="price-section">
@@ -399,17 +411,20 @@ const isInWishlist = (courseId) => {
   border-radius: 12px;
   border: 1px solid rgba(0, 191, 165, 0.2);
   transition: all var(--capy-transition-fast);
+  cursor: pointer;
 }
 
 .tag-item:hover {
   background: rgba(0, 191, 165, 0.15);
   border-color: var(--capy-primary);
+  transform: translateY(-1px);
 }
 
 .course-instructor {
-  font-size: var(--capy-font-size-sm);
-  color: var(--capy-text-secondary);
-  margin: 0 0 var(--capy-spacing-md) 0;
+  font-size: 13px;
+  color: var(--capy-text-primary);
+  font-weight: 500;
+  margin: 0 0 12px 0;
 }
 
 .course-meta {
@@ -458,12 +473,15 @@ const isInWishlist = (courseId) => {
 .price-section {
   display: flex;
   align-items: center;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 .price {
-  font-size: var(--capy-font-size-lg);
-  font-weight: var(--capy-font-weight-bold);
-  color: var(--capy-primary);
+  font-size: var(--capy-font-size-xl);
+  font-weight: 700;
+  color: var(--capy-danger);
+  letter-spacing: 0.5px;
 }
 
 .purchase-info {

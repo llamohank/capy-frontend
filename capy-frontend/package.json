@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
-    "@llamohank/custom-shaka-player": "^1.0.1",
+    "@llamohank/custom-shaka-player": "^1.0.2",
     "axios": "^1.13.2",
     "dompurify": "^3.3.0",
     "echarts": "^6.0.0",

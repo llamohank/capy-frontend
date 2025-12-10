@@ -22,7 +22,7 @@ const courseInfoRules = {
     { required: true, message: "課程名稱為必填項", trigger: "blur" },
     { max: 15, message: "課程名稱最多為15個字", trigger: "blur" },
   ],
-  coverImageUrl: [{ required: true, message: "課程封面為必需項", trigger: "cnange" }],
+  coverImageUrl: [{ required: true, message: "課程封面為必需項", trigger: "change" }],
   price: [{ required: true, message: "課程價格為必填項", trigger: "blur" }],
   description: [
     { required: true, message: "課程介紹為必填項", trigger: "blur" },

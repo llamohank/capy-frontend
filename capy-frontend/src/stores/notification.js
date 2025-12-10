@@ -141,7 +141,7 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   /**
-   * 獲取通知列表
+   * 獲取通知列表（通用）
    * @param {Object} params - 查詢參數
    * @param {Array<string>} params.types - 通知類型篩選
    * @param {number} params.page - 頁碼
@@ -175,6 +175,50 @@ export const useNotificationStore = defineStore('notification', () => {
       console.log(`✅ 已載入 ${response.content.length} 個通知`)
     } catch (error) {
       console.error('獲取通知列表失敗:', error)
+      ElMessage.error('載入通知失敗')
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * 獲取學生通知列表
+   * @param {Object} params - 查詢參數
+   * @param {string} params.announcementType - 公告類型篩選（platform / instructor / other / 未填=全部）
+   * @param {number} params.page - 頁碼
+   * @param {number} params.size - 每頁數量
+   * @param {boolean} params.append - 是否追加到現有列表（用於無限滾動）
+   */
+  const fetchStudentNotifications = async (params = {}) => {
+    const { append = false } = params
+
+    loading.value = true
+
+    try {
+      const response = await notificationApi.getStudentNotifications(params)
+
+      if (append) {
+        // 追加模式：用於無限滾動
+        notifications.value = [...notifications.value, ...response.content]
+      } else {
+        // 替換模式：用於初始載入或重新整理
+        notifications.value = response.content
+      }
+
+      // 更新分頁資訊
+      pagination.value = {
+        totalElements: response.totalElements,
+        totalPages: response.totalPages,
+        size: response.size,
+        number: response.number,
+        first: response.first,
+        last: response.last
+      }
+
+      console.log(`✅ 已載入 ${response.content.length} 個學生通知`)
+    } catch (error) {
+      console.error('獲取學生通知列表失敗:', error)
       ElMessage.error('載入通知失敗')
       throw error
     } finally {
@@ -270,6 +314,13 @@ export const useNotificationStore = defineStore('notification', () => {
         console.error('SSE 連線錯誤:', error)
         isSSEConnected.value = false
         connectionState.value = 'error'
+
+        // 處理認證錯誤
+        if (error.type === 'auth_error') {
+          ElMessage.error('通知連線失敗，請重新登入')
+          // 可以在這裡觸發登出或重新導向到登入頁面
+          // 例如: router.push('/login')
+        }
       },
       // 連線狀態變更回調
       (state) => {
@@ -416,6 +467,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
     // Actions
     fetchNotifications,
+    fetchStudentNotifications,
     fetchUnreadCount,
     markAllAsRead,
     markAsRead,

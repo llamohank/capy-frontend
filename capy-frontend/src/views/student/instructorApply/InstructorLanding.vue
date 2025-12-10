@@ -9,7 +9,6 @@
           加入 CapyCourse，保留 <strong>70%</strong> 的收益。<br />
           安全的影片託管、每月準時付款，以及不斷成長的學生群體。
         </p>
-        <router-link :to="{ name: 'becomeInstructor' }">
         <el-button
           type="primary"
           size="large"
@@ -19,7 +18,6 @@
           立即開始教學
           <el-icon class="ml-2"><ArrowRight /></el-icon>
         </el-button>
-        </router-link>
       </div>
     </section>
 
@@ -309,12 +307,12 @@ const formatPrice = (value) => {
 const handleStartTeaching = () => {
   if (userStore.isAuthenticated) {
     // User is logged in, go to application form
-    router.push('/become-instructor')
+    router.push({ name: 'becomeInstructor' })
   } else {
     // User not logged in, go to login page
     router.push({
-      name: 'Login',
-      query: { redirect: '/become-instructor' }
+      name: 'login',
+      query: { redirect: '/instructor/apply' }
     })
   }
 }

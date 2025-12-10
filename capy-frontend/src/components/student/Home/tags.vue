@@ -1,5 +1,8 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // 接收從父組件傳來的標籤資料
 const props = defineProps({
@@ -12,6 +15,18 @@ const props = defineProps({
 // 後端返回的格式: [{ id, name }]
 // 直接使用後端資料，不需要排序（後端已經按熱度排序）
 const displayTags = computed(() => props.tags)
+
+// 點擊標籤跳轉到 Explore 頁面
+const handleTagClick = async (tagName) => {
+  await router.push({
+    path: '/explore',
+    query: { keyword: tagName }
+  })
+
+  // 確保路由跳轉完成後再滾動
+  await nextTick()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
@@ -20,6 +35,7 @@ const displayTags = computed(() => props.tags)
       v-for="tag in displayTags"
       :key="tag.id"
       class="tag-pill"
+      @click="handleTagClick(tag.name)"
     >
       {{ tag.name }}
     </button>

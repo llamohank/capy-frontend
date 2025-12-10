@@ -110,6 +110,21 @@ export const resetPassword = ({ token, newPassword }) => {
 };
 
 /**
+ * 驗證電子郵件
+ * @param {string} token - 驗證令牌
+ * @returns {Promise}
+ */
+export const verifyEmail = (token) => {
+  if (!token) {
+    return Promise.reject(new Error('缺少驗證令牌'));
+  }
+
+  // 使用 POST 請求，token 作為 query parameter
+  // 確保 URL 中有 ?token=
+  return instance.post('/auth/verifyEmail', null, { params: { token } });
+};
+
+/**
  * 修改密碼（已登入使用者）
  * @param {Object} changeParam - 修改密碼參數 { oldPassword, newPassword }
  * @returns {Promise}

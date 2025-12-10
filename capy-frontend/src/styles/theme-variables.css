@@ -196,6 +196,7 @@
 
   /* ==================== 背景色覆寫 ==================== */
 
+
   --el-bg-color: #FFFFFF;
   --el-bg-color-page: #F5F7FA;
   --el-bg-color-overlay: #FFFFFF;
@@ -209,6 +210,7 @@
   --el-fill-color-extra-light: #FAFCFF;
   --el-fill-color-dark: #EBEDF0;
   --el-fill-color-darker: #E6E8EB;
+
 }
 
 /* ==================== 工具類別 ==================== */

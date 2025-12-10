@@ -68,6 +68,14 @@ export const useCartStore = defineStore('cart', () => {
    * 從後端載入購物車列表
    */
   const fetchCartList = async () => {
+    const userStore = useUserStore()
+
+    // 如果未登入，直接返回 false（不顯示錯誤訊息）
+    if (!userStore.isAuthenticated) {
+      console.log('未登入，跳過載入購物車')
+      return false
+    }
+
     try {
       const data = await getCartList()
       if (data && Array.isArray(data)) {
@@ -83,7 +91,14 @@ export const useCartStore = defineStore('cart', () => {
         return true
       }
       return false
-    } catch (error) {
+    } catch (error: any) {
+      // 靜默處理 401 錯誤（未登入）
+      if (error?.response?.status === 401 || error?.status === 401) {
+        console.log('未登入，無法載入購物車')
+        return false
+      }
+
+      // 其他錯誤才顯示訊息
       console.error('載入購物車失敗:', error)
       ElMessage.error('載入購物車失敗')
       return false
@@ -93,6 +108,11 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * 新增課程到購物車
    * @param course 課程資訊
+   *
+   * 注意：此方法假設後端已修改為：
+   * - 成功時返回 200 OK
+   * - 已擁有課程時返回 400 Bad Request
+   * - 已在購物車時返回 409 Conflict
    */
   const addItem = async (course: {
     id: number
@@ -101,41 +121,75 @@ export const useCartStore = defineStore('cart', () => {
     price: number
     cover_image_url: string
   }) => {
-    // 檢查課程是否已在購物車中
-    const existingItem = items.value.find(item => item.courseId === course.id)
-
-    if (existingItem) {
-      ElMessage.warning('課程已在購物車中')
-      return false
-    }
-
     try {
-      // 呼叫後端 API
+      // 呼叫後端 API（成功時返回 200）
       await addToCartAPI(course.id)
 
-      // 新增到本地購物車
-      items.value.push({
-        courseId: course.id,
-        title: course.title,
-        instructor: course.instructor,
-        price: course.price,
-        coverImageUrl: course.cover_image_url
-      })
+      // 成功加入：更新本地購物車
+      const existingItem = items.value.find(item => item.courseId === course.id)
 
-      // 儲存到 localStorage
-      saveToStorage()
+      if (!existingItem) {
+        items.value.push({
+          courseId: course.id,
+          title: course.title,
+          instructor: course.instructor,
+          price: course.price,
+          coverImageUrl: course.cover_image_url
+        })
 
-      // 更新 user store 的購物車數量
-      const userStore = useUserStore()
-      if (userStore.isAuthenticated) {
-        userStore.cartQuantity = items.value.length
+        // 儲存到 localStorage
+        saveToStorage()
+
+        // 更新 user store 的購物車數量
+        const userStore = useUserStore()
+        if (userStore.isAuthenticated) {
+          userStore.cartQuantity = items.value.length
+        }
       }
 
-      ElMessage.success('已加入購物車')
+      // 顯示成功訊息
+      ElMessage.success(`已加入「${course.title}」到購物車`)
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('加入購物車失敗:', error)
-      ElMessage.error('加入購物車失敗')
+
+      // 從錯誤回應中提取訊息
+      let errorMessage = '加入購物車失敗'
+      let messageType: 'info' | 'warning' | 'error' = 'error'
+
+      if (error?.response?.data) {
+        const responseData = error.response.data
+        // 後端標準格式：{ success, code, message, data }
+        errorMessage = responseData.message || errorMessage
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+
+      // 根據狀態碼或訊息內容判斷錯誤類型
+      if (error?.response?.status === 409) {
+        // 409 Conflict - 課程已在購物車
+        errorMessage = '課程已在購物車中'
+        messageType = 'warning'
+      } else if (typeof errorMessage === 'string') {
+        if (errorMessage.includes('已擁有')) {
+          // 已購買課程
+          messageType = 'info'
+        } else if (errorMessage.includes('已在購物車')) {
+          // 已在購物車
+          errorMessage = '課程已在購物車中'
+          messageType = 'warning'
+        }
+      }
+
+      // 顯示訊息（不包含錯誤代碼）
+      if (messageType === 'info') {
+        ElMessage.info(errorMessage)
+      } else if (messageType === 'warning') {
+        ElMessage.warning(errorMessage)
+      } else {
+        ElMessage.error(errorMessage)
+      }
+
       return false
     }
   }

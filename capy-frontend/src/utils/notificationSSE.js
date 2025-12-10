@@ -131,6 +131,28 @@ class NotificationSSEService {
       // 監聽錯誤事件
       this.eventSource.onerror = (error) => {
         console.error('❌ SSE 連線錯誤:', error)
+
+        // 檢查是否為認證錯誤（401/403）
+        // EventSource 在遇到 HTTP 錯誤時會自動關閉並觸發 error 事件
+        // readyState 會變成 CLOSED (2)
+        if (this.eventSource && this.eventSource.readyState === EventSource.CLOSED) {
+          console.warn('⚠️ SSE 連線已關閉，可能是認證失敗 (401/403)')
+          this.updateConnectionState('error')
+
+          // 不再嘗試重連，因為可能是認證問題
+          this.isManualClose = true
+
+          if (this.onErrorCallback) {
+            this.onErrorCallback({
+              type: 'auth_error',
+              message: '連線失敗，請重新登入',
+              error
+            })
+          }
+
+          return
+        }
+
         this.updateConnectionState('error')
 
         if (this.onErrorCallback) {

@@ -47,23 +47,33 @@
         <el-breadcrumb separator="/" class="breadcrumb">
           <el-breadcrumb-item>All Courses</el-breadcrumb-item>
           <el-breadcrumb-item>
-            {{ breadcrumbText }} ({{ coursesData.totalElements }} Courses)
+            {{ breadcrumbText }}
           </el-breadcrumb-item>
         </el-breadcrumb>
 
-        <!-- Selected Tags -->
-        <div v-if="selectedTags.length > 0" class="selected-tags">
-          <el-tag
-            v-for="tag in selectedTags"
-            :key="tag"
-            closable
-            type="info"
-            size="large"
-            @close="removeTag(tag)"
-          >
-            {{ tag }}
-          </el-tag>
+        <!-- Sort and Count Bar -->
+        <div class="sort-count-bar">
+          <el-select v-model="sortBy" placeholder="排序" size="default" class="sort-select">
+            <el-option label="最新課程" value="latest" />
+            <el-option label="最熱門" value="popular" />
+            <el-option label="評分最高" value="rating" />
+          </el-select>
+          <span class="course-count">共有 {{ coursesData.totalElements }} 堂課程</span>
         </div>
+
+        <!-- Active Filters Bar -->
+        <ActiveFiltersBar
+          :search-keyword="searchQuery"
+          :selected-categories="selectedCategories"
+          :selected-tags="selectedTags"
+          :selected-rating="selectedRating"
+          :categories="categories"
+          @remove-keyword="handleRemoveSearchKeyword"
+          @remove-category="handleRemoveCategory"
+          @remove-tag="handleRemoveTag"
+          @remove-rating="handleRemoveRating"
+          @clear-all="handleClearAllFilters"
+        />
 
         <!-- Loading State -->
         <div v-if="loading" class="loading-wrapper">
@@ -145,17 +155,21 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Filter } from '@element-plus/icons-vue'
-import ExploreHeader from '@/components/student/Explore/ExploreHeader.vue'
 import ExploreCourseCard from '@/components/student/Explore/ExploreCard/ExploreCourseCard.vue'
 import CategoryTreeMulti from '@/components/student/Explore/FilterDrawer/CategoryTreeMulti.vue'
 import CategoryRadioGroup from '@/components/student/Explore/FilterDrawer/CategoryRadioGroup.vue'
 import RatingOptions from '@/components/student/Explore/FilterDrawer/RatingOptions.vue'
-import { categories } from '@/mockData'
+import ActiveFiltersBar from '@/components/student/Explore/ActiveFiltersBar.vue'
 import { useWishlistStore } from '@/stores/wishlist'
 import { useUserStore } from '@/stores/user'
-import { searchCourses } from '@/api/student/explore'
+import { searchCourses, getCategories } from '@/api/student/explore'
+
+// Router
+const route = useRoute()
+const router = useRouter()
 
 // Stores
 const wishlistStore = useWishlistStore()
@@ -172,6 +186,10 @@ const selectedTags = ref([])
 const searchQuery = ref('')
 const sortBy = ref('popular') // 'popular' or 'latest'
 
+// 分類資料狀態
+const categories = ref([])
+const categoriesLoading = ref(false)
+
 // API 相關狀態
 const loading = ref(false)
 const coursesData = ref({
@@ -185,6 +203,22 @@ const coursesData = ref({
   empty: true
 })
 
+// 載入分類資料
+const loadCategories = async () => {
+  categoriesLoading.value = true
+  try {
+    const result = await getCategories()
+    categories.value = result
+    console.log('載入分類樹成功:', result)
+  } catch (error) {
+    console.error('載入分類樹失敗:', error)
+    ElMessage.error('載入分類資料失敗，請稍後再試')
+    categories.value = []
+  } finally {
+    categoriesLoading.value = false
+  }
+}
+
 // 建立 category ID 到 name 的映射
 const buildCategoryIdToNameMap = () => {
   const map = new Map()
@@ -196,11 +230,11 @@ const buildCategoryIdToNameMap = () => {
       }
     })
   }
-  traverse(categories)
+  traverse(categories.value)
   return map
 }
 
-const categoryIdToName = buildCategoryIdToNameMap()
+const categoryIdToName = computed(() => buildCategoryIdToNameMap())
 
 // Pagination states（後端分頁，從 1 開始顯示但 API 從 0 開始）
 const currentPage = ref(1)
@@ -222,7 +256,7 @@ const breadcrumbText = computed(() => {
   }
 
   const categoryNames = selectedCategories.value
-    .map(id => categoryIdToName.get(id))
+    .map(id => categoryIdToName.value.get(id))
     .filter(Boolean)
 
   if (categoryNames.length === 0) {
@@ -257,9 +291,12 @@ const loadCourses = async () => {
       sort: sortBy.value
     }
 
-    // 關鍵字搜尋
+    // 關鍵字搜尋（優先使用 searchQuery，如果沒有則使用第一個 selectedTag）
     if (searchQuery.value) {
       params.keyword = searchQuery.value
+    } else if (selectedTags.value.length > 0) {
+      // 如果沒有搜尋關鍵字但有選擇的 tags，使用第一個 tag 作為 keyword
+      params.keyword = selectedTags.value[0]
     }
 
     // 分類篩選（只取第一個分類，因為後端只支援單一 categoryId）
@@ -307,12 +344,12 @@ const handleSearch = (query) => {
 }
 
 const handleTagClick = (tag) => {
-  // Tag 篩選功能等後端 API 支援後再實作
-  // 目前將 tag 轉換為關鍵字搜尋（因為後端 keyword 會搜尋 tags）
-  searchQuery.value = tag
-  currentPage.value = 1
-  loadCourses()
-  ElMessage.info(`搜尋標籤：${tag}`)
+  // 將 tag 加入到 selectedTags 陣列（不設定 searchQuery，避免重複顯示）
+  if (!selectedTags.value.includes(tag)) {
+    selectedTags.value.push(tag)
+    currentPage.value = 1
+    loadCourses()
+  }
 }
 
 const removeTag = (tag) => {
@@ -322,6 +359,59 @@ const removeTag = (tag) => {
     selectedTags.value.splice(index, 1)
   }
   currentPage.value = 1
+}
+
+const handleRemoveCategory = (categoryId) => {
+  console.log('移除 category:', categoryId)
+  console.log('移除前:', selectedCategories.value)
+  const index = selectedCategories.value.indexOf(categoryId)
+  if (index > -1) {
+    selectedCategories.value.splice(index, 1)
+  }
+  console.log('移除後:', selectedCategories.value)
+  currentPage.value = 1
+  loadCourses()
+}
+
+const handleRemoveTag = (tag) => {
+  removeTag(tag)
+  currentPage.value = 1
+  loadCourses()
+}
+
+const handleRemoveRating = () => {
+  selectedRating.value = 0
+  currentPage.value = 1
+  loadCourses()
+}
+
+const handleRemoveSearchKeyword = () => {
+  // 清除搜尋關鍵字
+  searchQuery.value = ''
+
+  // 同步 URL（移除 keyword 參數）
+  const newQuery = { ...route.query }
+  delete newQuery.keyword
+  delete newQuery.search // 也移除舊的 search 參數
+  delete newQuery.tag // 也移除 tag 參數
+  router.replace({ query: newQuery })
+
+  // 重新載入課程
+  currentPage.value = 1
+  loadCourses()
+}
+
+const handleClearAllFilters = () => {
+  selectedCategories.value = []
+  selectedTags.value = []
+  selectedRating.value = 0
+  searchQuery.value = ''
+
+  // 清除所有 URL 參數
+  router.replace({ query: {} })
+
+  currentPage.value = 1
+  loadCourses()
 }
 
 const toggleWishlist = async (courseId) => {
@@ -360,12 +450,44 @@ watch([selectedCategories, selectedRating, sortBy], () => {
   loadCourses()
 }, { deep: true })
 
+// 監聽 URL query 變化（當使用者在 Header 搜尋時）
+watch(() => route.query, (newQuery) => {
+  // 優先使用 keyword，其次 search，最後 tag
+  const keyword = newQuery.keyword || newQuery.search || newQuery.tag
+  if (keyword && keyword !== searchQuery.value) {
+    searchQuery.value = keyword
+    currentPage.value = 1
+    loadCourses()
+  }
+}, { deep: true })
+
 onMounted(async () => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 
   // 先從 localStorage 載入願望清單資料（快速顯示）
   wishlistStore.loadFromStorage()
+
+  // 載入分類樹資料
+  await loadCategories()
+
+  // 讀取 URL query 參數
+  const query = route.query
+
+  // 優先使用 keyword，其次 search，最後 tag
+  const keyword = query.keyword || query.search || query.tag
+  if (keyword) {
+    searchQuery.value = keyword
+    console.log('從 URL 讀取搜尋關鍵字:', keyword)
+  }
+
+  if (query.categoryId) {
+    const categoryId = parseInt(query.categoryId)
+    if (!isNaN(categoryId)) {
+      selectedCategories.value = [categoryId]
+      console.log('從 URL 讀取分類 ID:', categoryId)
+    }
+  }
 
   // 載入課程資料
   await loadCourses()
@@ -458,8 +580,8 @@ onUnmounted(() => {
 .mobile-filter-btn .el-button {
   width: 100%;
   border-radius: 8px;
-  background: #7ec8a3;
-  border-color: #7ec8a3;
+  background: var(--capy-primary);
+  border-color: var(--capy-primary);
 }
 
 .breadcrumb {
@@ -468,15 +590,29 @@ onUnmounted(() => {
 }
 
 .breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: #7ec8a3;
+  color: var(--capy-primary);
   font-weight: 600;
 }
 
-.selected-tags {
+.sort-count-bar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--capy-bg-surface);
+  border-radius: var(--capy-radius-base);
+  border: 1px solid var(--capy-border-lighter);
+}
+
+.sort-select {
+  width: 160px;
+}
+
+.course-count {
+  font-size: var(--capy-font-size-sm);
+  color: var(--capy-text-secondary);
+  font-weight: var(--capy-font-weight-medium);
 }
 
 .course-grid {
@@ -498,12 +634,12 @@ onUnmounted(() => {
 }
 
 .pagination-wrapper :deep(.el-pager li.is-active) {
-  background: #7ec8a3;
+  background: var(--capy-primary);
   color: #fff;
 }
 
 .pagination-wrapper :deep(.el-pager li:hover) {
-  color: #7ec8a3;
+  color: var(--capy-primary);
 }
 
 .drawer-content {
@@ -521,15 +657,15 @@ onUnmounted(() => {
 
 .apply-btn {
   width: 100%;
-  background: #7ec8a3;
-  border-color: #7ec8a3;
+  background: var(--capy-primary);
+  border-color: var(--capy-primary);
   border-radius: 8px;
   font-weight: 600;
 }
 
 .apply-btn:hover {
-  background: #6bb890;
-  border-color: #6bb890;
+  background: var(--capy-primary-dark);
+  border-color: var(--capy-primary-dark);
 }
 
 /* RWD */

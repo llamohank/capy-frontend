@@ -31,19 +31,24 @@
             v-for="(lesson, lessonIndex) in section.lessons"
             :key="lessonIndex"
             class="lesson-item"
+            :class="{ 'clickable': isEnrolled || lesson.preview }"
+            @click="handleLessonItemClick(lesson, index, lessonIndex)"
           >
             <span class="lesson-number">{{ lessonIndex + 1 }}.</span>
             <span class="lesson-title">{{ lesson.title }}</span>
             <span class="lesson-duration">{{ lesson.duration }}</span>
-            <el-tag v-if="lesson.preview" size="small" type="info">Preview</el-tag>
+            <a
+              v-if="!isEnrolled && lesson.preview"
+              href="javascript:void(0)"
+              class="preview-link"
+              @click.stop="handlePreviewClick(lesson, index, lessonIndex)"
+            >
+              預覽
+            </a>
           </div>
         </div>
       </el-collapse-item>
       </el-collapse>
-
-    <div>
-        <p class="course-description">{{ description }}</p>
-    </div>
     </div>
 
   </div>
@@ -53,7 +58,7 @@
 import { ref } from 'vue'
 import { ArrowRight } from '@element-plus/icons-vue'
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: ''
@@ -73,10 +78,44 @@ defineProps({
   showContent: {
     type: Boolean,
     default: true
+  },
+  isEnrolled: {
+    type: Boolean,
+    default: false
   }
 })
 
+const emit = defineEmits(['preview', 'lesson-click'])
+
 const activeNames = ref([0])
+
+/**
+ * 處理課程項目點擊（整行點擊）
+ */
+const handleLessonItemClick = (lesson, sectionIndex, lessonIndex) => {
+  // 如果用戶已購買，或者是免費試看課程，才允許點擊
+  if (props.isEnrolled || lesson.preview) {
+    emit('lesson-click', {
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      isFreePreview: lesson.preview,
+      sectionIndex,
+      lessonIndex
+    })
+  }
+}
+
+/**
+ * 處理預覽按鈕點擊（僅訪客用戶顯示）
+ */
+const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
+  emit('preview', {
+    lessonId: lesson.id,
+    lessonTitle: lesson.title,
+    sectionIndex,
+    lessonIndex
+  })
+}
 </script>
 
 <style scoped>
@@ -166,10 +205,20 @@ const activeNames = ref([0])
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
   gap: 12px;
+  transition: background-color 0.2s ease;
 }
 
 .lesson-item:last-child {
   border-bottom: none;
+}
+
+/* 可點擊的課程項目 */
+.lesson-item.clickable {
+  cursor: pointer;
+}
+
+.lesson-item.clickable:hover {
+  background-color: #f8f9fa;
 }
 
 .lesson-number {
@@ -187,6 +236,30 @@ const activeNames = ref([0])
 .lesson-duration {
   color: #999;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+/* 預覽連結樣式 */
+.preview-link {
+  color: var(--capy-primary, #54CDF2);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--capy-primary, #54CDF2);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.preview-link:hover {
+  background: var(--capy-primary, #54CDF2);
+  color: white;
+  text-decoration: none;
 }
 
 :deep(.el-collapse) {

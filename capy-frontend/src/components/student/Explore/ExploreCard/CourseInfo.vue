@@ -123,14 +123,15 @@ const handleTagClick = (tag, event) => {
   font-weight: 600;
   color: #2c3e50;
   margin: 0 0 var(--capy-spacing-sm) 0;
-  line-height: 1.4;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-  min-height: 44px;
+  min-height: 48px; /* 2 lines * 24px (16px * 1.5) */
+  max-height: 48px;
 }
 
 .course-tags {
@@ -143,18 +144,18 @@ const handleTagClick = (tag, event) => {
 .tag-item {
   display: inline-block;
   padding: 3px 10px;
-  background: rgba(0, 191, 165, 0.1);
+  background: rgba(84, 205, 242, 0.1);
   color: var(--capy-primary);
   font-size: var(--capy-font-size-xs);
   font-weight: var(--capy-font-weight-semibold);
   border-radius: 12px;
-  border: 1px solid rgba(0, 191, 165, 0.2);
+  border: 1px solid rgba(84, 205, 242, 0.2);
   cursor: pointer;
   transition: all var(--capy-transition-fast);
 }
 
 .tag-item:hover {
-  background: rgba(0, 191, 165, 0.15);
+  background: rgba(84, 205, 242, 0.15);
   border-color: var(--capy-primary);
   transform: translateY(-1px);
 }
@@ -173,7 +174,8 @@ const handleTagClick = (tag, event) => {
 
 .course-teacher {
   font-size: 13px;
-  color: #909399;
+  color: var(--capy-text-primary);
+  font-weight: 500;
   margin: 0 0 12px 0;
 }
 
@@ -207,7 +209,15 @@ const handleTagClick = (tag, event) => {
 
 .rating-count {
   font-size: 13px;
-  color: #909399;
+  color: var(--capy-text-secondary);
+}
+
+.rating-count::before {
+  content: '';
+}
+
+.rating-count::after {
+  content: '則評價';
 }
 
 .course-price {

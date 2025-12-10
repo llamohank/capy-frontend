@@ -2,178 +2,203 @@
   <div class="notifications-page">
     <!-- Header -->
     <div class="page-header">
-      <h1 class="page-title">My Notifications</h1>
+      <h1 class="page-title">我的通知</h1>
+      <div class="header-actions">
+        <el-button
+          v-if="notificationStore.unreadCount > 0"
+          type="primary"
+          size="small"
+          @click="handleMarkAllAsRead"
+        >
+          全部標記為已讀
+        </el-button>
+      </div>
     </div>
 
     <!-- Filter Tabs -->
-    <NotificationFilters v-model="activeFilter" />
+    <NotificationFilters v-model="activeFilter" @change="handleFilterChange" />
 
     <!-- Search Bar -->
-    <NotificationSearchBar v-model="searchQuery" />
+    <NotificationSearchBar v-model="searchQuery" @search="handleSearch" />
+
+    <!-- Loading State -->
+    <div v-if="notificationStore.loading" class="loading-container">
+      <el-skeleton :rows="5" animated />
+    </div>
 
     <!-- Notifications List -->
-    <div class="notifications-list">
+    <div v-else class="notifications-list">
       <NotificationCard
-        v-for="notification in paginatedNotifications"
+        v-for="notification in displayedNotifications"
         :key="notification.id"
         :notification="notification"
         @click="handleNotificationClick"
+        @delete="handleDeleteNotification"
       />
 
       <!-- Empty State -->
-      <div v-if="filteredNotifications.length === 0" class="empty-state">
+      <div v-if="displayedNotifications.length === 0" class="empty-state">
         <el-icon :size="64" color="#C0C4CC">
           <BellFilled />
         </el-icon>
-        <p class="empty-text">No notifications found</p>
+        <p class="empty-text">{{ emptyStateText }}</p>
       </div>
     </div>
 
     <!-- Pagination -->
-    <div v-if="filteredNotifications.length > pageSize" class="pagination-container">
+    <div v-if="notificationStore.pagination.totalElements > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="filteredNotifications.length"
+        :page-size="notificationStore.pagination.size"
+        :total="notificationStore.pagination.totalElements"
         :pager-count="5"
-        layout="prev, pager, next"
+        layout="total, prev, pager, next"
         background
-        size="small"
+        @current-change="handlePageChange"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { BellFilled } from '@element-plus/icons-vue'
-import { NotificationType } from '@/types/notification'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useNotificationStore } from '@/stores/notification'
 import NotificationCard from '@/components/student/StudentCenter/MyNotification/NotificationCard.vue'
 import NotificationFilters from '@/components/student/StudentCenter/MyNotification/NotificationFilters.vue'
 import NotificationSearchBar from '@/components/student/StudentCenter/MyNotification/NotificationSearchBar.vue'
+
+// Store
+const notificationStore = useNotificationStore()
 
 // State
 const activeFilter = ref('all')
 const searchQuery = ref('')
 const currentPage = ref(1)
-const pageSize = ref(5)
+const announcementType = ref(undefined) // platform / instructor / other / undefined=全部
 
-// Mock notifications data
-const notifications = ref([
-  {
-    id: 1,
-    title: 'Course Update',
-    content: 'Your course "Introduction to Data Science" has been updated with new materials.',
-    notificationType: NotificationType.CourseUpdate,
-    isRead: false,
-    createdAt: '2023-10-25T08:30:00Z',
-    relatedEntityType: 'course',
-    relatedEntityId: 101
-  },
-  {
-    id: 2,
-    title: 'Instructor Reply',
-    content: 'Instructor Sarah Chen has replied to your question in the "Advanced Calculus" forum.',
-    notificationType: NotificationType.InstructorReply,
-    isRead: false,
-    createdAt: '2023-10-25T07:45:00Z',
-    relatedEntityType: 'question',
-    relatedEntityId: 205
-  },
-  {
-    id: 3,
-    title: 'System Announcement',
-    content: 'Welcome to CapyCourse! Explore our platform and start learning today.',
-    notificationType: NotificationType.SystemAnnouncement,
-    isRead: false,
-    createdAt: '2023-10-24T15:00:00Z'
-  },
-  {
-    id: 4,
-    title: 'Course Update',
-    content: 'Your course "Introduction to Data Science" has been updated with new materials.',
-    notificationType: NotificationType.CourseUpdate,
-    isRead: true,
-    createdAt: '2023-10-23T10:30:00Z',
-    relatedEntityType: 'course',
-    relatedEntityId: 101
-  },
-  {
-    id: 5,
-    title: 'Instructor Reply',
-    content: 'Instructor Sarah Chen has replied to your question in the "Advanced Calculus" forum.',
-    notificationType: NotificationType.InstructorReply,
-    isRead: true,
-    createdAt: '2023-10-22T14:20:00Z',
-    relatedEntityType: 'question',
-    relatedEntityId: 206
-  },
-  {
-    id: 6,
-    title: 'System Announcement',
-    content: 'Welcome to CapyCourse! Explore our platform and start learning today.',
-    notificationType: NotificationType.SystemAnnouncement,
-    isRead: true,
-    createdAt: '2023-10-21T09:00:00Z'
-  },
-  {
-    id: 7,
-    title: 'Your account has been restored',
-    content: 'Thank you for contacting support. Your access is fully restored.',
-    notificationType: NotificationType.AccountRestored,
-    isRead: false,
-    createdAt: '2023-10-20T16:30:00Z'
-  },
-  {
-    id: 8,
-    title: 'Account Suspended',
-    content: 'Your account has been temporarily suspended due to policy violation. Please contact support.',
-    notificationType: NotificationType.AccountSuspended,
-    isRead: true,
-    createdAt: '2023-10-19T11:00:00Z'
-  }
-])
+// 從 activeFilter 映射到 announcementType
+const filterToAnnouncementType = {
+  'all': undefined,
+  'platform': 'platform',
+  'instructor': 'instructor',
+  'other': 'other'
+}
 
-// Filter notifications
-const filteredNotifications = computed(() => {
-  let filtered = notifications.value
+// 顯示的通知列表（客戶端搜尋過濾）
+const displayedNotifications = computed(() => {
+  let filtered = notificationStore.notifications
 
-  // Apply read/unread filter
-  if (activeFilter.value === 'unread') {
-    filtered = filtered.filter(n => !n.isRead)
-  } else if (activeFilter.value === 'read') {
-    filtered = filtered.filter(n => n.isRead)
-  }
-
-  // Apply search filter
+  // 客戶端搜尋過濾
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     filtered = filtered.filter(n =>
-      n.title.toLowerCase().includes(query) ||
-      n.content.toLowerCase().includes(query)
+      n.title?.toLowerCase().includes(query) ||
+      n.content?.toLowerCase().includes(query)
     )
   }
 
   return filtered
 })
 
-// Paginated notifications
-const paginatedNotifications = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value
-  const end = start + pageSize.value
-  return filteredNotifications.value.slice(start, end)
+// 空狀態文字
+const emptyStateText = computed(() => {
+  if (searchQuery.value) {
+    return '找不到符合搜尋條件的通知'
+  }
+  if (activeFilter.value === 'platform') {
+    return '目前沒有平台公告'
+  }
+  if (activeFilter.value === 'instructor') {
+    return '目前沒有講師公告'
+  }
+  return '目前沒有通知'
 })
 
-// Handle notification click
-const handleNotificationClick = (notification) => {
-  // Mark as read
-  notification.isRead = true
-
-  // Navigate to related entity if exists
-  if (notification.relatedEntityType && notification.relatedEntityId) {
-    console.log(`Navigate to ${notification.relatedEntityType}:${notification.relatedEntityId}`)
+// 載入通知列表
+const loadNotifications = async (page = 0) => {
+  try {
+    await notificationStore.fetchStudentNotifications({
+      announcementType: announcementType.value,
+      page,
+      size: 5,
+      sort: 'createdAt,DESC'
+    })
+  } catch (error) {
+    console.error('載入通知失敗:', error)
   }
 }
+
+// 處理篩選變更
+const handleFilterChange = (filter) => {
+  activeFilter.value = filter
+  announcementType.value = filterToAnnouncementType[filter]
+  currentPage.value = 1
+  loadNotifications(0)
+}
+
+// 處理搜尋
+const handleSearch = () => {
+  // 搜尋是客戶端過濾，不需要重新載入
+}
+
+// 處理分頁變更
+const handlePageChange = (page) => {
+  currentPage.value = page
+  loadNotifications(page - 1) // API 的 page 從 0 開始
+}
+
+// 處理通知點擊
+const handleNotificationClick = async (notification) => {
+  // 標記為已讀
+  if (!notification.is_read) {
+    await notificationStore.markAsRead(notification.id)
+  }
+
+  // TODO: 根據通知類型導航到相關頁面
+  if (notification.relatedEntityType && notification.relatedEntityId) {
+    console.log(`導航到 ${notification.relatedEntityType}:${notification.relatedEntityId}`)
+  }
+}
+
+// 處理刪除通知
+const handleDeleteNotification = async (notificationId) => {
+  try {
+    await ElMessageBox.confirm(
+      '確定要刪除這則通知嗎？',
+      '確認刪除',
+      {
+        confirmButtonText: '確定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    await notificationStore.deleteNotification(notificationId)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('刪除通知失敗:', error)
+    }
+  }
+}
+
+// 處理全部標記為已讀
+const handleMarkAllAsRead = async () => {
+  try {
+    await notificationStore.markAllAsRead()
+    await loadNotifications(currentPage.value - 1)
+  } catch (error) {
+    console.error('標記全部已讀失敗:', error)
+  }
+}
+
+// 初始化
+onMounted(async () => {
+  await loadNotifications(0)
+  await notificationStore.fetchUnreadCount()
+})
+
 </script>
 
 <style scoped>
@@ -183,6 +208,9 @@ const handleNotificationClick = (notification) => {
 
 /* Header */
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
 }
 
@@ -190,13 +218,17 @@ const handleNotificationClick = (notification) => {
   font-size: 28px;
   font-weight: 700;
   color: #1a1a1a;
-  margin: 0 0 8px 0;
+  margin: 0;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Loading State */
+.loading-container {
+  padding: 20px 0;
 }
 
 /* Notifications List */
@@ -205,12 +237,13 @@ const handleNotificationClick = (notification) => {
   flex-direction: column;
   gap: 16px;
   margin-bottom: 32px;
+  min-height: 400px;
 }
 
 /* Empty State */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
 }
 
 .empty-text {
@@ -224,6 +257,7 @@ const handleNotificationClick = (notification) => {
   display: flex;
   justify-content: center;
   margin-top: 40px;
+  padding: 20px 0;
 }
 
 .pagination-container :deep(.el-pagination) {
@@ -250,14 +284,32 @@ const handleNotificationClick = (notification) => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
   .page-title {
     font-size: 22px;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .el-button {
+    flex: 1;
   }
 }
 
 @media (max-width: 480px) {
   .page-title {
     font-size: 20px;
+  }
+
+  .notifications-list {
+    min-height: 300px;
   }
 }
 </style>

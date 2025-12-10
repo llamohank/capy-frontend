@@ -137,3 +137,41 @@ body {
 .el-link.el-link--primary:hover {
   color: #1ac9b3;
 }
+
+/* ==================== MessageBox 確認對話框樣式 ==================== */
+
+/* 購物車移除確認對話框 - 增加 padding */
+.cart-remove-confirm-dialog.el-message-box {
+  padding: 32px 24px 24px !important;
+}
+
+.cart-remove-confirm-dialog .el-message-box__content {
+  padding: 24px 0 !important;
+  font-size: 16px !important;
+}
+
+.cart-remove-confirm-dialog .el-message-box__btns {
+  padding-top: 24px !important;
+}
+
+/* 確認按鈕使用 danger 顏色 */
+.cart-remove-confirm-dialog .el-button--primary {
+  --el-button-bg-color: #F56C6C !important;
+  --el-button-border-color: #F56C6C !important;
+  --el-button-hover-bg-color: #f89898 !important;
+  --el-button-hover-border-color: #f89898 !important;
+  --el-button-active-bg-color: #c45656 !important;
+  --el-button-active-border-color: #c45656 !important;
+  background-color: #F56C6C !important;
+  border-color: #F56C6C !important;
+}
+
+.cart-remove-confirm-dialog .el-button--primary:hover {
+  background-color: #f89898 !important;
+  border-color: #f89898 !important;
+}
+
+.cart-remove-confirm-dialog .el-button--primary:active {
+  background-color: #c45656 !important;
+  border-color: #c45656 !important;
+}

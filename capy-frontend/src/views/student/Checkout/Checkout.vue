@@ -183,8 +183,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Reading,
@@ -200,6 +200,7 @@ import { createOrder, getEcpayCheckout } from '@/api/student/orders'
 // ==================== Composables ====================
 
 const router = useRouter()
+const route = useRoute()
 const cartStore = useCartStore()
 
 // ==================== State ====================
@@ -306,7 +307,8 @@ const handleRemoveItem = async (courseId) => {
       {
         confirmButtonText: '確定',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
+        customClass: 'cart-remove-confirm-dialog'
       }
     )
 
@@ -429,9 +431,22 @@ const loadCart = async () => {
     // 如果後端載入失敗，從 localStorage 載入
     cartStore.loadFromStorage()
   }
+
+  // 檢查是否有 autoSelect 參數（從立即購買導向過來）
+  const autoSelectId = route.query.autoSelect
+  if (autoSelectId) {
+    const courseId = parseInt(autoSelectId)
+    // 自動選中該課程
+    if (cartStore.items.some(item => item.courseId === courseId)) {
+      selectedItemIds.value = [courseId]
+      console.log('自動選中課程:', courseId)
+    }
+  }
 }
 
-loadCart()
+onMounted(() => {
+  loadCart()
+})
 </script>
 
 <style scoped>

@@ -11,7 +11,58 @@
           <p class="loading-text">正在載入訂單資訊...</p>
         </div>
 
-        <!-- Error State -->
+        <!-- Pending State (訂單處理中) -->
+        <div v-else-if="orderStatus === 'pending'" class="pending-state">
+          <el-icon class="pending-icon" :size="80" color="var(--capy-warning)">
+            <Clock />
+          </el-icon>
+          <h2 class="pending-title">訂單處理中</h2>
+          <p class="pending-message">
+            您的付款正在處理中，請稍候...
+          </p>
+          <p class="pending-hint">
+            訂單編號：#{{ currentOrderId }}
+          </p>
+          <p class="pending-polling" v-if="isPolling">
+            <el-icon class="is-loading"><Loading /></el-icon>
+            自動查詢中... ({{ pollingCount }}/{{ MAX_POLLING_ATTEMPTS }})
+          </p>
+          <div class="pending-actions">
+            <el-button type="primary" @click="retryLoad" :loading="loading">
+              重新查詢
+            </el-button>
+            <el-button @click="goToOrders">
+              查看我的訂單
+            </el-button>
+          </div>
+          <p class="pending-note">
+            如果長時間未完成，請聯繫客服
+          </p>
+        </div>
+
+        <!-- Failed State (付款失敗) -->
+        <div v-else-if="orderStatus === 'failed'" class="failed-state">
+          <el-icon class="failed-icon" :size="80" color="var(--capy-danger)">
+            <CircleClose />
+          </el-icon>
+          <h2 class="failed-title">付款失敗</h2>
+          <p class="failed-message">
+            很抱歉，您的付款未能成功完成
+          </p>
+          <p class="failed-hint">
+            訂單編號：#{{ currentOrderId }}
+          </p>
+          <div class="failed-actions">
+            <el-button type="primary" @click="goToCheckout">
+              重新付款
+            </el-button>
+            <el-button @click="goToOrders">
+              查看訂單記錄
+            </el-button>
+          </div>
+        </div>
+
+        <!-- Error State (載入錯誤) -->
         <div v-else-if="error" class="error-state">
           <el-icon class="error-icon" :size="80" color="var(--capy-danger)">
             <CircleClose />
@@ -28,8 +79,8 @@
           </div>
         </div>
 
-        <!-- Success State -->
-        <div v-else-if="orderData" class="success-state">
+        <!-- Success State (付款成功) -->
+        <div v-else-if="orderData && orderStatus === 'paid'" class="success-state">
           <!-- Success Icon -->
           <div class="success-icon-wrapper">
             <el-icon class="success-icon" :size="80" color="var(--capy-success)">
@@ -113,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -121,9 +172,10 @@ import {
   CircleCheck,
   CircleClose,
   Loading,
-  Picture
+  Picture,
+  Clock
 } from '@element-plus/icons-vue'
-import { getOrderSuccess } from '@/api/student/orders'
+import { getOrderSuccess, getOrderDetails } from '@/api/student/orders'
 
 // ==================== Composables ====================
 
@@ -152,42 +204,103 @@ const errorMessage = ref('')
  */
 const orderData = ref(null)
 
+/**
+ * 訂單狀態 (pending|paid|failed)
+ */
+const orderStatus = ref(null)
+
+/**
+ * 當前訂單 ID
+ */
+const currentOrderId = ref(null)
+
+/**
+ * 輪詢計時器
+ */
+const pollingInterval = ref(null)
+
+/**
+ * 輪詢次數
+ */
+const pollingCount = ref(0)
+
+/**
+ * 最大輪詢次數
+ */
+const MAX_POLLING_ATTEMPTS = 10
+
+/**
+ * 是否正在輪詢
+ */
+const isPolling = ref(false)
+
 // ==================== Methods ====================
 
 /**
- * 載入訂單成功資料
+ * 載入訂單資料（改進版：先檢查狀態）
  */
 const loadOrderSuccess = async () => {
   try {
     loading.value = true
     error.value = false
 
-    // 從 URL 參數取得 orderId（同時支援駝峰式 orderId 和小寫 orderid）
-    const orderId = route.query.orderId || route.query.orderid || route.params.orderId || route.params.orderid
+    // 從 URL 參數取得 orderId
+    const orderId = route.query.orderId || route.query.orderid ||
+                    route.params.orderId || route.params.orderid
 
     if (!orderId) {
       throw new Error('訂單編號不存在')
     }
 
-    console.log('載入訂單成功資料，訂單 ID:', orderId)
+    currentOrderId.value = orderId
+    console.log('載入訂單資料，訂單 ID:', orderId)
 
-    // 呼叫 API 取得訂單成功資料
-    const response = await getOrderSuccess(orderId)
+    // 步驟 1: 先呼叫 details API 檢查訂單狀態
+    const detailsResponse = await getOrderDetails(orderId)
+    const orderDetails = detailsResponse.data || detailsResponse
 
-    // 後端回傳的資料在 data 欄位中
-    orderData.value = response.data || response
-
-    if (!orderData.value) {
+    if (!orderDetails) {
       throw new Error('訂單資料載入失敗')
     }
 
-    console.log('訂單成功資料:', orderData.value)
+    orderStatus.value = orderDetails.status
+    console.log('訂單狀態:', orderDetails.status)
+
+    // 步驟 2: 根據訂單狀態決定顯示內容
+    if (orderDetails.status === 'paid') {
+      // 訂單已付款，呼叫 success API 取得完整資訊
+      try {
+        const successResponse = await getOrderSuccess(orderId)
+        orderData.value = successResponse.data || successResponse
+        console.log('訂單成功資料:', orderData.value)
+      } catch (successErr) {
+        // 如果 success API 失敗，使用 details 的資料
+        console.warn('success API 失敗，使用 details 資料:', successErr)
+        orderData.value = {
+          orderId: orderDetails.orderId,
+          paidAt: orderDetails.paidAt,
+          totalAmount: orderDetails.totalAmount,
+          items: orderDetails.orderItems
+        }
+      }
+    } else if (orderDetails.status === 'pending') {
+      // 訂單尚未完成付款，啟動輪詢
+      console.log('訂單處理中，啟動輪詢機制')
+      startPolling(orderId)
+    } else if (orderDetails.status === 'failed') {
+      // 付款失敗
+      console.log('付款失敗')
+    }
 
   } catch (err) {
     console.error('載入訂單失敗:', err)
     error.value = true
 
-    if (err.response) {
+    if (err.response?.status === 500) {
+      errorMessage.value = '訂單尚未完成付款處理，請稍後重新整理頁面或聯繫客服'
+    } else if (err.response?.status === 404) {
+      errorMessage.value = '找不到此訂單，請確認訂單編號是否正確'
+    } else if (err.response) {
       errorMessage.value = err.response.data?.message || '訂單資料載入失敗，請稍後再試'
     } else if (err.message) {
       errorMessage.value = err.message
@@ -197,6 +310,56 @@ const loadOrderSuccess = async () => {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 啟動輪詢機制
+ */
+const startPolling = (orderId) => {
+  // 清除現有的輪詢
+  stopPolling()
+
+  isPolling.value = true
+  pollingCount.value = 0
+
+  pollingInterval.value = setInterval(async () => {
+    pollingCount.value++
+
+    if (pollingCount.value >= MAX_POLLING_ATTEMPTS) {
+      stopPolling()
+      ElMessage.warning('訂單處理時間較長，請稍後到「我的訂單」查看或聯繫客服')
+      return
+    }
+
+    try {
+      console.log(`輪詢第 ${pollingCount.value} 次...`)
+      const detailsResponse = await getOrderDetails(orderId)
+      const orderDetails = detailsResponse.data || detailsResponse
+
+      if (orderDetails.status === 'paid') {
+        stopPolling()
+        ElMessage.success('付款已完成！')
+        // 重新載入成功資訊
+        loadOrderSuccess()
+      } else if (orderDetails.status === 'failed') {
+        stopPolling()
+        orderStatus.value = 'failed'
+      }
+    } catch (err) {
+      console.error('輪詢失敗:', err)
+    }
+  }, 3000) // 每 3 秒查詢一次
+}
+
+/**
+ * 停止輪詢
+ */
+const stopPolling = () => {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+    pollingInterval.value = null
+  }
+  isPolling.value = false
 }
 
 /**
@@ -263,10 +426,21 @@ const goToExplore = () => {
   router.push({ name: 'courseExplore' })
 }
 
+/**
+ * 前往結帳頁
+ */
+const goToCheckout = () => {
+  router.push({ name: 'checkout' })
+}
+
 // ==================== Lifecycle ====================
 
 onMounted(() => {
   loadOrderSuccess()
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
 
@@ -386,6 +560,112 @@ onMounted(() => {
 }
 
 .error-actions {
+  display: flex;
+  gap: var(--capy-spacing-md);
+  justify-content: center;
+}
+
+/* ==================== Pending State ==================== */
+
+.pending-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--capy-spacing-xxl) 0;
+  text-align: center;
+}
+
+.pending-icon {
+  margin-bottom: var(--capy-spacing-lg);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pending-title {
+  font-size: var(--capy-font-size-xxl);
+  font-weight: var(--capy-font-weight-bold);
+  color: var(--capy-text-primary);
+  margin: 0 0 var(--capy-spacing-md) 0;
+}
+
+.pending-message {
+  font-size: var(--capy-font-size-lg);
+  color: var(--capy-text-secondary);
+  margin: 0 0 var(--capy-spacing-sm) 0;
+}
+
+.pending-hint {
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-tertiary);
+  margin: 0 0 var(--capy-spacing-md) 0;
+}
+
+.pending-polling {
+  display: flex;
+  align-items: center;
+  gap: var(--capy-spacing-xs);
+  font-size: var(--capy-font-size-sm);
+  color: var(--capy-primary);
+  margin: 0 0 var(--capy-spacing-lg) 0;
+}
+
+.pending-actions {
+  display: flex;
+  gap: var(--capy-spacing-md);
+  justify-content: center;
+  margin-bottom: var(--capy-spacing-md);
+}
+
+.pending-note {
+  font-size: var(--capy-font-size-sm);
+  color: var(--capy-text-tertiary);
+  margin: 0;
+}
+
+/* ==================== Failed State ==================== */
+
+.failed-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--capy-spacing-xxl) 0;
+  text-align: center;
+}
+
+.failed-icon {
+  margin-bottom: var(--capy-spacing-lg);
+}
+
+.failed-title {
+  font-size: var(--capy-font-size-xxl);
+  font-weight: var(--capy-font-weight-bold);
+  color: var(--capy-text-primary);
+  margin: 0 0 var(--capy-spacing-md) 0;
+}
+
+.failed-message {
+  font-size: var(--capy-font-size-lg);
+  color: var(--capy-text-secondary);
+  margin: 0 0 var(--capy-spacing-sm) 0;
+}
+
+.failed-hint {
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-tertiary);
+  margin: 0 0 var(--capy-spacing-xl) 0;
+}
+
+.failed-actions {
   display: flex;
   gap: var(--capy-spacing-md);
   justify-content: center;

@@ -73,17 +73,30 @@
             </el-form-item>
 
             <el-form-item label="暱稱" prop="nickname">
-              <el-input
-                v-model="formData.nickname"
-                placeholder="請輸入暱稱"
-                maxlength="20"
-                show-word-limit
-              >
-                <template #prefix>
-                  <el-icon><User /></el-icon>
-                </template>
-              </el-input>
-              <div class="nickname-format-hint">
+              <div class="input-with-icon">
+                <el-input
+                  v-model="formData.nickname"
+                  placeholder="請輸入暱稱"
+                  maxlength="20"
+                  show-word-limit
+                  @input="handleNicknameInput"
+                  @compositionstart="handleCompositionStart"
+                  @compositionend="handleCompositionEnd"
+                >
+                  <template #prefix>
+                    <el-icon><User /></el-icon>
+                  </template>
+                </el-input>
+                <div v-if="nicknameValidation.checking" class="input-icon-right">
+                  <el-icon class="is-loading">
+                    <Loading />
+                  </el-icon>
+                </div>
+              </div>
+              <div v-show="nicknameValidation.message" :class="['validation-message-inline', nicknameValidation.type]">
+                {{ nicknameValidation.message }}
+              </div>
+              <div v-if="!nicknameValidation.message" class="nickname-format-hint">
                 僅能包含中英文、數字、底線(_)、連接號(-)、句點(.)，不允許空白
               </div>
             </el-form-item>
@@ -241,7 +254,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, h, onMounted } from 'vue'
+import { ref, watch, computed, h, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox, ElInput } from 'element-plus'
 
 // ===== 除錯程式碼開始 =====
@@ -258,9 +271,11 @@ import {
   Lock,
   ArrowLeft,
   Delete,
-  WarningFilled
+  WarningFilled,
+  Loading
 } from '@element-plus/icons-vue'
-import { validateNicknameFormat } from '@/utils/usernameValidator'
+import { validateNicknameFormat, createNicknameValidator, debounce } from '@/utils/usernameValidator'
+import { checkNickname } from '@/api/oauth/nicknameCheck'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import StudentPasswordForm from './StudentPasswordForm.vue'
@@ -306,6 +321,20 @@ const previewAvatarUrl = ref('') // 本地預覽 URL
 const pendingAvatarFile = ref(null) // 待上傳的檔案
 const bindingGoogle = ref(false) // Google 綁定載入狀態
 const pendingGoogleBind = ref(null) // 儲存待綁定的 Google 資訊
+
+// 暱稱驗證狀態
+const nicknameValidation = ref({
+  checking: false,
+  message: '',
+  type: '', // 'success' | 'error' | 'warning' | 'info'
+  available: null // true: 可用, false: 不可用, null: 未檢查
+})
+
+// 中文輸入法狀態
+const isComposing = ref(false)
+
+// 原始暱稱（用於比較是否有變更）
+const originalNickname = ref('')
 
 // Router and Store
 const router = useRouter()
@@ -369,6 +398,101 @@ const cleanupPreview = () => {
   pendingAvatarFile.value = null
 }
 
+// 建立暱稱驗證器
+const nicknameValidator = createNicknameValidator()
+
+// 暱稱驗證函式（帶 debounce 和 API 檢查）
+const validateNicknameDebounced = debounce(async (nickname) => {
+  // 如果正在組字中，不執行驗證
+  if (isComposing.value) {
+    return
+  }
+
+  const trimmedNickname = nickname.trim()
+
+  // 如果暱稱與原始暱稱相同，跳過驗證
+  if (trimmedNickname === originalNickname.value) {
+    nicknameValidation.value.message = ''
+    nicknameValidation.value.type = ''
+    nicknameValidation.value.checking = false
+    nicknameValidation.value.available = true
+    return
+  }
+
+  // 先進行前端格式驗證
+  const formatValidation = validateNicknameFormat(trimmedNickname)
+
+  // 如果格式驗證失敗，直接顯示錯誤
+  if (!formatValidation.valid) {
+    nicknameValidation.value.message = formatValidation.message
+    nicknameValidation.value.type = formatValidation.type
+    nicknameValidation.value.checking = false
+    nicknameValidation.value.available = null
+    return
+  }
+
+  // 格式驗證通過，開始 API 檢查
+  nicknameValidation.value.checking = true
+  nicknameValidation.value.message = '檢查中...'
+  nicknameValidation.value.type = 'info'
+
+  try {
+    // 呼叫 API 檢查暱稱
+    const result = await nicknameValidator.validate(trimmedNickname)
+
+    // 如果返回 null，表示這是舊的請求，被新請求取代了
+    if (result === null) {
+      return
+    }
+
+    // 更新驗證結果
+    nicknameValidation.value.message = result.message
+    nicknameValidation.value.type = result.type
+    nicknameValidation.value.available = result.available
+    nicknameValidation.value.checking = false
+  } catch (error) {
+    console.error('暱稱驗證錯誤:', error)
+    nicknameValidation.value.message = '暫時無法驗證暱稱，請稍後再試'
+    nicknameValidation.value.type = 'warning'
+    nicknameValidation.value.available = null
+    nicknameValidation.value.checking = false
+  }
+}, 500) // 500ms debounce
+
+// 處理暱稱輸入
+const handleNicknameInput = () => {
+  // 如果正在組字中，不觸發驗證
+  if (isComposing.value) {
+    return
+  }
+
+  const nickname = formData.value.nickname.trim()
+
+  // 如果長度為 0，清空驗證訊息
+  if (nickname.length === 0) {
+    nicknameValidation.value.message = ''
+    nicknameValidation.value.type = ''
+    nicknameValidation.value.checking = false
+    nicknameValidation.value.available = null
+    return
+  }
+
+  // 觸發 debounced 驗證
+  validateNicknameDebounced(formData.value.nickname)
+}
+
+// 處理中文輸入法開始組字
+const handleCompositionStart = () => {
+  isComposing.value = true
+}
+
+// 處理中文輸入法結束組字
+const handleCompositionEnd = () => {
+  isComposing.value = false
+  // 組字完成後，觸發驗證
+  handleNicknameInput()
+}
+
 // 暱稱格式驗證
 const validateNicknameFormatRule = (rule, value, callback) => {
   if (!value) {
@@ -396,16 +520,18 @@ const validateNicknameUnique = async (rule, value, callback) => {
   }
 
   try {
-    // TODO: 實作暱稱檢查 API
-    // import { checkNicknameAvailability } from '@/api/student/Studentcenter'
-    // const response = await checkNicknameAvailability(value)
-    // if (!response.available) {
-    //   return callback(new Error('此暱稱已被使用'))
-    // }
+    // 呼叫 API 檢查暱稱是否可用
+    const response = await checkNickname(value.trim())
+
+    // response 已被 http.js 攔截器解包，直接是 { available: boolean }
+    if (response && response.available === false) {
+      return callback(new Error('此暱稱已被使用'))
+    }
 
     callback()
   } catch (error) {
-    console.error('Nickname validation error:', error)
+    console.error('暱稱驗證錯誤:', error)
+    // 如果 API 呼叫失敗，允許通過（避免阻擋用戶）
     callback()
   }
 }
@@ -440,6 +566,9 @@ watch(
           nickname: profileData.nickname || currentUserData.value.nickname || '',
           avatarUrl: profileData.avatarUrl || currentUserData.value.avatarUrl || currentUserData.value.avatar || ''
         }
+
+        // 儲存原始暱稱
+        originalNickname.value = formData.value.nickname
 
         console.log('設定後的 formData:', formData.value)
 
@@ -948,10 +1077,11 @@ const handleSave = async () => {
 
     // result 已經是 data 物件：{ userId, nickname, email, avatarUrl, ... }
     if (result && result.userId) {
+      // 更新 userStore
       userStore.updateUserInfo({
-        id: result.userId,
+        userId: result.userId,
         nickname: result.nickname,
-        avatar: result.avatarUrl,
+        avatarUrl: result.avatarUrl,
         email: result.email,
         googleLinked: result.googleLinked
       })
@@ -964,8 +1094,13 @@ const handleSave = async () => {
       // 關閉對話框
       dialogVisible.value = false
 
-      // Emit save event for parent component
+      // Emit save event for parent component with updated data
       emit('save', result)
+
+      // 重新載入頁面以確保所有組件都更新到最新資料
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
     } else {
       throw new Error('更新失敗：未取得使用者資料')
     }
@@ -1134,6 +1269,17 @@ onMounted(() => {
     console.log('❌ [StudentProfileEditDialog] 未檢測到綁定流程或參數不完整')
     if (!isBindFlow) console.log('   - google_bind_flow 不存在或不為 true')
     if (!googleId) console.log('   - googleId 不存在')
+  }
+})
+
+// 清理函式
+onUnmounted(() => {
+  // 取消所有待處理的驗證
+  if (validateNicknameDebounced.cancel) {
+    validateNicknameDebounced.cancel()
+  }
+  if (nicknameValidator.cancel) {
+    nicknameValidator.cancel()
   }
 })
 </script>
@@ -1305,6 +1451,80 @@ onMounted(() => {
 
 .profile-form :deep(.el-input__prefix) {
   color: var(--capy-text-secondary);
+}
+
+/* 輸入框帶 icon */
+.input-with-icon {
+  position: relative;
+}
+
+.input-icon-right {
+  position: absolute;
+  right: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--capy-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-icon-right .is-loading {
+  animation: rotating 1.5s linear infinite;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 驗證訊息 */
+.validation-message-inline {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  animation: slideDown 0.3s ease;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.validation-message-inline.success {
+  color: var(--el-color-success);
+  background: var(--el-color-success-light-9);
+}
+
+.validation-message-inline.error {
+  color: var(--capy-danger);
+  background: var(--el-color-danger-light-9);
+}
+
+.validation-message-inline.warning {
+  color: var(--el-color-warning);
+  background: var(--el-color-warning-light-9);
+}
+
+.validation-message-inline.info {
+  color: var(--capy-primary);
+  background: var(--el-color-primary-light-9);
 }
 
 /* 暱稱格式提示 */

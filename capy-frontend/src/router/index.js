@@ -9,8 +9,14 @@ const routes = [...teacherRouter, ...adminRouter, ...studentRouter];
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior() {
-    return { top: 0, behavior: "smooth" };
+  scrollBehavior(to, from, savedPosition) {
+    // 如果有保存的位置（例如使用瀏覽器的前進/後退按鈕）
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      // 新的導航，滾動到頂部
+      return { top: 0, behavior: "smooth" };
+    }
   },
 });
 

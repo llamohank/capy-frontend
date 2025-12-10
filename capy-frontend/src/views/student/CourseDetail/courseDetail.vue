@@ -11,8 +11,8 @@
           :show-content="false"
         />
 
-        <!-- Course Video/Image -->
-        <div class="course-media">
+        <!-- Course Video/Image (隱藏於桌面版，顯示於手機版) -->
+        <div class="course-media mobile-only">
           <img :src="course.cover" :alt="course.title" />
         </div>
 
@@ -31,6 +31,9 @@
         <CourseContent
           :sections="course.contentSections"
           :show-header="false"
+          :is-enrolled="course.isEnrolled"
+          @preview="handlePreview"
+          @lesson-click="handleLessonClick"
         />
 
         <!-- Instructor -->
@@ -48,65 +51,146 @@
       <!-- Right Sidebar -->
       <el-aside width="350px" class="sidebar">
         <el-card class="purchase-card" shadow="never">
-          <div class="course-preview">
+          <!-- 封面圖片：已購買用戶點擊直接進入學習頁面 -->
+          <div
+            class="course-preview"
+            @click="course.isEnrolled ? navigateToLearning() : handleSidebarPreview()"
+          >
             <img :src="course.cover" :alt="course.title" />
+            <!-- 訪客用戶：顯示預覽覆蓋層 -->
+            <div v-if="!course.isEnrolled" class="play-overlay">
+              <el-icon class="play-icon"><VideoPlay /></el-icon>
+              <span class="preview-text">預覽課程</span>
+            </div>
           </div>
 
-          <div class="price-section">
-            <div class="price">${{ course.price }}</div>
+          <!-- 價格區域：已購買用戶不顯示價格 -->
+          <div v-if="!course.isEnrolled" class="price-section">
+            <div class="price">NT${{ course.price }}</div>
           </div>
 
-          <el-button type="success" size="large" class="buy-btn">
-            Buy Now
+          <!-- 學習進度：已購買用戶顯示進度條 -->
+          <div v-if="course.isEnrolled && course.progress > 0" class="progress-section">
+            <div class="progress-label">學習進度</div>
+            <el-progress
+              :percentage="course.progress"
+              :stroke-width="8"
+              :color="'#7ec8a3'"
+            />
+          </div>
+
+          <!-- 主要按鈕：根據購買狀態切換 -->
+          <el-button
+            v-if="course.isEnrolled"
+            type="primary"
+            size="large"
+            class="learning-btn"
+            @click="navigateToLearning"
+          >
+            {{ course.progress > 0 ? '繼續學習' : '開始學習' }}
           </el-button>
 
-          <el-button size="large" class="cart-btn">
-            Add to Cart
+          <el-button
+            v-else
+            type="warning"
+            size="large"
+            class="buy-btn"
+            @click="handleBuyNow"
+          >
+            立即購買
+          </el-button>
+
+          <!-- 加入購物車按鈕：僅訪客用戶顯示 -->
+          <el-button
+            v-if="!course.isEnrolled"
+            size="large"
+            class="cart-btn"
+            @click="handleAddToCart"
+          >
+            加入購物車
           </el-button>
 
           <div class="course-includes">
-            <h4 class="includes-title">Total Length</h4>
+            <h4 class="includes-title">課程總長</h4>
             <div class="include-item">
               <el-icon><Clock /></el-icon>
               <span>{{ course.totalLength }}</span>
             </div>
 
-            <h4 class="includes-title">Sections</h4>
+            <h4 class="includes-title">章節數量</h4>
             <div class="include-item">
               <el-icon><List /></el-icon>
-              <span>{{ course.sections }} sections</span>
+              <span>{{ course.sections }} 個章節</span>
             </div>
 
-            <h4 class="includes-title">Resources</h4>
+            <h4 class="includes-title">課程資源</h4>
             <div class="include-item">
               <el-icon><Download /></el-icon>
-              <span>{{ course.resources }} downloadable resources</span>
+              <span>{{ course.resources }} 個可下載資源</span>
             </div>
           </div>
         </el-card>
       </el-aside>
     </el-container>
+
+    <!-- Preview Modal -->
+    <el-dialog
+      v-model="isPreviewVisible"
+      title="課程預覽"
+      width="800px"
+      center
+      :close-on-click-modal="false"
+      @close="handleClosePreview"
+    >
+      <div class="preview-player-container">
+        <div ref="videoContainer" class="video-wrapper">
+          <video
+            ref="videoElement"
+            class="video-element"
+            playsinline
+          ></video>
+          <!-- 購買課程覆蓋層 -->
+          <div v-if="showBuyOverlay" class="buy-overlay">
+            <div class="buy-overlay-content">
+              <el-icon class="buy-icon"><Lock /></el-icon>
+              <h3 class="buy-title">試看結束</h3>
+              <p class="buy-text">購買課程以繼續學習完整內容</p>
+              <el-button type="warning" size="large" class="buy-now-btn">
+                立即購買課程
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { List, Download, Clock } from '@element-plus/icons-vue'
+import { List, Download, Clock, VideoPlay, Lock } from '@element-plus/icons-vue'
 import { ElMessage, ElLoading } from 'element-plus'
 import CourseContent from '@/components/student/CourseDetail/CourseContent.vue'
 import CourseIntro from '@/components/student/CourseDetail/CourseIntro.vue'
 import InstructorCard from '@/components/student/CourseDetail/InstructorCard.vue'
 import RatingsReviews from '@/components/student/CourseDetail/RatingsReviews.vue'
+import VideoPlayer from '@llamohank/custom-shaka-player'
 import {
   fetchCourseDetail,
   calculateTotalDuration,
   formatRatingDistribution,
-  extractLearningPoints
+  extractLearningPoints,
+  getPreviewVideoUrl
 } from '@/api/student/courseDetail'
+import { useCartStore } from '@/stores/cart'
+import { useUserStore } from '@/stores/user'
+import { createOrder } from '@/api/student/orders'
 
 const route = useRoute()
 const router = useRouter()
+const cartStore = useCartStore()
+const userStore = useUserStore()
 
 // 載入狀態
 const loading = ref(false)
@@ -140,12 +224,14 @@ const course = computed(() => {
       },
       learningPoints: [],
       contentSections: [],
-      reviews: []
+      reviews: [],
+      isEnrolled: false,
+      progress: 0
     }
   }
 
   const { courseInfo } = courseData.value
-  const { course: courseBasic, sections, rateTable, userReviews } = courseInfo
+  const { course: courseBasic, sections, rateTable, userReviews, isEnrolled } = courseInfo
 
   // 計算總時長
   const totalDurationMinutes = calculateTotalDuration(sections || [])
@@ -161,11 +247,15 @@ const course = computed(() => {
     duration: `${totalHours}h ${totalMinutes}m`,
     sections: courseBasic?.totalSections || 0,
     attachments: 0, // API 未提供此欄位
-    totalLength: `${totalHours} hours ${totalMinutes} minutes on-demand video`,
+    totalLength: `${totalHours} 小時 ${totalMinutes} 分鐘的影片`,
     resources: 0, // API 未提供此欄位
     rating: rateTable?.averageRating || 0,
     totalReviews: rateTable?.reviewCount || 0,
-    ratingDistribution: formatRatingDistribution(rateTable),
+    ratingDistribution: (() => {
+      const distribution = formatRatingDistribution(rateTable)
+      console.log('📊 評分分佈:', distribution)
+      return distribution
+    })(),
     instructor: {
       id: courseBasic?.instructor?.instructorId,
       name: courseBasic?.instructor?.instructorName || '',
@@ -196,7 +286,11 @@ const course = computed(() => {
       date: formatReviewDate(review.createdAt),
       rating: review.rating,
       text: review.comment
-    }))
+    })),
+    // 從後端 API 取得購買狀態（在 courseInfo 層級）
+    isEnrolled: isEnrolled || false,
+    // 進度資訊（目前後端未提供，預設為 0）
+    progress: courseBasic?.progress || 0
   }
 })
 
@@ -247,14 +341,330 @@ const relatedCourses = ref([
   }
 ])
 
+// 預覽 Modal 狀態
+const isPreviewVisible = ref(false)
+const currentPreviewUrl = ref('')
+const currentPreviewLessonId = ref(null)
+const showBuyOverlay = ref(false)
+
+// Video Player Refs
+const videoElement = ref(null)
+const videoContainer = ref(null)
+let player = null
+
+// 建立完整的課程列表（扁平化）
+const flatLessonList = computed(() => {
+  const lessons = []
+  if (course.value.contentSections && course.value.contentSections.length > 0) {
+    course.value.contentSections.forEach(section => {
+      if (section.lessons && section.lessons.length > 0) {
+        section.lessons.forEach(lesson => {
+          lessons.push({
+            ...lesson,
+            sectionName: section.name
+          })
+        })
+      }
+    })
+  }
+  return lessons
+})
+
+/**
+ * 統一的預覽處理函數 - 支援兩種入口
+ */
 const handlePreview = (previewInfo) => {
-  // 處理試看影片播放
-  console.log('Preview lesson:', previewInfo)
-  // 這裡可以實作影片播放邏輯，例如：
-  // - 開啟影片播放器 modal
-  // - 跳轉到影片播放頁面
-  // - 或直接在當前頁面播放
-  alert(`試看影片：\n章節 ${previewInfo.sectionIndex + 1}\n課程 ${previewInfo.lessonIndex + 1}`)
+  console.log('Preview triggered:', previewInfo)
+
+  // Entry Point A: 從 Header 按鈕點擊（播放第一個免費課程）
+  if (previewInfo.fromHeader) {
+    const firstFreeLesson = findFirstFreeLesson()
+    if (firstFreeLesson) {
+      openPreview(firstFreeLesson.id)
+    } else {
+      ElMessage.warning('此課程暫無可預覽內容')
+    }
+  }
+  // Entry Point B: 從課程列表按鈕點擊（播放指定課程）
+  else if (previewInfo.lessonId) {
+    openPreview(previewInfo.lessonId)
+  }
+}
+
+/**
+ * 處理課程列表項目點擊
+ */
+const handleLessonClick = (lessonInfo) => {
+  console.log('Lesson clicked:', lessonInfo)
+
+  // 如果用戶已購買課程，直接導航到學習頁面
+  if (course.value.isEnrolled) {
+    router.push({
+      name: 'courseLearning',
+      params: { id: course.value.id },
+      query: { lessonId: lessonInfo.lessonId }
+    })
+  } else {
+    // 訪客用戶：檢查是否為免費試看課程
+    if (lessonInfo.isFreePreview) {
+      // 免費課程：開啟預覽 Modal
+      openPreview(lessonInfo.lessonId)
+    } else {
+      // 付費課程：顯示警告訊息
+      ElMessage.warning('請購買課程以觀看此單元')
+    }
+  }
+}
+
+/**
+ * 導航到學習頁面
+ */
+const navigateToLearning = () => {
+  if (!course.value.id) {
+    ElMessage.error('課程資訊錯誤')
+    return
+  }
+
+  router.push({
+    name: 'courseLearning',
+    params: { id: course.value.id }
+  })
+}
+
+/**
+ * 處理立即購買
+ */
+const handleBuyNow = async () => {
+  // 檢查登入狀態
+  if (!userStore.isAuthenticated) {
+    ElMessage.warning('請先登入以購買課程')
+    // 導向登入頁，並帶上當前頁面作為回跳參數
+    router.push({
+      name: 'login',
+      query: { redirect: route.fullPath }
+    })
+    return
+  }
+
+  if (!course.value.id) {
+    ElMessage.error('課程資訊錯誤')
+    return
+  }
+
+  // 檢查課程是否已在購物車中
+  const alreadyInCart = cartStore.hasItem(course.value.id)
+
+  if (alreadyInCart) {
+    // 課程已在購物車，直接跳轉到結帳頁面
+    router.push({
+      name: 'checkout',
+      query: { autoSelect: course.value.id }
+    })
+    return
+  }
+
+  const loadingInstance = ElLoading.service({
+    lock: true,
+    text: '正在加入購物車...',
+    background: 'rgba(0, 0, 0, 0.7)'
+  })
+
+  try {
+    // 步驟 1: 先加入購物車
+    const added = await cartStore.addItem({
+      id: course.value.id,
+      title: course.value.title,
+      instructor: course.value.instructor.name,
+      price: course.value.price,
+      cover_image_url: course.value.cover
+    })
+
+    if (!added) {
+      // 如果加入購物車失敗（可能已擁有課程等其他原因）
+      // addItem 已經顯示了錯誤訊息，直接返回
+      loadingInstance.close()
+      return
+    }
+
+    // 步驟 2: 導向結帳頁面，並帶上課程 ID 以自動選中
+    router.push({
+      name: 'checkout',
+      query: { autoSelect: course.value.id }
+    })
+  } catch (error) {
+    console.error('立即購買失敗:', error)
+    ElMessage.error('操作失敗，請稍後再試')
+  } finally {
+    loadingInstance.close()
+  }
+}
+
+/**
+ * 處理加入購物車
+ */
+const handleAddToCart = async () => {
+  // 檢查登入狀態
+  if (!userStore.isAuthenticated) {
+    ElMessage.warning('請先登入以加入購物車')
+    // 導向登入頁，並帶上當前頁面作為回跳參數
+    router.push({
+      name: 'login',
+      query: { redirect: route.fullPath }
+    })
+    return
+  }
+
+  if (!course.value.id) {
+    ElMessage.error('課程資訊錯誤')
+    return
+  }
+
+  // 使用 cartStore 的 addItem 方法
+  await cartStore.addItem({
+    id: course.value.id,
+    title: course.value.title,
+    instructor: course.value.instructor.name,
+    price: course.value.price,
+    cover_image_url: course.value.cover
+  })
+}
+
+/**
+ * 處理側邊欄封面圖片點擊 - 播放第一個可預覽的課程
+ */
+const handleSidebarPreview = () => {
+  const firstFreeLesson = findFirstFreeLesson()
+  if (firstFreeLesson) {
+    openPreview(firstFreeLesson.id)
+  } else {
+    ElMessage.warning('此課程暫無可預覽內容')
+  }
+}
+
+/**
+ * 統一的開啟預覽函數
+ */
+const openPreview = async (lessonId) => {
+  currentPreviewLessonId.value = lessonId
+  currentPreviewUrl.value = getPreviewVideoUrl(lessonId)
+  isPreviewVisible.value = true
+  showBuyOverlay.value = false
+  console.log('🎬 開啟預覽 Modal，Lesson ID:', lessonId, 'URL:', currentPreviewUrl.value)
+
+  // 等待 DOM 更新後初始化播放器
+  await nextTick()
+  await initPreviewPlayer()
+}
+
+/**
+ * 初始化預覽播放器
+ */
+const initPreviewPlayer = async () => {
+  try {
+    if (!videoElement.value || !videoContainer.value) {
+      console.error('Video elements not found')
+      return
+    }
+
+    // 建立播放器實例
+    player = new VideoPlayer(
+      videoElement.value,
+      videoContainer.value,
+      { seekJumpSeconds: 10 }
+    )
+
+    // 初始化播放器
+    const initialized = await player.initialize()
+    if (!initialized) {
+      throw new Error('您的瀏覽器不支援影片播放功能')
+    }
+
+    // 載入並播放影片
+    await player.play(currentPreviewUrl.value)
+
+    // 監聽影片結束事件
+    videoElement.value.addEventListener('ended', handleVideoEnded)
+
+    // 自動播放
+    await videoElement.value.play()
+
+    console.log('✅ 預覽播放器初始化成功')
+  } catch (err) {
+    console.error('❌ 預覽播放器初始化失敗:', err)
+    ElMessage.error('影片載入失敗，請稍後再試')
+  }
+}
+
+/**
+ * 處理影片結束事件 - 自動播放下一個免費課程
+ */
+const handleVideoEnded = async () => {
+  console.log('🎬 影片播放結束，尋找下一個免費課程...')
+
+  // 找到當前課程在列表中的索引
+  const currentIndex = flatLessonList.value.findIndex(
+    lesson => lesson.id === currentPreviewLessonId.value
+  )
+
+  if (currentIndex === -1) {
+    console.error('❌ 找不到當前課程')
+    return
+  }
+
+  // 從當前課程的下一個開始搜尋
+  let nextFreeLesson = null
+  for (let i = currentIndex + 1; i < flatLessonList.value.length; i++) {
+    const lesson = flatLessonList.value[i]
+    // 只播放標記為免費試看的課程（is_free_preview === 1 或 preview === true）
+    if (lesson.preview) {
+      nextFreeLesson = lesson
+      break
+    }
+  }
+
+  if (nextFreeLesson) {
+    console.log('✅ 找到下一個免費課程:', nextFreeLesson.title)
+    // 清理當前播放器
+    if (player) {
+      videoElement.value.removeEventListener('ended', handleVideoEnded)
+      await player.destroy()
+      player = null
+    }
+    // 播放下一個課程
+    await openPreview(nextFreeLesson.id)
+  } else {
+    console.log('⚠️ 沒有更多免費課程，顯示購買提示')
+    // 顯示購買課程覆蓋層
+    showBuyOverlay.value = true
+  }
+}
+
+/**
+ * 關閉預覽 Modal
+ */
+const handleClosePreview = async () => {
+  // 移除事件監聽器
+  if (videoElement.value) {
+    videoElement.value.removeEventListener('ended', handleVideoEnded)
+  }
+
+  // 清理播放器
+  if (player) {
+    await player.destroy()
+    player = null
+  }
+
+  isPreviewVisible.value = false
+  currentPreviewUrl.value = ''
+  currentPreviewLessonId.value = null
+  showBuyOverlay.value = false
+}
+
+/**
+ * 找到第一個免費試看課程
+ */
+const findFirstFreeLesson = () => {
+  return flatLessonList.value.find(lesson => lesson.preview) || null
 }
 
 /**
@@ -282,6 +692,9 @@ const loadCourseDetail = async () => {
     console.log('🔄 開始載入課程詳情，ID:', courseId)
     const data = await fetchCourseDetail(courseId)
     console.log('✅ 課程詳情載入成功:', data)
+    console.log('📊 isEnrolled 狀態:', data?.courseInfo?.isEnrolled)
+    console.log('⭐ 平均評分:', data?.courseInfo?.rateTable?.averageRating)
+    console.log('💬 總評論數:', data?.courseInfo?.rateTable?.reviewCount)
 
     courseData.value = data
 
@@ -308,6 +721,14 @@ const loadCourseDetail = async () => {
 onMounted(() => {
   loadCourseDetail()
 })
+
+onBeforeUnmount(async () => {
+  // 清理播放器
+  if (player) {
+    await player.destroy()
+    player = null
+  }
+})
 </script>
 
 <style scoped>
@@ -327,6 +748,7 @@ onMounted(() => {
   padding: 0 24px 0 0;
 }
 
+/* 桌面版隱藏主要封面圖片 */
 .course-media {
   width: 100%;
   height: 400px;
@@ -334,6 +756,7 @@ onMounted(() => {
   overflow: hidden;
   margin-bottom: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: none; /* 預設隱藏 */
 }
 
 .course-media img {
@@ -342,9 +765,11 @@ onMounted(() => {
   object-fit: cover;
 }
 
+/* Sticky Sidebar */
 .sidebar {
   position: sticky;
-  top: 24px;
+  top: 20px;
+  z-index: 10;
 }
 
 .purchase-card {
@@ -356,16 +781,56 @@ onMounted(() => {
   padding: 0;
 }
 
+/* 課程預覽區域 - 添加播放覆蓋層 */
 .course-preview {
   width: 100%;
   height: 200px;
   overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.course-preview:hover {
+  transform: scale(1.02);
 }
 
 .course-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* 播放覆蓋層 */
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.course-preview:hover .play-overlay {
+  opacity: 1;
+}
+
+.play-icon {
+  font-size: 48px;
+  color: white;
+}
+
+.preview-text {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .price-section {
@@ -379,24 +844,53 @@ onMounted(() => {
   color: #1a1a1a;
 }
 
+/* 學習進度區域 */
+.progress-section {
+  padding: 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.progress-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 12px;
+}
+
 .buy-btn,
-.cart-btn {
+.cart-btn,
+.learning-btn {
   width: calc(100% - 48px);
   margin: 12px 24px;
   border-radius: 8px;
   font-weight: 600;
 }
 
+/* Buy Now 按鈕改為橘色 (Warning) */
 .buy-btn {
-  background: #7ec8a3;
-  border-color: #7ec8a3;
+  background: var(--capy-warning, #FB8C00);
+  border-color: var(--capy-warning, #FB8C00);
+  color: white;
 }
 
 .buy-btn:hover {
-  background: #6bb890;
-  border-color: #6bb890;
+  background: var(--el-color-warning-dark-2, #c97000);
+  border-color: var(--el-color-warning-dark-2, #c97000);
 }
 
+/* 學習按鈕 (Primary - 綠色/藍色) */
+.learning-btn {
+  background: var(--capy-primary, #7ec8a3);
+  border-color: var(--capy-primary, #7ec8a3);
+  color: white;
+}
+
+.learning-btn:hover {
+  background: var(--el-color-primary-dark-2, #5fa885);
+  border-color: var(--el-color-primary-dark-2, #5fa885);
+}
+
+/* Add to Cart 保持為 Outlined 樣式 */
 .cart-btn {
   background: #fff;
   border: 2px solid #7ec8a3;
@@ -436,6 +930,112 @@ onMounted(() => {
   font-size: 18px;
 }
 
+/* 預覽播放器容器 */
+.preview-player-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+}
+
+.video-element {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 購買課程覆蓋層 */
+.buy-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.buy-overlay-content {
+  text-align: center;
+  padding: 40px;
+  max-width: 400px;
+}
+
+.buy-icon {
+  font-size: 64px;
+  color: var(--capy-warning);
+  margin-bottom: 24px;
+}
+
+.buy-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 16px 0;
+}
+
+.buy-text {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+}
+
+.buy-now-btn {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 32px;
+  height: auto;
+}
+
+/* Shaka Player 控制列樣式 */
+:deep(.shaka-controls-container) {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+}
+
+:deep(.shaka-play-button),
+:deep(.shaka-volume-bar-container),
+:deep(.shaka-current-time),
+:deep(.shaka-time-separator),
+:deep(.shaka-duration) {
+  color: var(--capy-primary, #54CDF2);
+}
+
+:deep(.shaka-seek-bar-container) {
+  .shaka-seek-bar {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .shaka-buffered-range {
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .shaka-played-range {
+    background-color: var(--capy-primary, #54CDF2);
+  }
+}
+
+/* 平板和桌面版 */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
 @media (max-width: 1200px) {
   .main-container {
     flex-direction: column;
@@ -453,12 +1053,14 @@ onMounted(() => {
   }
 }
 
+/* 手機版 - 顯示封面圖片 */
 @media (max-width: 768px) {
   .main-container {
     padding: 24px 16px;
   }
 
-  .course-media {
+  .course-media.mobile-only {
+    display: block;
     height: 250px;
   }
 }

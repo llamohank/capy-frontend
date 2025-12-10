@@ -51,7 +51,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Loading, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import instance from '@/utils/http.js';
+import { verifyEmail as verifyEmailAPI } from '@/api/oauth/oauth.js';
 import { useUserStore } from '@/stores/user';
 
 const route = useRoute();
@@ -72,7 +72,7 @@ const verifyEmail = async (token) => {
   try {
     // 呼叫後端驗證 API - 使用 POST 請求，token 作為 query parameter
     // 後端只會啟用帳號（從 suspended 改為 active），不會簽發 JWT
-    await instance.post(`/student/verifyEmail?token=${token}`);
+    await verifyEmailAPI(token);
 
     // 設定成功狀態
     status.value = 'success';
@@ -83,7 +83,7 @@ const verifyEmail = async (token) => {
   } catch (error) {
     console.error('驗證失敗:', error);
     status.value = 'error';
-    
+
     // 設定錯誤訊息
     const message = error.response?.data?.message || error.message;
     if (message.includes('expired') || message.includes('過期')) {
@@ -123,13 +123,13 @@ const goToLogin = () => {
  */
 onMounted(() => {
   const token = route.query.token;
-  
+
   if (!token) {
     status.value = 'error';
     errorMessage.value = '缺少驗證令牌，請檢查連結是否完整';
     return;
   }
-  
+
   // 執行驗證
   verifyEmail(token);
 });
@@ -268,11 +268,11 @@ onUnmounted(() => {
   .verify-card {
     padding: 40px 24px;
   }
-  
+
   .state-title {
     font-size: 24px;
   }
-  
+
   .state-description {
     font-size: 14px;
   }

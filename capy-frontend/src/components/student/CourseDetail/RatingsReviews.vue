@@ -23,12 +23,14 @@
           class="rating-bar-item"
         >
           <span class="star-label">{{ star }}</span>
-          <el-progress
-            :percentage="getRatingPercentage(star)"
-            :show-text="false"
-            :stroke-width="8"
-            color="#ff9900"
-          />
+          <div class="progress-wrapper">
+            <el-progress
+              :percentage="getRatingPercentage(star)"
+              :show-text="false"
+              :stroke-width="8"
+              color="#ff9900"
+            />
+          </div>
           <span class="percentage-label">{{ getRatingPercentage(star) }}%</span>
         </div>
       </div>
@@ -61,7 +63,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 
 const props = defineProps({
   averageRating: {
@@ -83,8 +85,18 @@ const props = defineProps({
 })
 
 const getRatingPercentage = (star) => {
-  return props.ratingDistribution[star] || 0
+  const percentage = props.ratingDistribution[star] || 0
+  console.log(`⭐ ${star} 星評分:`, percentage, '%')
+  return percentage
 }
+
+onMounted(() => {
+  console.log('📊 RatingsReviews 元件載入')
+  console.log('平均評分:', props.averageRating)
+  console.log('總評論數:', props.totalReviews)
+  console.log('評分分佈:', props.ratingDistribution)
+  console.log('評論列表:', props.reviews)
+})
 </script>
 
 <style scoped>
@@ -146,6 +158,27 @@ const getRatingPercentage = (star) => {
   font-size: 14px;
   color: #666;
   min-width: 12px;
+}
+
+.progress-wrapper {
+  flex: 1;
+  min-width: 200px;
+}
+
+.progress-wrapper :deep(.el-progress) {
+  width: 100%;
+}
+
+.progress-wrapper :deep(.el-progress-bar) {
+  padding-right: 0;
+}
+
+.progress-wrapper :deep(.el-progress-bar__outer) {
+  background-color: #f0f0f0;
+}
+
+.progress-wrapper :deep(.el-progress-bar__inner) {
+  background-color: #ff9900;
 }
 
 .percentage-label {

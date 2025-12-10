@@ -75,11 +75,11 @@ const findRootId = (nodeId) => {
   const findInTree = (nodes, targetId, rootId = null) => {
     for (const node of nodes) {
       const currentRootId = rootId || node.id
-      
+
       if (node.id === targetId) {
         return currentRootId
       }
-      
+
       if (node.children && node.children.length > 0) {
         const found = findInTree(node.children, targetId, currentRootId)
         if (found) return found
@@ -87,7 +87,7 @@ const findRootId = (nodeId) => {
     }
     return null
   }
-  
+
   return findInTree(props.categories, nodeId)
 }
 
@@ -98,7 +98,7 @@ const findRootId = (nodeId) => {
  */
 const getAllNodeIdsUnderRoot = (rootId) => {
   const ids = []
-  
+
   const collectIds = (nodes) => {
     for (const node of nodes) {
       ids.push(node.id)
@@ -107,12 +107,12 @@ const getAllNodeIdsUnderRoot = (rootId) => {
       }
     }
   }
-  
+
   const rootNode = props.categories.find(cat => cat.id === rootId)
   if (rootNode) {
     collectIds([rootNode])
   }
-  
+
   return ids
 }
 
@@ -121,28 +121,28 @@ const getAllNodeIdsUnderRoot = (rootId) => {
  */
 const handleCheck = (currentObj, treeStatus) => {
   if (!treeRef.value) return
-  
+
   // 1. 找到當前節點所屬的根分類
   const currentRootId = findRootId(currentObj.id)
-  
+
   if (!currentRootId) return
-  
+
   // 2. 獲取當前所有已選中的節點
   const allCheckedKeys = treeStatus.checkedKeys
-  
+
   // 3. 過濾出屬於當前根分類的節點
   const validKeys = allCheckedKeys.filter(key => {
     const keyRootId = findRootId(key)
     return keyRootId === currentRootId
   })
-  
+
   // 4. 更新樹狀結構的選中狀態
   nextTick(() => {
     treeRef.value.setCheckedKeys(validKeys)
-    
+
     // 5. 發送更新事件
     emit('update:modelValue', validKeys)
-    
+
     // 6. 發送過濾變更事件給父組件
     emit('filter-change', {
       category_ids: validKeys
@@ -155,18 +155,18 @@ const handleCheck = (currentObj, treeStatus) => {
  */
 const idToLabelMap = computed(() => {
   const map = new Map()
-  
+
   const traverse = (nodes, parentLabel = '') => {
     nodes.forEach(node => {
       const fullLabel = parentLabel ? `${parentLabel} > ${node.name}` : node.name
       map.set(node.id, fullLabel)
-      
+
       if (node.children && node.children.length > 0) {
         traverse(node.children, fullLabel)
       }
     })
   }
-  
+
   traverse(props.categories)
   return map
 })
@@ -192,15 +192,15 @@ const removeCategory = (label) => {
       break
     }
   }
-  
+
   if (idToRemove && treeRef.value) {
     // 取消選中該節點（會自動取消其子節點）
     treeRef.value.setChecked(idToRemove, false, true)
-    
+
     // 獲取更新後的選中狀態
     const checkedKeys = treeRef.value.getCheckedKeys()
     emit('update:modelValue', checkedKeys)
-    
+
     // 發送過濾變更事件
     emit('filter-change', {
       category_ids: checkedKeys
@@ -211,13 +211,16 @@ const removeCategory = (label) => {
 /**
  * 監聽 modelValue 變化，同步到 tree
  */
-watch(() => props.modelValue, (newVal) => {
+watch(() => props.modelValue, (newVal, oldVal) => {
   if (treeRef.value) {
+    // 使用 nextTick 確保 DOM 更新後再設置
     nextTick(() => {
-      treeRef.value.setCheckedKeys(newVal)
+      // 強制設置選中的 keys，第二個參數 false 表示不觸發 check 事件
+      treeRef.value.setCheckedKeys(newVal || [])
+      console.log('CategoryTreeMulti: 同步選中狀態', newVal)
     })
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 /**
  * 監聽 categories 變化，重置選中狀態

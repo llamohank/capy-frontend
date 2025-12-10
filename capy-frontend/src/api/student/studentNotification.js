@@ -54,6 +54,54 @@ export const getNotifications = async (params = {}) => {
 }
 
 /**
+ * 獲取學生通知列表
+ * @param {Object} params - 查詢參數
+ * @param {string} params.announcementType - 公告類型篩選（platform / instructor / other / 未填=全部）
+ * @param {number} params.page - 頁碼（從 0 開始，預設 0）
+ * @param {number} params.size - 每頁數量（預設 5）
+ * @param {string} params.sort - 排序方式（預設 'createdAt,DESC'）
+ * @returns {Promise<Object>} 分頁通知列表
+ *
+ * 回應格式：
+ * {
+ *   content: [...],      // 通知列表
+ *   totalElements: 100,  // 總數量
+ *   totalPages: 5,       // 總頁數
+ *   size: 5,             // 每頁數量
+ *   number: 0,           // 當前頁碼
+ *   first: true,         // 是否第一頁
+ *   last: false          // 是否最後一頁
+ * }
+ */
+export const getStudentNotifications = async (params = {}) => {
+  const {
+    announcementType,
+    page = 0,
+    size = 5,
+    sort = 'createdAt,DESC'
+  } = params
+
+  try {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      sort
+    })
+
+    // 添加 announcementType 參數（如果有）
+    if (announcementType) {
+      queryParams.append('announcementType', announcementType)
+    }
+
+    const response = await instance.get(`/notifications/student?${queryParams.toString()}`)
+    return response
+  } catch (error) {
+    console.error('獲取學生通知列表失敗:', error)
+    throw error
+  }
+}
+
+/**
  * 獲取學生未讀通知數量
  * @returns {Promise<number>} 未讀通知數量
  */
@@ -146,6 +194,7 @@ export const getNotificationDetail = async (notificationId) => {
 
 export default {
   getNotifications,
+  getStudentNotifications,
   getStudentUnreadCount,
   markNotificationAsRead,
   markAllStudentNotificationsAsRead,

@@ -1,4 +1,4 @@
-// ====================================
+ // ====================================
 // Student Router Configuration
 // 使用 LazyLoad 方式載入所有頁面組件
 // ====================================
@@ -141,16 +141,9 @@ const studentRoutes = [
     children: [
       // 課程學習頁面 - 使用 courseId 和 lessonId
       {
-        path: "course/:id",
+        path: "course/:courseId/lesson/:lessonId",
         name: "courseLearning",
         component: () => import("@/views/student/CourseLearning/CourseLearningPage.vue"),
-        meta: { requiresAuth: true },
-      },
-      // 課程播放章節頁面
-      {
-        path: "course/:id/section/:sectionId",
-        name: "coursePlaySection",
-        component: () => import("@/views/student/CoursePlaySection/coursePlaySection.vue"),
         meta: { requiresAuth: true },
       },
     ],
@@ -161,6 +154,11 @@ const studentRoutes = [
   {
     path: "/login",
     name: "login",
+    component: () => import("@/views/student/Auth&Register/LoginPage.vue"),
+  },
+  {
+    path: "/register",
+    name: "register",
     component: () => import("@/views/student/Auth&Register/LoginPage.vue"),
   },
   {

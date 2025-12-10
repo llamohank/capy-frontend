@@ -122,17 +122,13 @@ const loading = ref(false)
  * 將項目加入購物車
  */
 const handleAddToCart = async (courseId) => {
-  const success = wishlistStore.moveToCart(courseId)
+  // 等待 moveToCart 完成（它會處理所有訊息顯示）
+  const success = await wishlistStore.moveToCart(courseId)
 
-  if (success) {
-    ElMessage.success('已加入購物車')
-
-    // 如果已登入，重新載入願望清單以更新數量
-    if (userStore.isAuthenticated) {
-      await loadRecentWishlist()
-    }
-  } else {
-    ElMessage.warning('此課程已在購物車中')
+  // moveToCart 內部的 cartStore.addItem 已經會顯示適當的訊息
+  // 所以這裡不需要再顯示訊息，只需要在成功時重新載入願望清單
+  if (success && userStore.isAuthenticated) {
+    await loadRecentWishlist()
   }
 }
 

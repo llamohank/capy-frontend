@@ -2,27 +2,21 @@
   <div class="course-intro">
     <h2 class="intro-title">課程介紹</h2>
     <p class="course-description">{{ description }}</p>
-    
+
     <!-- 試看單元 -->
-    <div v-if="previewLesson" class="preview-section">
-      <div class="preview-header">
-        <el-icon class="preview-icon"><VideoPlay /></el-icon>
-        <h3 class="preview-title">免費試看</h3>
-      </div>
+    <div v-if="previewCount > 0" class="preview-section">
       <div class="preview-content">
         <div class="preview-info">
-          <span class="preview-chapter">{{ previewLesson.sectionName }}</span>
-          <span class="preview-separator">›</span>
-          <span class="preview-lesson">{{ previewLesson.lessonTitle }}</span>
-          <span class="preview-duration">({{ previewLesson.duration }})</span>
+          <el-icon class="preview-icon"><VideoPlay /></el-icon>
+          <span class="preview-text">本課程提供 {{ previewCount }} 堂免費試看課程，立即體驗教學風格</span>
         </div>
-        <el-button type="primary" class="preview-btn" @click="handlePreview">
+        <el-button plain class="preview-btn" @click="handlePreview">
           <el-icon><VideoPlay /></el-icon>
           立即試看
         </el-button>
       </div>
     </div>
-    
+
     <h3 class="stats-title">課程資訊</h3>
     <div class="course-stats">
       <span class="stat-item">
@@ -39,21 +33,12 @@
       </span>
     </div>
 
-    <div v-if="learningPoints && learningPoints.length > 0" class="learning-points">
-      <h3 class="learning-title">你將學到</h3>
-      <ul class="learning-list">
-        <li v-for="(point, index) in learningPoints" :key="index" class="learning-item">
-          <el-icon class="check-icon"><Check /></el-icon>
-          <span>{{ point }}</span>
-        </li>
-      </ul>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import { Clock, Document, VideoPlay, Check } from '@element-plus/icons-vue'
+import { Clock, Document, VideoPlay } from '@element-plus/icons-vue'
 
 const props = defineProps({
   description: {
@@ -72,10 +57,6 @@ const props = defineProps({
     type: Number,
     required: true
   },
-  learningPoints: {
-    type: Array,
-    default: () => []
-  },
   contentSections: {
     type: Array,
     default: () => []
@@ -84,31 +65,26 @@ const props = defineProps({
 
 const emit = defineEmits(['preview'])
 
-// 自動取得第一個 section 的第一個 lesson 作為試看單元
-const previewLesson = computed(() => {
-  if (props.contentSections && props.contentSections.length > 0) {
-    const firstSection = props.contentSections[0]
-    if (firstSection.lessons && firstSection.lessons.length > 0) {
-      const firstLesson = firstSection.lessons[0]
-      return {
-        sectionName: firstSection.name,
-        lessonTitle: firstLesson.title,
-        duration: firstLesson.duration,
-        sectionIndex: 0,
-        lessonIndex: 0
-      }
+// 計算免費試看課程數量
+const previewCount = computed(() => {
+  if (!props.contentSections || props.contentSections.length === 0) return 0
+
+  let count = 0
+  props.contentSections.forEach(section => {
+    if (section.lessons && section.lessons.length > 0) {
+      section.lessons.forEach(lesson => {
+        if (lesson.preview) {
+          count++
+        }
+      })
     }
-  }
-  return null
+  })
+  return count
 })
 
 const handlePreview = () => {
-  if (previewLesson.value) {
-    emit('preview', {
-      sectionIndex: previewLesson.value.sectionIndex,
-      lessonIndex: previewLesson.value.lessonIndex
-    })
-  }
+  // 觸發預覽事件，讓父組件處理（播放第一個免費課程）
+  emit('preview', { fromHeader: true })
 }
 </script>
 
@@ -135,30 +111,11 @@ const handlePreview = () => {
 }
 
 .preview-section {
-  background: linear-gradient(135deg, #f0f9f4 0%, #e8f5ee 100%);
-  border: 2px solid #7ec8a3;
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px 24px;
   margin-bottom: 32px;
-}
-
-.preview-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.preview-icon {
-  color: #7ec8a3;
-  font-size: 24px;
-}
-
-.preview-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0;
 }
 
 .preview-content {
@@ -172,44 +129,35 @@ const handlePreview = () => {
 .preview-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex: 1;
   min-width: 200px;
 }
 
-.preview-chapter {
-  font-weight: 600;
+.preview-icon {
+  color: var(--capy-primary);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.preview-text {
   color: #333;
   font-size: 15px;
-}
-
-.preview-separator {
-  color: #999;
-  font-size: 14px;
-}
-
-.preview-lesson {
-  color: #666;
-  font-size: 15px;
-}
-
-.preview-duration {
-  color: #999;
-  font-size: 14px;
-  margin-left: 4px;
+  line-height: 1.5;
 }
 
 .preview-btn {
-  background: #7ec8a3;
-  border-color: #7ec8a3;
   font-weight: 600;
-  padding: 12px 24px;
+  padding: 10px 24px;
   height: auto;
+  border-color: var(--capy-primary);
+  color: var(--capy-primary);
 }
 
 .preview-btn:hover {
-  background: #6bb890;
-  border-color: #6bb890;
+  background: var(--capy-primary);
+  border-color: var(--capy-primary);
+  color: white;
 }
 
 .preview-btn .el-icon {
@@ -244,42 +192,6 @@ const handlePreview = () => {
   font-size: 18px;
 }
 
-.learning-points {
-  margin-top: 32px;
-}
-
-.learning-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin: 0 0 20px 0;
-}
-
-.learning-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.learning-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 15px;
-  color: #333;
-  line-height: 1.6;
-}
-
-.check-icon {
-  color: #7ec8a3;
-  font-size: 18px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
 @media (max-width: 768px) {
   .course-intro {
     padding: 24px 16px;
@@ -294,11 +206,7 @@ const handlePreview = () => {
   }
 
   .preview-section {
-    padding: 20px 16px;
-  }
-
-  .preview-title {
-    font-size: 18px;
+    padding: 16px;
   }
 
   .preview-content {
@@ -307,9 +215,7 @@ const handlePreview = () => {
   }
 
   .preview-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    gap: 8px;
   }
 
   .preview-btn {
@@ -317,17 +223,12 @@ const handlePreview = () => {
     justify-content: center;
   }
 
-  .stats-title,
-  .learning-title {
+  .stats-title {
     font-size: 18px;
   }
 
   .course-stats {
     gap: 20px;
-  }
-
-  .learning-list {
-    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -215,7 +215,17 @@
             <label for="terms" class="checkbox-label">我同意服務條款和隱私政策</label>
           </div>
 
-          <button class="submit-button" @click="handleRegister">建立帳號</button>
+          <button
+            class="submit-button"
+            @click="handleRegister"
+            :disabled="isRegistering"
+            :class="{ 'is-loading': isRegistering }"
+          >
+            <el-icon v-if="isRegistering" class="is-loading">
+              <Loading />
+            </el-icon>
+            <span>{{ isRegistering ? '註冊中...' : '建立帳號' }}</span>
+          </button>
 
           <button class="google-button" @click="handleGoogleLogin">
             <svg class="google-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -286,6 +296,9 @@ const showConfirmPassword = ref(false);
 
 // 登入載入狀態
 const isLoggingIn = ref(false);
+
+// 註冊載入狀態
+const isRegistering = ref(false);
 
 // 登入表單
 const loginForm = reactive({
@@ -545,6 +558,11 @@ const handleLogin = async () => {
 
 // 處理註冊
 const handleRegister = async () => {
+  // 防止重複點擊
+  if (isRegistering.value) {
+    return;
+  }
+
   // 檢查是否正在驗證暱稱
   if (nicknameValidation.checking) {
     ElMessage.warning('請等待暱稱驗證完成');
@@ -610,6 +628,9 @@ const handleRegister = async () => {
     return;
   }
 
+  // 開始載入
+  isRegistering.value = true;
+
   try {
     // 註冊前再次確認暱稱可用性（防止併發問題）
     const finalCheck = await nicknameValidator.validate(registerForm.username.trim());
@@ -618,6 +639,7 @@ const handleRegister = async () => {
       nicknameValidation.available = false;
       nicknameValidation.message = VALIDATION_MESSAGES.TAKEN;
       nicknameValidation.type = 'error';
+      isRegistering.value = false;
       return;
     }
 
@@ -682,6 +704,9 @@ const handleRegister = async () => {
   } catch (error) {
     console.error('註冊失敗:', error);
     ElMessage.error(error.response?.data?.message || error.message || '註冊失敗，請稍後再試');
+  } finally {
+    // 無論成功或失敗，都重置載入狀態
+    isRegistering.value = false;
   }
 };
 

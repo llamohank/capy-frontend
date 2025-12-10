@@ -15,28 +15,19 @@
 
       <!-- 只在非申請頁面顯示搜尋框 -->
       <div v-if="!isApplicationPage" class="header-center">
-        <el-autocomplete
+        <el-input
           v-model="searchText"
-          :fetch-suggestions="querySearch"
-          placeholder="搜尋課程或標籤..."
+          placeholder="搜尋課程、標籤或講師..."
           :prefix-icon="Search"
           class="search-input"
           size="large"
-          @select="handleSelect"
           clearable
+          @keyup.enter="handleSearch"
         >
-          <template #default="{ item }">
-            <div class="autocomplete-item">
-              <el-icon class="item-icon">
-                <component :is="item.icon" />
-              </el-icon>
-              <span class="item-label">{{ item.value }}</span>
-              <el-tag v-if="item.type" size="small" class="item-type">
-                {{ item.type }}
-              </el-tag>
-            </div>
+          <template #append>
+            <el-button :icon="Search" @click="handleSearch" />
           </template>
-        </el-autocomplete>
+        </el-input>
       </div>
 
       <!-- 在申請頁面時顯示佔位元素，保持 Logo 和使用者選單的間距 -->
@@ -156,45 +147,33 @@ const notificationStore = useNotificationStore()
 const searchText = ref('')
 const showCartDrawer = ref(false)
 
-// 模擬搜尋建議資料（課程標題和標籤）
-const searchSuggestions = [
-  { value: 'Vue 3 完整開發指南', type: '課程', icon: Document },
-  { value: 'Python 數據分析實戰', type: '課程', icon: Document },
-  { value: 'Spring Boot 微服務架構', type: '課程', icon: Document },
-  { value: 'React 18 完整開發指南', type: '課程', icon: Document },
-  { value: 'Java', type: '標籤', icon: PriceTag },
-  { value: 'Python', type: '標籤', icon: PriceTag },
-  { value: 'Vue3', type: '標籤', icon: PriceTag },
-  { value: 'Spring Boot', type: '標籤', icon: PriceTag },
-  { value: '前端開發', type: '標籤', icon: PriceTag },
-  { value: '後端開發', type: '標籤', icon: PriceTag },
-  { value: '數據分析', type: '標籤', icon: PriceTag },
-  { value: '機器學習', type: '標籤', icon: PriceTag }
-]
-
-// 搜尋建議查詢函數
-const querySearch = (queryString, cb) => {
-  if (!queryString) {
-    cb([])
+/**
+ * 處理搜尋
+ * 導航到探索頁面並帶上搜尋關鍵字
+ */
+const handleSearch = () => {
+  if (!searchText.value || searchText.value.trim() === '') {
+    ElMessage.warning('請輸入搜尋關鍵字')
     return
   }
 
-  const results = searchSuggestions.filter(item => {
-    return item.value.toLowerCase().includes(queryString.toLowerCase())
-  })
+  const keyword = searchText.value.trim()
 
-  cb(results)
-}
-
-// 處理選擇建議項目
-const handleSelect = (item) => {
-  if (item.type === '課程') {
-    ElMessage.success(`正在搜尋課程：${item.value}`)
-    router.push({ path: '/explore', query: { search: item.value } })
-  } else if (item.type === '標籤') {
-    ElMessage.success(`正在搜尋標籤：${item.value}`)
-    router.push({ path: '/explore', query: { tag: item.value } })
+  // 如果已經在探索頁面，直接更新 query
+  if (route.path === '/explore') {
+    router.push({
+      path: '/explore',
+      query: { search: keyword }
+    })
+  } else {
+    // 如果不在探索頁面，導航過去
+    router.push({
+      path: '/explore',
+      query: { search: keyword }
+    })
   }
+
+  ElMessage.success(`搜尋：${keyword}`)
 }
 
 // ==================== 初始化資料 ====================

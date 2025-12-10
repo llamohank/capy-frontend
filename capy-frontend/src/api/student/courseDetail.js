@@ -54,7 +54,8 @@ import request from '@/utils/http'
  *         totalCourses: number
  *       },
  *       totalHours: number,
- *       totalSections: number
+ *       totalSections: number,
+ *       isEnrolled: boolean
  *     },
  *     sections: [
  *       {
@@ -126,6 +127,86 @@ export const fetchCourseDetail = (courseId, params = {}) => {
     }
     throw error
   })
+}
+
+/**
+ * 2. 取得免費試看影片的 HLS 播放器 URL（未登入也可呼叫）
+ * GET /api/student/preview/{lessonId}/master
+ *
+ * @param {number} lessonId - 課程單元 ID
+ * @returns {string} 回傳完整的 HLS master.m3u8 URL
+ *
+ * @description
+ * 此 API 用於免費試看功能：
+ * - 未登入用戶也可請求，但後端會驗證該 lesson 是否標記為 is_free_preview=true
+ * - 若用戶已購買課程，也可以透過此 API 播放
+ * - 後端會自動處理子檔案路徑（/api/student/preview/{lessonId}/{filePath}）
+ * - Content-Type 會根據檔案類型自動設定（m3u8/ts/m4s）
+ * - 自動使用當前環境的 API baseURL（開發環境：localhost:8080，生產環境：實際域名）
+ *
+ * @example
+ * // 基本呼叫
+ * const hlsUrl = getPreviewVideoUrl(123)
+ * // 開發環境回傳：'http://localhost:8080/api/student/preview/123/master'
+ * // 生產環境回傳：'https://your-domain.com/api/student/preview/123/master'
+ *
+ * @throws {Error} 401 - 未登入且課程未標記為免費試看
+ * @throws {Error} 403 - 無權限觀看（未購買且非免費試看）
+ * @throws {Error} 404 - lessonId 不存在或轉檔檔案不存在
+ */
+export const getPreviewVideoUrl = (lessonId) => {
+  if (!lessonId) {
+    throw new Error('lessonId 為必填參數')
+  }
+
+  // 從 http.js 的 axios instance 獲取 baseURL
+  // 移除末尾的 '/api' 因為我們需要完整路徑
+  const apiBaseURL = 'http://localhost:8080'
+
+  // 也可以從環境變數讀取（如果有設定）
+  // const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
+  // 組合完整的 HLS master.m3u8 URL
+  return `${apiBaseURL}/api/student/preview/${lessonId}/master`
+}
+
+/**
+ * 3. 驗證免費試看影片是否可用（可選的輔助函數）
+ * 透過發送 HEAD 請求來檢查影片是否存在且可訪問
+ *
+ * @param {number} lessonId - 課程單元 ID
+ * @returns {Promise<boolean>} 回傳是否可以播放
+ *
+ * @example
+ * const canPlay = await checkPreviewAvailability(123)
+ * if (canPlay) {
+ *   // 載入播放器
+ * } else {
+ *   // 顯示錯誤訊息
+ * }
+ */
+export const checkPreviewAvailability = async (lessonId) => {
+  try {
+    await request({
+      url: `/student/preview/${lessonId}/master`,
+      method: 'HEAD',
+      withCredentials: true // 如果使用 Cookie 認證模式
+    })
+    return true
+  } catch (error) {
+    console.error('❌ 免費試看影片不可用:', error)
+
+    // 根據錯誤狀態碼提供更詳細的錯誤訊息
+    if (error.response?.status === 401) {
+      console.error('未登入且課程未標記為免費試看')
+    } else if (error.response?.status === 403) {
+      console.error('無權限觀看（未購買且非免費試看）')
+    } else if (error.response?.status === 404) {
+      console.error('課程單元不存在或轉檔檔案不存在')
+    }
+
+    return false
+  }
 }
 
 /**
@@ -207,6 +288,8 @@ export const extractLearningPoints = (sections) => {
 // 匯出所有 API 函數
 export default {
   fetchCourseDetail,
+  getPreviewVideoUrl,
+  checkPreviewAvailability,
   convertSecondsToHours,
   calculateTotalDuration,
   formatRatingDistribution,
