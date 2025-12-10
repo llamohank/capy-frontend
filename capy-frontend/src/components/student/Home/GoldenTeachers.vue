@@ -17,7 +17,7 @@ const props = defineProps({
 const displayTeachers = computed(() => props.teachers)
 
 const goToTeacher = (id) => {
-  router.push(`/teacher/${id}`)
+  router.push(`/teacherdetail/${id}`)
 }
 
 const formatStudentCount = (count) => {
