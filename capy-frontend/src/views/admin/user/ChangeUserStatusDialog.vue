@@ -1,6 +1,11 @@
 <script setup>
+import { ref } from "vue";
+import { ElMessage } from "element-plus";
+import { suspendUser, unsuspendUser } from "@/api/admin/user";
+
 const visible = ref(false);
 const operationDetail = ref("");
+const loading = ref(false);
 let resolveFn = null;
 let currentUserdetail = null;
 
@@ -8,15 +13,39 @@ function open(userdetail, resolve) {
   visible.value = true;
   currentUserdetail = userdetail; //user物件
   resolveFn = resolve;
+  operationDetail.value = ""; // 重置備註
 }
 
 async function confirm() {
-  // ======= 執行你的封鎖 API =======
-  // const success = await blockUser(currentUserId)
-  // 封鎖成功 → 關閉 dialog、switch 成功切換
-  visible.value = false;
+  // 驗證備註是否填寫
+  if (!operationDetail.value.trim()) {
+    ElMessage.warning("請輸入操作備註");
+    return;
+  }
 
-  resolveFn(true);
+  try {
+    loading.value = true;
+    
+    if (currentUserdetail.isActive) {
+      // 當前是 active，要停權
+      await suspendUser(currentUserdetail.userId, operationDetail.value);
+      ElMessage.success("用戶已停權");
+    } else {
+      // 當前是 suspended，要恢復
+      await unsuspendUser(currentUserdetail.userId, operationDetail.value);
+      ElMessage.success("用戶已恢復");
+    }
+    
+    visible.value = false;
+    operationDetail.value = "";
+    resolveFn(true);
+  } catch (error) {
+    console.error("操作失敗:", error);
+    ElMessage.error(error?.response?.data?.message || "操作失敗，請稍後再試");
+    resolveFn(false);
+  } finally {
+    loading.value = false;
+  }
 }
 
 function cancel() {
@@ -52,7 +81,7 @@ defineExpose({
     <template #footer>
       <div class="dialog-footer">
         <el-button type="info" @click="cancel">取消</el-button>
-        <el-button type="primary" @click="confirm"> 確認 </el-button>
+        <el-button type="primary" :loading="loading" @click="confirm"> 確認 </el-button>
       </div>
     </template>
   </el-dialog>

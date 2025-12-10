@@ -1,34 +1,90 @@
 <script setup>
+import { ref, watch, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import { listAllTags, createTag, deleteTag } from "@/api/admin/tag";
+
+// Dialog 狀態
 const createDialogVisible = ref(false);
 const deleteDialogVisible = ref(false);
-const currentTagValue = ref(null);
+
+// 資料狀態
+const loading = ref(false);
+const createLoading = ref(false);
+const deleteLoading = ref(false);
+const currentTag = ref(null);
 const newTagValue = ref("");
-const taglist = ref([
-  {
-    tag_id: "1",
-    tag_name: "限時優惠",
-  },
-  {
-    tag_id: "2",
-    tag_name: "全站第一",
-  },
-]);
-const handelDelete = (tag) => {
-  currentTagValue.value = tag;
+const tagList = ref([]);
+
+// 取得標籤列表
+const fetchTags = async () => {
+  try {
+    loading.value = true;
+    const result = await listAllTags();
+    if (result) {
+      tagList.value = result || [];
+    }
+  } catch (error) {
+    console.error("Failed to fetch tags:", error);
+    ElMessage.error("取得標籤列表失敗");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 點擊刪除標籤
+const handleDelete = (tag) => {
+  currentTag.value = tag;
   deleteDialogVisible.value = true;
 };
-const handleCreateTag = () => {
-  //發送新增請求
-  createDialogVisible.value = false;
-  //獲取最新資訊
+
+// 新增標籤
+const handleCreateTag = async () => {
+  if (!newTagValue.value.trim()) {
+    ElMessage.warning("請輸入標籤名稱");
+    return;
+  }
+
+  try {
+    createLoading.value = true;
+    await createTag(newTagValue.value.trim());
+    ElMessage.success("標籤新增成功");
+    createDialogVisible.value = false;
+    // 重新獲取標籤列表
+    fetchTags();
+  } catch (error) {
+    console.error("Failed to create tag:", error);
+    ElMessage.error(error?.response?.data?.message || "新增標籤失敗");
+  } finally {
+    createLoading.value = false;
+  }
 };
-const handleDeleteTag = () => {
-  //發送刪除請求
-  deleteDialogVisible.value = false;
-  //重新獲取最新標籤資訊
+
+// 刪除標籤
+const handleDeleteTag = async () => {
+  if (!currentTag.value) return;
+
+  try {
+    deleteLoading.value = true;
+    await deleteTag(currentTag.value.id);
+    ElMessage.success("標籤刪除成功");
+    deleteDialogVisible.value = false;
+    // 重新獲取標籤列表
+    fetchTags();
+  } catch (error) {
+    console.error("Failed to delete tag:", error);
+    ElMessage.error(error?.response?.data?.message || "刪除標籤失敗");
+  } finally {
+    deleteLoading.value = false;
+  }
 };
+
+// 重置表單
 watch(createDialogVisible, (val) => {
   if (!val) newTagValue.value = "";
+});
+
+onMounted(() => {
+  fetchTags();
 });
 </script>
 <template>
@@ -50,7 +106,7 @@ watch(createDialogVisible, (val) => {
       <template #footer>
         <div class="dialog-footer">
           <el-button size="large" type="info" @click="createDialogVisible = false">取消</el-button>
-          <el-button size="large" type="primary" @click="handleCreateTag"> 確認 </el-button>
+          <el-button size="large" type="primary" :loading="createLoading" @click="handleCreateTag"> 確認 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -60,16 +116,13 @@ watch(createDialogVisible, (val) => {
       </template>
       <div class="dialog-body">
         <p>
-          確認刪除標籤<span style="font-weight: 500; color: #409eff">{{
-            currentTagValue?.tag_name
-          }}</span
-          >?
+          確認刪除標籤<span style="font-weight: 500; color: #409eff">{{ currentTag?.name }}</span>?
         </p>
       </div>
       <template #footer>
         <div class="dialog-footer">
           <el-button size="large" type="info" @click="deleteDialogVisible = false">取消</el-button>
-          <el-button size="large" type="primary" @click="handleDeleteTag"> 確認 </el-button>
+          <el-button size="large" type="primary" :loading="deleteLoading" @click="handleDeleteTag"> 確認 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -80,10 +133,17 @@ watch(createDialogVisible, (val) => {
       >
     </div>
     <p style="padding-bottom: 12px">現有標籤 :</p>
-    <div class="pool">
-      <span @click="handelDelete(tag)" v-for="tag in taglist" :key="tag.tag_id" class="pool-item"
-        >{{ tag.tag_name }}<el-icon><CircleClose /></el-icon
-      ></span>
+    <div v-loading="loading" class="pool">
+      <span 
+        v-for="tag in tagList" 
+        :key="tag.id" 
+        class="pool-item"
+        @click="handleDelete(tag)"
+      >
+        {{ tag.name }}
+        <el-icon><CircleClose /></el-icon>
+      </span>
+      <span v-if="!loading && tagList.length === 0" class="empty-text">暫無標籤</span>
     </div>
   </div>
 </template>
@@ -143,5 +203,10 @@ watch(createDialogVisible, (val) => {
   padding: 12px 0;
   font-weight: 500;
   font-size: 24px;
+}
+.empty-text {
+  color: rgb(153, 173, 183);
+  padding: 12px;
+  font-size: 14px;
 }
 </style>
