@@ -78,10 +78,10 @@ const dataWithIndex = computed(() => {
 });
 
 // 查看詳情
-const viewDetail = (applicantId) => {
+const viewDetail = (applicationId) => {
   router.push({
     name: "instructor_detail",
-    params: { visitorId: applicantId },
+    params: { instructorId: applicationId },
   });
 };
 
@@ -153,7 +153,7 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="操作">
         <template #default="{ row }">
-          <el-button type="primary" link @click="viewDetail(row.applicantId)">
+          <el-button type="primary" link @click="viewDetail(row.applicationId)">
             查看詳情
           </el-button>
         </template>
