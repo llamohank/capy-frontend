@@ -6,7 +6,7 @@ import { useCourseStore } from "@/stores/course";
 import AlertDialog from "../common/AlertDialog.vue";
 import LessonFormDialog from "./LessonFormDialog.vue";
 import { getVideoUrl } from "@/api/teacher/video";
-import { createLesson } from "@/api/teacher/course";
+import { createLesson, updateLesson } from "@/api/teacher/course";
 
 const props = defineProps({
   sectionInfo: {
@@ -45,8 +45,12 @@ const handleEditLesson = async (lessonInfo) => {
   isEditLesson.value = true;
   currentLesson.value = lessonInfo;
   const res = await getVideoUrl(lessonInfo.lessonId);
-  lessonVideoUrl.value = res.signedUrl;
-  lessonDialogRef.value.open();
+  console.log(res);
+  if (res.signedUrl) {
+    lessonVideoUrl.value = res.signedUrl;
+  }
+  showLessonDialog.value = true;
+  // lessonDialogRef.value.open();
 };
 const handleSaveLesson = async (data) => {
   data.request.courseId = courseStore.currentCourseId;
@@ -69,7 +73,13 @@ const handleSaveLesson = async (data) => {
   if (!isEditLesson.value) {
     const res = await createLesson(fd);
     console.log(res);
+  } else {
+    const res = await updateLesson(fd);
+    console.log(res);
   }
+};
+const checkIsUploading = (lessonId) => {
+  return true;
 };
 /////////////////////////
 const tableData = ref([
@@ -127,12 +137,6 @@ const deleteLessonVid = async () => {
     ElMessage.info("已取消刪除");
   }
 };
-const form = ref({
-  name: "",
-  description: "",
-  isFree: false,
-  cate: "",
-});
 </script>
 <template>
   <TextInputDialog
@@ -159,51 +163,7 @@ const form = ref({
     :isEdit="isEditLesson"
     :lessonInfo="currentLesson"
   />
-  <!-- <el-dialog center v-model="dialogFormVisible" :title="modelMode" width="600">
-    <el-form :model="form" label-position="top" size="large" class="dialogForm">
-      <el-form-item label="單元影片標題 :">
-        <el-input style="width: 80%" v-model="form.lesson_name" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="對應章節 :">
-        <el-input style="width: auto" disabled :value="chapterinfo?.chapter_name" />
-      </el-form-item>
-      <el-form-item label="單元影片簡介 :">
-        <el-input v-model="form.lesson_description" type="textarea" :rows="5" />
-      </el-form-item>
-      <el-form-item label="是否為試看單元 :">
-        <el-switch v-model="form.isFree" size="large" active-text="是" inactive-text="否" />
-      </el-form-item>
-      <el-form-item label="預覽影片 :">
-        <el-upload
-          class="upload"
-          style="width: 100%"
-          drag
-          action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
-        >
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          <template #tip>
-            <div class="el-upload__tip">jpg/png files with a size less than 500kb</div>
-          </template>
-        </el-upload>
-      </el-form-item>
-      <el-form-item label="上傳單元附件 :">
-        <el-upload class="upload" style="width: 100%" drag>
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          <template #tip>
-            <div class="el-upload__tip">jpg/png files with a size less than 500kb</div>
-          </template>
-        </el-upload>
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取消</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false"> 保存更新 </el-button>
-      </div>
-    </template>
-  </el-dialog> -->
+
   <el-collapse-item>
     <template #icon="{ isActive }">
       <el-icon size="large" v-show="isActive"><ArrowDownBold /></el-icon>
@@ -229,14 +189,14 @@ const form = ref({
       >
       <ul v-if="sectionInfo.lessons?.length > 0" class="course-playlist">
         <Draggable v-model="tableData">
-          <li v-for="(lesson, index) in chapterinfo?.lesson_info" :key="lesson.lessonid">
-            <span
-              ><span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
-              >{{ lesson.lesson_name
-              }}<el-tag v-show="lesson.isFree" style="margin-left: 4px">試看單元</el-tag></span
-            >
-            <div>
-              {{ lesson.duration_time }}
+          <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
+            <div style="display: flex; align-items: center">
+              <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
+              >{{ lesson.lessonTitle
+              }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
+            </div>
+            <div v-if="checkIsUploading(lesson.lessonId)">
+              {{ lesson.lessonDurationSeconds }}
               <el-button style="margin-left: 8px" @click="handleEditLesson(lesson)"
                 >編輯
               </el-button>
@@ -297,6 +257,7 @@ const form = ref({
 .dialogForm {
   padding: 16px;
 }
+
 .collapse-chapter-btns {
   position: absolute;
   z-index: 10;

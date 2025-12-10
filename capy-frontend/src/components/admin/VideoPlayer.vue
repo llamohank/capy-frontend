@@ -57,7 +57,7 @@ defineExpose({
   width: 100% !important;
   height: auto;
   margin: 12px 0;
-  margin-left: -12px;
+  /* margin-left: -12px; */
 }
 :deep(#shaka-player-ui-time-container) {
   align-items: center;
