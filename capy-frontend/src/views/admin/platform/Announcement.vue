@@ -216,71 +216,74 @@ onMounted(() => {
       </el-form>
     </el-dialog>
     <h2 class="section-heading">全站公告管理</h2>
-    <div
-      style="
-        display: flex;
-        padding: 0 8px;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 48px;
-      "
-    >
-      <div style="display: flex; align-items: center; gap: 12px">
-        <span style="font-weight: 500; font-size: 18px">發布人 :</span>
-        <el-radio-group v-model="currentAnnouncementType" size="large" fill="#4F46E5" @change="handleTypeChange">
-          <el-radio-button label="All" value="" />
-          <el-radio-button label="平台" value="platform" />
-          <el-radio-button label="講師" value="instructor" />
-        </el-radio-group>
-      </div>
-      <el-button @click="addDialogVisible = true" type="primary" round size="large"
-        ><el-icon size="large" style="margin-right: 4px"><CirclePlus /></el-icon>發布公告</el-button
-      >
-    </div>
-    <ul v-loading="loading" class="message-list">
-      <li v-for="item in announcementList" :key="item.id" @click="checkoutDetail(item)" class="message-list-item">
-        <div>
-          <div style="display: flex; align-items: center; margin-bottom: 24px; gap: 4px">
-            <h3 class="message-title">{{ item.title }}</h3>
-            <el-tag
-              class="tag"
-              type="info"
-              effect="plain"
-              round
-              size="large"
-              >{{ formatTargetAudience(item.targetAudience) }}</el-tag
-            >
-          </div>
-          <p style="margin-bottom: 12px; font-weight: 500">
-            {{ formatAnnouncementType(item.announcementType) }} {{ item.senderNickname }}
-          </p>
-          <span style="font-style: italic; font-size: 14px">{{ formatDate(item.createdAt) }}</span>
+    <div class="wrapper" style="margin-bottom: 24px">
+      <div class="filter-bar">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="font-weight: 500; font-size: 16px">發布人 :</span>
+          <el-radio-group v-model="currentAnnouncementType" size="large" fill="#4F46E5" @change="handleTypeChange">
+            <el-radio-button label="All" value="" />
+            <el-radio-button label="平台" value="platform" />
+            <el-radio-button label="講師" value="instructor" />
+          </el-radio-group>
         </div>
-        <span class="checkout">點擊查看詳情</span>
-      </li>
-      <li v-if="!loading && announcementList.length === 0" class="empty-text">
-        暫無公告
-      </li>
-    </ul>
-    <div style="justify-content: center" class="pagination-btn">
-      <el-pagination 
-        size="large" 
-        background 
-        layout="total, prev, pager, next" 
-        :total="totalElements"
-        :page-size="pageSize"
-        :current-page="currentPage"
-        @current-change="handlePageChange"
-      />
+        <el-button @click="addDialogVisible = true" type="primary" round size="large"
+          ><el-icon size="large" style="margin-right: 4px"><CirclePlus /></el-icon>發布公告</el-button
+        >
+      </div>
+    </div>
+    <div class="wrapper">
+      <ul v-loading="loading" class="message-list">
+        <li v-for="item in announcementList" :key="item.id" @click="checkoutDetail(item)" class="message-list-item">
+          <div>
+            <div style="display: flex; align-items: center; margin-bottom: 24px; gap: 4px">
+              <h3 class="message-title">{{ item.title }}</h3>
+              <el-tag
+                class="tag"
+                type="info"
+                effect="plain"
+                round
+                size="large"
+                >{{ formatTargetAudience(item.targetAudience) }}</el-tag
+              >
+            </div>
+            <p style="margin-bottom: 12px; font-weight: 500">
+              {{ formatAnnouncementType(item.announcementType) }} {{ item.senderNickname }}
+            </p>
+            <span style="font-style: italic; font-size: 14px">{{ formatDate(item.createdAt) }}</span>
+          </div>
+          <span class="checkout">點擊查看詳情</span>
+        </li>
+        <li v-if="!loading && announcementList.length === 0" class="empty-text">
+          暫無公告
+        </li>
+      </ul>
+      <div style="justify-content: center" class="pagination-btn">
+        <el-pagination 
+          size="large" 
+          background 
+          layout="total, prev, pager, next" 
+          :total="totalElements"
+          :page-size="pageSize"
+          :current-page="currentPage"
+          @current-change="handlePageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 <style scoped>
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .message-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 20px;
 }
 
 .message-list-item {

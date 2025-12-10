@@ -108,26 +108,22 @@ onMounted(() => {
 
   <div class="wrapper" style="margin-bottom: 24px">
     <div class="filter-bar">
-      <el-form inline label-position="left" size="large" class="filter-form">
-        <el-form-item label="課程分類">
-          <el-select
-            v-model="filters.parentCategoryId"
-            placeholder="全部分類"
-            clearable
-            style="width: 200px"
-          >
-            <el-option
-              v-for="item in categories"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" size="large" @click="resetFilters">清除篩選</el-button>
-        </el-form-item>
-      </el-form>
+      <el-select
+        v-model="filters.parentCategoryId"
+        size="large"
+        placeholder="全部分類"
+        clearable
+        style="width: 200px"
+      >
+        <el-option
+          v-for="item in categories"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+
+      <el-button type="primary" size="large" @click="resetFilters">清除篩選</el-button>
     </div>
   </div>
 
@@ -172,11 +168,11 @@ onMounted(() => {
         </template>
       </el-table-column>
     </el-table>
-    <div class="pagination-btn">
+    <div class="pagination-btn" style="justify-content: center">
       <el-pagination
         size="large"
         background
-        layout="prev, pager, next"
+        layout="total, prev, pager, next"
         :page-size="pageSize"
         :total="totalElements"
         :current-page="currentPage"
@@ -190,7 +186,6 @@ onMounted(() => {
 .filter-bar {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }

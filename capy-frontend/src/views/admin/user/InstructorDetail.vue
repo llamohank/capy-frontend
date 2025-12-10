@@ -219,7 +219,7 @@ onMounted(() => {
 
 <template>
   <div class="instructor-detail" v-loading="loading">
-    <div class="section-heading">講師申請詳情</div>
+    <h2 class="section-heading">講師申請詳情</h2>
 
     <template v-if="instructor">
       <!-- 基本資料卡片 -->

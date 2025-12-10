@@ -139,28 +139,9 @@ onMounted(() => {
 <template>
   <ChangeUserStatusDialog ref="dialogRef" />
   <h2 class="section-heading">用戶狀態管理</h2>
-  <div class="wrapper">
+  <div class="wrapper" style="margin-bottom: 24px">
     <!-- 篩選與搜尋區 -->
     <div class="filter-bar">
-      <el-input
-        v-model="searchKeyword"
-        size="large"
-        placeholder="搜尋用戶暱稱、Email..."
-        style="width: 300px"
-        clearable
-        @keyup.enter="handleSearch"
-        @clear="clearSearch"
-      >
-        <template #prefix>
-          <el-icon><Search /></el-icon>
-        </template>
-      </el-input>
-
-      <el-button type="primary" size="large" @click="handleSearch">
-        <el-icon style="margin-right: 4px"><Search /></el-icon>
-        搜尋
-      </el-button>
-
       <el-select
         v-model="currentRole"
         size="large"
@@ -192,8 +173,29 @@ onMounted(() => {
           :value="item.value"
         />
       </el-select>
-    </div>
 
+      <el-input
+        v-model="searchKeyword"
+        size="large"
+        placeholder="搜尋用戶暱稱、Email..."
+        style="width: 300px"
+        clearable
+        @keyup.enter="handleSearch"
+        @clear="clearSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+
+      <el-button type="primary" size="large" @click="handleSearch">
+        <el-icon style="margin-right: 4px"><Search /></el-icon>
+        搜尋
+      </el-button>
+    </div>
+  </div>
+
+  <div class="wrapper">
     <el-table
       v-loading="loading"
       stripe
@@ -202,7 +204,7 @@ onMounted(() => {
       :header-cell-class-name="() => 'table-head'"
       size="large"
       :data="dataWithIndex"
-      style="width: 100%; margin-top: 24px"
+      style="width: 100%"
       empty-text="暫無用戶"
     >
       <el-table-column label="序號" width="80">
@@ -249,7 +251,7 @@ onMounted(() => {
         </template>
       </el-table-column>
     </el-table>
-    <div class="pagination-btn">
+    <div class="pagination-btn" style="justify-content: center">
       <el-pagination
         size="large"
         background

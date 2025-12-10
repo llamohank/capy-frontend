@@ -91,13 +91,13 @@ onMounted(() => {
 </script>
 <template>
   <h2 class="section-heading">教師申請列表</h2>
-  <div class="wrapper">
+  <div class="wrapper" style="margin-bottom: 24px">
     <div class="filter-bar">
       <el-select
         v-model="currentSort"
         size="large"
         placeholder="排序方式"
-        style="width: 200px; margin-left: auto"
+        style="width: 200px"
         @change="handleSortChange"
       >
         <el-option
@@ -108,7 +108,9 @@ onMounted(() => {
         />
       </el-select>
     </div>
+  </div>
 
+  <div class="wrapper">
     <el-table
       v-loading="loading"
       stripe
@@ -159,7 +161,7 @@ onMounted(() => {
         </template>
       </el-table-column>
     </el-table>
-    <div class="pagination-btn">
+    <div class="pagination-btn" style="justify-content: center">
       <el-pagination
         size="large"
         background
@@ -226,7 +228,6 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
 }
 </style>
 

@@ -200,7 +200,7 @@ onMounted(() => {
 <template>
   <h2 class="section-heading">課程狀態管理</h2>
 
-  <div class="wrapper">
+  <div class="wrapper" style="margin-bottom: 24px">
     <!-- 篩選與搜尋區 -->
     <div class="filter-bar">
       <el-select
@@ -258,7 +258,7 @@ onMounted(() => {
         v-model="currentSort"
         size="large"
         placeholder="排序方式"
-        style="width: 200px; margin-left: auto"
+        style="width: 200px"
         @change="handleSortChange"
       >
         <el-option
@@ -269,7 +269,9 @@ onMounted(() => {
         />
       </el-select>
     </div>
+  </div>
 
+  <div class="wrapper">
     <!-- 課程列表 -->
     <el-table
       v-loading="loading"
@@ -279,7 +281,7 @@ onMounted(() => {
       :header-cell-class-name="() => 'table-head'"
       size="large"
       :data="dataWithIndex"
-      style="width: 100%; margin-top: 24px"
+      style="width: 100%"
       empty-text="暫無課程"
     >
       <el-table-column label="序號" width="80">
@@ -326,7 +328,7 @@ onMounted(() => {
     </el-table>
 
     <!-- 分頁 -->
-    <div class="pagination-btn">
+    <div class="pagination-btn" style="justify-content: center">
       <el-pagination
         size="large"
         background
@@ -346,7 +348,6 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding-bottom: 8px;
 }
 
 .pagination-btn {

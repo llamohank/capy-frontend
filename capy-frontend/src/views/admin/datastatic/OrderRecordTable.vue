@@ -225,7 +225,6 @@ watch(
 .filter-bar {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }

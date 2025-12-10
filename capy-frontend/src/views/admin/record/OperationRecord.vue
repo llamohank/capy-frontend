@@ -153,7 +153,7 @@ onMounted(() => {
 <template>
   <div>
     <h2 class="section-heading">操作紀錄查詢</h2>
-    <div class="wrapper" style="margin-bottom: 32px">
+    <div class="wrapper" style="margin-bottom: 24px">
       <div class="filter-bar">
         <el-form inline size="large" label-position="left" class="filter-form">
           <el-form-item label="操作類型 :">
@@ -204,11 +204,6 @@ onMounted(() => {
             </el-button>
           </el-form-item>
         </el-form>
-        <div class="meta">
-          <span class="meta-label">共</span>
-          <span class="meta-value">{{ totalElements }}</span>
-          <span class="meta-label">筆結果</span>
-        </div>
       </div>
     </div>
     <div class="wrapper">
@@ -256,7 +251,7 @@ onMounted(() => {
         </el-table-column>
       </el-table>
 
-      <div class="pagination-btn">
+      <div class="pagination-btn" style="justify-content: center">
         <el-pagination
           size="large"
           background
