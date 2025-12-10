@@ -1,324 +1,124 @@
 <script setup>
-const formModel = ref({
-  name: "java basic",
-  price: "3600",
-  imageUrl: "https://picsum.photos/300",
-  cate: ["guide", "disciplines", "consistency"],
-});
-//category
-const cateOptions = [
-  {
-    value: "guide",
-    label: "Guide",
-    children: [
-      {
-        value: "disciplines",
-        label: "Disciplines",
-        children: [
-          {
-            value: "consistency",
-            label: "Consistency",
-          },
-          {
-            value: "feedback",
-            label: "Feedback",
-          },
-          {
-            value: "efficiency",
-            label: "Efficiency",
-          },
-          {
-            value: "controllability",
-            label: "Controllability",
-          },
-        ],
-      },
-      {
-        value: "navigation",
-        label: "Navigation",
-        children: [
-          {
-            value: "side nav",
-            label: "Side Navigation",
-          },
-          {
-            value: "top nav",
-            label: "Top Navigation",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    value: "component",
-    label: "Component",
-    children: [
-      {
-        value: "basic",
-        label: "Basic",
-        children: [
-          {
-            value: "layout",
-            label: "Layout",
-          },
-          {
-            value: "color",
-            label: "Color",
-          },
-          {
-            value: "typography",
-            label: "Typography",
-          },
-          {
-            value: "icon",
-            label: "Icon",
-          },
-          {
-            value: "button",
-            label: "Button",
-          },
-        ],
-      },
-      {
-        value: "form",
-        label: "Form",
-        children: [
-          {
-            value: "radio",
-            label: "Radio",
-          },
-          {
-            value: "checkbox",
-            label: "Checkbox",
-          },
-          {
-            value: "input",
-            label: "Input",
-          },
-          {
-            value: "input-number",
-            label: "InputNumber",
-          },
-          {
-            value: "select",
-            label: "Select",
-          },
-          {
-            value: "cascader",
-            label: "Cascader",
-          },
-          {
-            value: "switch",
-            label: "Switch",
-          },
-          {
-            value: "slider",
-            label: "Slider",
-          },
-          {
-            value: "time-picker",
-            label: "TimePicker",
-          },
-          {
-            value: "date-picker",
-            label: "DatePicker",
-          },
-          {
-            value: "datetime-picker",
-            label: "DateTimePicker",
-          },
-          {
-            value: "upload",
-            label: "Upload",
-          },
-          {
-            value: "rate",
-            label: "Rate",
-          },
-          {
-            value: "form",
-            label: "Form",
-          },
-        ],
-      },
-      {
-        value: "data",
-        label: "Data",
-        children: [
-          {
-            value: "table",
-            label: "Table",
-          },
-          {
-            value: "tag",
-            label: "Tag",
-          },
-          {
-            value: "progress",
-            label: "Progress",
-          },
-          {
-            value: "tree",
-            label: "Tree",
-          },
-          {
-            value: "pagination",
-            label: "Pagination",
-          },
-          {
-            value: "badge",
-            label: "Badge",
-          },
-        ],
-      },
-      {
-        value: "notice",
-        label: "Notice",
-        children: [
-          {
-            value: "alert",
-            label: "Alert",
-          },
-          {
-            value: "loading",
-            label: "Loading",
-          },
-          {
-            value: "message",
-            label: "Message",
-          },
-          {
-            value: "message-box",
-            label: "MessageBox",
-          },
-          {
-            value: "notification",
-            label: "Notification",
-          },
-        ],
-      },
-      {
-        value: "navigation",
-        label: "Navigation",
-        children: [
-          {
-            value: "menu",
-            label: "Menu",
-          },
-          {
-            value: "tabs",
-            label: "Tabs",
-          },
-          {
-            value: "breadcrumb",
-            label: "Breadcrumb",
-          },
-          {
-            value: "dropdown",
-            label: "Dropdown",
-          },
-          {
-            value: "steps",
-            label: "Steps",
-          },
-        ],
-      },
-      {
-        value: "others",
-        label: "Others",
-        children: [
-          {
-            value: "dialog",
-            label: "Dialog",
-          },
-          {
-            value: "tooltip",
-            label: "Tooltip",
-          },
-          {
-            value: "popover",
-            label: "Popover",
-          },
-          {
-            value: "card",
-            label: "Card",
-          },
-          {
-            value: "carousel",
-            label: "Carousel",
-          },
-          {
-            value: "collapse",
-            label: "Collapse",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    value: "resource",
-    label: "Resource",
-    children: [
-      {
-        value: "axure",
-        label: "Axure Components",
-      },
-      {
-        value: "sketch",
-        label: "Sketch Templates",
-      },
-      {
-        value: "docs",
-        label: "Design Documentation",
-      },
-    ],
-  },
-];
-//tags
-const tagValue = ref(["Label1", "Label2"]);
+import { inject, computed } from "vue";
 
-const tagOptions = [
-  {
-    tagId: "1",
-    label: "Label1",
-  },
-  {
-    tagId: "2",
-    label: "Label2",
-  },
-  {
-    tagId: "3",
-    label: "Label3",
-  },
-  {
-    tagId: "4",
-    label: "Label4",
-  },
-  {
-    tagId: "5",
-    label: "Label5",
-  },
-];
+const courseData = inject("courseData");
+const allCategories = inject("allCategories");
+const allTags = inject("allTags");
+
+// 根據課程的 categories ID 找出分類名稱 (categories 是 [父類別id, 子類別id])
+const categoryDisplay = computed(() => {
+  const categoryIds = courseData.value?.categories || [];
+  const categories = allCategories.value || [];
+
+  if (categoryIds.length < 2 || categories.length === 0) return "-";
+
+  const parentId = categoryIds[0];
+  const childId = categoryIds[1];
+
+  // 從樹狀結構中找出父類別和子類別名稱
+  for (const parent of categories) {
+    if (parent.id === parentId) {
+      const child = parent.children?.find(c => c.id === childId);
+      if (child) {
+        return `${parent.name} > ${child.name}`;
+      }
+      return parent.name;
+    }
+  }
+  return "-";
+});
+
+// 根據課程的 tagIds 找出標籤名稱
+const tagsDisplay = computed(() => {
+  const tagIds = courseData.value?.tagIds || [];
+  const tags = allTags.value || [];
+
+  if (tagIds.length === 0 || tags.length === 0) return [];
+
+  // 建立 id -> tag 的映射
+  const tagMap = {};
+  tags.forEach(tag => {
+    tagMap[tag.id] = tag.name;
+  });
+
+  return tagIds
+    .map(id => tagMap[id])
+    .filter(name => name);
+});
+
+const statusMap = {
+  draft: "草稿",
+  pending_review: "待審核",
+  submitted_approved: "審核通過",
+  submitted_rejected: "審核拒絕",
+  transcoding: "轉碼中",
+  transcoding_failed: "轉碼失敗",
+  published: "已發布",
+  force_unpublish: "強制下架",
+};
+
+const statusTagType = (status) => {
+  const typeMap = {
+    draft: "info",
+    pending_review: "warning",
+    submitted_approved: "success",
+    submitted_rejected: "danger",
+    transcoding: "warning",
+    transcoding_failed: "danger",
+    published: "success",
+    force_unpublish: "danger",
+  };
+  return typeMap[status] || "info";
+};
+
+const formatPrice = (price) => {
+  if (price === 0) return "免費";
+  return `NT$ ${Number(price || 0).toLocaleString()}`;
+};
 </script>
+
 <template>
   <div class="wrapper">
     <h2 class="section-title">課程基本資訊</h2>
-    <el-form size="large" label-position="top" :model="formModel">
-      <el-form-item label="課程名稱 :"> Lorem ipsum dolor sit amet. </el-form-item>
-      <el-form-item label="課程封面 :">
-        <img style="max-width: 100%" v-if="formModel.imageUrl" :src="formModel.imageUrl" />
+    <el-form size="large" label-position="top">
+      <el-form-item label="課程名稱 :">
+        {{ courseData?.title || "-" }}
       </el-form-item>
-      <el-form-item label="課程價格 :"> ${{ 55 }} </el-form-item>
-      <el-form-item label="課程分類 :"> 商業>會計 </el-form-item>
+      <el-form-item label="課程封面 :">
+        <img
+          v-if="courseData?.coverImageUrl"
+          style="max-width: 300px; border-radius: 8px"
+          :src="courseData.coverImageUrl"
+        />
+        <span v-else>-</span>
+      </el-form-item>
+      <el-form-item label="課程價格 :">
+        {{ formatPrice(courseData?.price) }}
+      </el-form-item>
+      <el-form-item label="課程分類 :">
+        {{ categoryDisplay }}
+      </el-form-item>
       <el-form-item label="課程標籤 :">
-        <el-tag effect="plain" round size="large">88</el-tag>
+        <div v-if="tagsDisplay.length > 0" class="tags-container">
+          <el-tag v-for="tag in tagsDisplay" :key="tag" size="default" style="margin-right: 8px; margin-bottom: 4px;">
+            {{ tag }}
+          </el-tag>
+        </div>
+        <span v-else>-</span>
+      </el-form-item>
+      <el-form-item label="課程狀態 :">
+        <el-tag v-if="courseData?.status" :type="statusTagType(courseData.status)" size="large">
+          {{ statusMap[courseData.status] || courseData.status }}
+        </el-tag>
+        <span v-else>-</span>
       </el-form-item>
       <el-form-item label="課程簡介 :">
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Doloribus, molestias.</p>
+        <p style="white-space: pre-wrap">{{ courseData?.description || "-" }}</p>
       </el-form-item>
     </el-form>
   </div>
 </template>
+
 <style scoped>
 :deep(.el-form-item__content) {
   padding-left: 12px;
@@ -330,5 +130,9 @@ const tagOptions = [
 }
 :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>

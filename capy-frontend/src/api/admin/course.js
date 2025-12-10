@@ -57,3 +57,13 @@ export const downloadAttachment = (attachmentId) => {
     responseType: "blob",
   });
 };
+
+// Get All Categories (with hierarchy)
+export const getAllCategories = () => {
+  return axios.get("/admin/courses/applications/all-categories");
+};
+
+// Get All Tags
+export const getAllTags = () => {
+  return axios.get("/admin/tags");
+};

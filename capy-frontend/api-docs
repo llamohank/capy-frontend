@@ -859,7 +859,7 @@
                 "tags": [
                     "admin-course-controller"
                 ],
-                "operationId": "downloadAttachment_1",
+                "operationId": "downloadAttachment_2",
                 "parameters": [
                     {
                         "name": "attachmentId",
@@ -918,6 +918,46 @@
                             "*/*": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ResultPageAdminCourseApplicationVo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/courses/applications/parent-categories": {
+            "get": {
+                "tags": [
+                    "admin-course-application-controller"
+                ],
+                "operationId": "getParentCategories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResultListCategoryTreeVo"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/courses/applications/all-categories": {
+            "get": {
+                "tags": [
+                    "admin-course-application-controller"
+                ],
+                "operationId": "getAllCategories_1",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ResultListCategoryTreeVo"
                                 }
                             }
                         }
@@ -1117,7 +1157,7 @@
     },
     "components": {
         "schemas": {
-            "ResultRevenueTrendVo": {
+            "ResultPageAdminUserStatusVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -1131,98 +1171,14 @@
                         "type": "string"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/RevenueTrendVo"
+                        "$ref": "#/components/schemas/PageAdminUserStatusVo"
                     },
                     "path": {
                         "type": "string"
                     }
                 }
             },
-            "RevenueTrendVo": {
-                "type": "object",
-                "properties": {
-                    "points": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/DailyPoint"
-                        }
-                    }
-                }
-            },
-            "DailyPoint": {
-                "type": "object",
-                "properties": {
-                    "date": {
-                        "type": "string"
-                    },
-                    "amount": {
-                        "type": "number"
-                    }
-                }
-            },
-            "ResultRawSignedUrlVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "$ref": "#/components/schemas/RawSignedUrlVo"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "RawSignedUrlVo": {
-                "type": "object",
-                "properties": {
-                    "lessonId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "videoAssetId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "signedUrl": {
-                        "type": "string"
-                    },
-                    "validTimeMinute": {
-                        "type": "integer",
-                        "format": "int32"
-                    }
-                }
-            },
-            "ResultPageAdminOrderRecordVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "$ref": "#/components/schemas/PageAdminOrderRecordVo"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "PageAdminOrderRecordVo": {
+            "PageAdminUserStatusVo": {
                 "type": "object",
                 "properties": {
                     "totalElements": {
@@ -1233,11 +1189,11 @@
                         "type": "integer",
                         "format": "int32"
                     },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
                     "sort": {
                         "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
                     },
                     "first": {
                         "type": "boolean"
@@ -1256,7 +1212,7 @@
                     "content": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AdminOrderRecordVo"
+                            "$ref": "#/components/schemas/AdminUserStatusVo"
                         }
                     },
                     "number": {
@@ -1265,6 +1221,32 @@
                     },
                     "empty": {
                         "type": "boolean"
+                    }
+                }
+            },
+            "PageableObject": {
+                "type": "object",
+                "properties": {
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "paged": {
+                        "type": "boolean"
+                    },
+                    "pageNumber": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "unpaged": {
+                        "type": "boolean"
+                    },
+                    "offset": {
+                        "type": "integer",
+                        "format": "int64"
                     }
                 }
             },
@@ -1282,61 +1264,41 @@
                     }
                 }
             },
-            "PageableObject": {
+            "AdminUserStatusVo": {
                 "type": "object",
                 "properties": {
-                    "paged": {
-                        "type": "boolean"
-                    },
-                    "pageNumber": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "pageSize": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "unpaged": {
-                        "type": "boolean"
-                    },
-                    "sort": {
-                        "$ref": "#/components/schemas/SortObject"
-                    },
-                    "offset": {
-                        "type": "integer",
-                        "format": "int64"
-                    }
-                }
-            },
-            "AdminOrderRecordVo": {
-                "type": "object",
-                "properties": {
-                    "orderId": {
+                    "userId": {
                         "type": "integer",
                         "format": "int64"
                     },
-                    "transactionId": {
+                    "avatarUrl": {
                         "type": "string"
                     },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
+                    "nickname": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
                     },
                     "status": {
                         "type": "string",
                         "enum": [
-                            "pending",
-                            "paid",
-                            "failed",
-                            "cancelled"
+                            "active",
+                            "suspended",
+                            "unauthorized",
+                            "deleted"
                         ]
                     },
-                    "totalAmount": {
-                        "type": "number"
+                    "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 }
             },
-            "ResultAdminDashboardVo": {
+            "ResultTopTagVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -1350,81 +1312,30 @@
                         "type": "string"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/AdminDashboardVo"
+                        "$ref": "#/components/schemas/TopTagVo"
                     },
                     "path": {
                         "type": "string"
                     }
                 }
             },
-            "AdminDashboardVo": {
+            "TopTagVo": {
                 "type": "object",
                 "properties": {
-                    "todayNewUsers": {
+                    "id": {
                         "type": "integer",
                         "format": "int64"
                     },
-                    "pendingCourseReview": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "pendingInstructorApplications": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "currentMonthRevenue": {
-                        "type": "number"
-                    },
-                    "currentMonthNewUsers": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "popularCourses": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/PopularCourse"
-                        }
-                    }
-                }
-            },
-            "PopularCourse": {
-                "type": "object",
-                "properties": {
-                    "courseId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "courseTitle": {
+                    "name": {
                         "type": "string"
                     },
-                    "enrollmentCount": {
+                    "usageCount": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int64"
                     }
                 }
             },
-            "Pageable": {
-                "type": "object",
-                "properties": {
-                    "page": {
-                        "type": "integer",
-                        "format": "int32",
-                        "minimum": 0
-                    },
-                    "size": {
-                        "type": "integer",
-                        "format": "int32",
-                        "minimum": 1
-                    },
-                    "sort": {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        }
-                    }
-                }
-            },
-            "ResultVoid": {
+            "ResultPageAdminInstructorApplicationListVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -1437,9 +1348,86 @@
                     "message": {
                         "type": "string"
                     },
-                    "data": {},
+                    "data": {
+                        "$ref": "#/components/schemas/PageAdminInstructorApplicationListVo"
+                    },
                     "path": {
                         "type": "string"
+                    }
+                }
+            },
+            "PageAdminInstructorApplicationListVo": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminInstructorApplicationListVo"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "AdminInstructorApplicationListVo": {
+                "type": "object",
+                "properties": {
+                    "applicationId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "applicantId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "nickname": {
+                        "type": "string"
+                    },
+                    "avatarUrl": {
+                        "type": "string"
+                    },
+                    "fullName": {
+                        "type": "string"
+                    },
+                    "appliedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "firstApplication": {
+                        "type": "boolean"
                     }
                 }
             },
@@ -1475,11 +1463,11 @@
                         "type": "integer",
                         "format": "int32"
                     },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
                     "sort": {
                         "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
                     },
                     "first": {
                         "type": "boolean"
@@ -1556,7 +1544,7 @@
                     }
                 }
             },
-            "ResultPageAdminAuditLogVo": {
+            "ResultInteger": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -1570,338 +1558,24 @@
                         "type": "string"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/PageAdminAuditLogVo"
+                        "type": "integer",
+                        "format": "int32"
                     },
                     "path": {
                         "type": "string"
                     }
                 }
             },
-            "PageAdminAuditLogVo": {
+            "AdminCreateAnnouncementDto": {
                 "type": "object",
                 "properties": {
-                    "totalElements": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "totalPages": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
-                    "sort": {
-                        "$ref": "#/components/schemas/SortObject"
-                    },
-                    "first": {
-                        "type": "boolean"
-                    },
-                    "last": {
-                        "type": "boolean"
-                    },
-                    "numberOfElements": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "size": {
-                        "type": "integer",
-                        "format": "int32"
+                    "title": {
+                        "type": "string",
+                        "minLength": 1
                     },
                     "content": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/AdminAuditLogVo"
-                        }
-                    },
-                    "number": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "empty": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "AdminAuditLogVo": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "action": {
                         "type": "string",
-                        "enum": [
-                            "user_suspended",
-                            "user_unsuspended",
-                            "instructor_application_approved",
-                            "instructor_application_rejected",
-                            "course_submitted_approved",
-                            "course_submitted_rejected",
-                            "course_force_unpublished",
-                            "course_restored",
-                            "tag_created",
-                            "tag_deleted",
-                            "announcement_created",
-                            "payout_executed"
-                        ]
-                    },
-                    "targetType": {
-                        "type": "string",
-                        "enum": [
-                            "user",
-                            "course",
-                            "category",
-                            "tag",
-                            "announcement",
-                            "payout",
-                            "instructor_application"
-                        ]
-                    },
-                    "targetId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "reason": {
-                        "type": "string"
-                    },
-                    "displayReason": {
-                        "type": "string"
-                    },
-                    "adminNickname": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "ResultListAdminMonthlyUserGrowthVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/AdminMonthlyUserGrowthVo"
-                        }
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "AdminMonthlyUserGrowthVo": {
-                "type": "object",
-                "properties": {
-                    "label": {
-                        "type": "string"
-                    },
-                    "count": {
-                        "type": "integer",
-                        "format": "int64"
-                    }
-                }
-            },
-            "ResultPageAdminUserStatusVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "$ref": "#/components/schemas/PageAdminUserStatusVo"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "PageAdminUserStatusVo": {
-                "type": "object",
-                "properties": {
-                    "totalElements": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "totalPages": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
-                    "sort": {
-                        "$ref": "#/components/schemas/SortObject"
-                    },
-                    "first": {
-                        "type": "boolean"
-                    },
-                    "last": {
-                        "type": "boolean"
-                    },
-                    "numberOfElements": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "size": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/AdminUserStatusVo"
-                        }
-                    },
-                    "number": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "empty": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "AdminUserStatusVo": {
-                "type": "object",
-                "properties": {
-                    "userId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "avatarUrl": {
-                        "type": "string"
-                    },
-                    "nickname": {
-                        "type": "string"
-                    },
-                    "email": {
-                        "type": "string"
-                    },
-                    "role": {
-                        "type": "string"
-                    },
-                    "status": {
-                        "type": "string",
-                        "enum": [
-                            "active",
-                            "suspended",
-                            "unauthorized",
-                            "deleted"
-                        ]
-                    },
-                    "updatedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    }
-                }
-            },
-            "ResultPageAdminAnnouncementVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "$ref": "#/components/schemas/PageAdminAnnouncementVo"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "PageAdminAnnouncementVo": {
-                "type": "object",
-                "properties": {
-                    "totalElements": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "totalPages": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
-                    "sort": {
-                        "$ref": "#/components/schemas/SortObject"
-                    },
-                    "first": {
-                        "type": "boolean"
-                    },
-                    "last": {
-                        "type": "boolean"
-                    },
-                    "numberOfElements": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "size": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "content": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/AdminAnnouncementVo"
-                        }
-                    },
-                    "number": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "empty": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "AdminAnnouncementVo": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "senderUserId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "senderNickname": {
-                        "type": "string"
-                    },
-                    "announcementType": {
-                        "type": "string",
-                        "enum": [
-                            "platform",
-                            "instructor"
-                        ]
+                        "minLength": 1
                     },
                     "targetAudience": {
                         "type": "string",
@@ -1910,20 +1584,15 @@
                             "instructors",
                             "students_of_instructor"
                         ]
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "content": {
-                        "type": "string"
-                    },
-                    "createdAt": {
-                        "type": "string",
-                        "format": "date-time"
                     }
-                }
+                },
+                "required": [
+                    "content",
+                    "targetAudience",
+                    "title"
+                ]
             },
-            "ResultPageAdminInstructorApplicationListVo": {
+            "ResultAdminDashboardVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -1937,146 +1606,56 @@
                         "type": "string"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/PageAdminInstructorApplicationListVo"
+                        "$ref": "#/components/schemas/AdminDashboardVo"
                     },
                     "path": {
                         "type": "string"
                     }
                 }
             },
-            "PageAdminInstructorApplicationListVo": {
+            "AdminDashboardVo": {
                 "type": "object",
                 "properties": {
-                    "totalElements": {
+                    "todayNewUsers": {
                         "type": "integer",
                         "format": "int64"
                     },
-                    "totalPages": {
+                    "pendingCourseReview": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int64"
                     },
-                    "pageable": {
-                        "$ref": "#/components/schemas/PageableObject"
-                    },
-                    "sort": {
-                        "$ref": "#/components/schemas/SortObject"
-                    },
-                    "first": {
-                        "type": "boolean"
-                    },
-                    "last": {
-                        "type": "boolean"
-                    },
-                    "numberOfElements": {
+                    "pendingInstructorApplications": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int64"
                     },
-                    "size": {
+                    "currentMonthRevenue": {
+                        "type": "number"
+                    },
+                    "currentMonthNewUsers": {
                         "type": "integer",
-                        "format": "int32"
+                        "format": "int64"
                     },
-                    "content": {
+                    "popularCourses": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/AdminInstructorApplicationListVo"
+                            "$ref": "#/components/schemas/PopularCourse"
                         }
+                    }
+                }
+            },
+            "PopularCourse": {
+                "type": "object",
+                "properties": {
+                    "courseId": {
+                        "type": "integer",
+                        "format": "int64"
                     },
-                    "number": {
+                    "courseTitle": {
+                        "type": "string"
+                    },
+                    "enrollmentCount": {
                         "type": "integer",
                         "format": "int32"
-                    },
-                    "empty": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "AdminInstructorApplicationListVo": {
-                "type": "object",
-                "properties": {
-                    "applicationId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "applicantId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "nickname": {
-                        "type": "string"
-                    },
-                    "avatarUrl": {
-                        "type": "string"
-                    },
-                    "fullName": {
-                        "type": "string"
-                    },
-                    "appliedAt": {
-                        "type": "string",
-                        "format": "date-time"
-                    },
-                    "firstApplication": {
-                        "type": "boolean"
-                    }
-                }
-            },
-            "ResultAdminAnnouncementVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "$ref": "#/components/schemas/AdminAnnouncementVo"
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "ResultListTopTagVo": {
-                "type": "object",
-                "properties": {
-                    "success": {
-                        "type": "boolean"
-                    },
-                    "code": {
-                        "type": "integer",
-                        "format": "int32"
-                    },
-                    "message": {
-                        "type": "string"
-                    },
-                    "data": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/components/schemas/TopTagVo"
-                        }
-                    },
-                    "path": {
-                        "type": "string"
-                    }
-                }
-            },
-            "TopTagVo": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "usageCount": {
-                        "type": "integer",
-                        "format": "int64"
                     }
                 }
             },
@@ -2116,6 +1695,25 @@
                     },
                     "value": {
                         "type": "number"
+                    }
+                }
+            },
+            "ResultVoid": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {},
+                    "path": {
+                        "type": "string"
                     }
                 }
             },
@@ -2217,6 +1815,36 @@
                     }
                 }
             },
+            "AttachmentFlat": {
+                "type": "object",
+                "properties": {
+                    "sectionId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "sectionTitle": {
+                        "type": "string"
+                    },
+                    "lessonId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "lessonTitle": {
+                        "type": "string"
+                    },
+                    "attachmentId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "fileName": {
+                        "type": "string"
+                    },
+                    "fileSize": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
             "CourseInfo": {
                 "type": "object",
                 "properties": {
@@ -2263,36 +1891,6 @@
                             "published",
                             "force_unpublish"
                         ]
-                    }
-                }
-            },
-            "AttachmentFlat": {
-                "type": "object",
-                "properties": {
-                    "sectionId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "sectionTitle": {
-                        "type": "string"
-                    },
-                    "lessonId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "lessonTitle": {
-                        "type": "string"
-                    },
-                    "attachmentId": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "fileName": {
-                        "type": "string"
-                    },
-                    "fileSize": {
-                        "type": "integer",
-                        "format": "int64"
                     }
                 }
             },
@@ -2377,16 +1975,210 @@
                     }
                 }
             },
-            "AdminCreateAnnouncementDto": {
+            "ResultPageAdminAuditLogVo": {
                 "type": "object",
                 "properties": {
-                    "title": {
-                        "type": "string",
-                        "minLength": 1
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/PageAdminAuditLogVo"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PageAdminAuditLogVo": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
                     },
                     "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminAuditLogVo"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "AdminAuditLogVo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "action": {
                         "type": "string",
-                        "minLength": 1
+                        "enum": [
+                            "user_suspended",
+                            "user_unsuspended",
+                            "instructor_application_approved",
+                            "instructor_application_rejected",
+                            "course_submitted_approved",
+                            "course_submitted_rejected",
+                            "course_force_unpublished",
+                            "course_restored",
+                            "tag_created",
+                            "tag_deleted",
+                            "announcement_created",
+                            "payout_executed"
+                        ]
+                    },
+                    "targetType": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "course",
+                            "category",
+                            "tag",
+                            "announcement",
+                            "payout",
+                            "instructor_application"
+                        ]
+                    },
+                    "targetId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "displayReason": {
+                        "type": "string"
+                    },
+                    "adminNickname": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "ResultRawSignedUrlVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/RawSignedUrlVo"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RawSignedUrlVo": {
+                "type": "object",
+                "properties": {
+                    "lessonId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "videoAssetId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "signedUrl": {
+                        "type": "string"
+                    },
+                    "validTimeMinute": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "ResultAdminAnnouncementVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/AdminAnnouncementVo"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AdminAnnouncementVo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "senderUserId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "senderNickname": {
+                        "type": "string"
+                    },
+                    "announcementType": {
+                        "type": "string",
+                        "enum": [
+                            "platform",
+                            "instructor"
+                        ]
                     },
                     "targetAudience": {
                         "type": "string",
@@ -2395,15 +2187,20 @@
                             "instructors",
                             "students_of_instructor"
                         ]
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "content": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
                     }
-                },
-                "required": [
-                    "content",
-                    "targetAudience",
-                    "title"
-                ]
+                }
             },
-            "ResultInteger": {
+            "ResultRevenueTrendVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -2417,15 +2214,36 @@
                         "type": "string"
                     },
                     "data": {
-                        "type": "integer",
-                        "format": "int32"
+                        "$ref": "#/components/schemas/RevenueTrendVo"
                     },
                     "path": {
                         "type": "string"
                     }
                 }
             },
-            "ResultTopTagVo": {
+            "RevenueTrendVo": {
+                "type": "object",
+                "properties": {
+                    "points": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/DailyPoint"
+                        }
+                    }
+                }
+            },
+            "DailyPoint": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "number"
+                    }
+                }
+            },
+            "ResultListTopTagVo": {
                 "type": "object",
                 "properties": {
                     "success": {
@@ -2439,10 +2257,272 @@
                         "type": "string"
                     },
                     "data": {
-                        "$ref": "#/components/schemas/TopTagVo"
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/TopTagVo"
+                        }
                     },
                     "path": {
                         "type": "string"
+                    }
+                }
+            },
+            "ResultPageAdminOrderRecordVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/PageAdminOrderRecordVo"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PageAdminOrderRecordVo": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminOrderRecordVo"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "empty": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "AdminOrderRecordVo": {
+                "type": "object",
+                "properties": {
+                    "orderId": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "transactionId": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "paid",
+                            "failed",
+                            "cancelled"
+                        ]
+                    },
+                    "totalAmount": {
+                        "type": "number"
+                    }
+                }
+            },
+            "ResultListCategoryTreeVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CategoryTreeVo"
+                        }
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CategoryTreeVo": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "displayOrder": {
+                        "type": "integer",
+                        "format": "int32"
+                    }
+                }
+            },
+            "Pageable": {
+                "type": "object",
+                "properties": {
+                    "page": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 0
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32",
+                        "minimum": 1
+                    },
+                    "sort": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "ResultListAdminMonthlyUserGrowthVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminMonthlyUserGrowthVo"
+                        }
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AdminMonthlyUserGrowthVo": {
+                "type": "object",
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                }
+            },
+            "ResultPageAdminAnnouncementVo": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/PageAdminAnnouncementVo"
+                    },
+                    "path": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PageAdminAnnouncementVo": {
+                "type": "object",
+                "properties": {
+                    "totalElements": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "totalPages": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "sort": {
+                        "$ref": "#/components/schemas/SortObject"
+                    },
+                    "pageable": {
+                        "$ref": "#/components/schemas/PageableObject"
+                    },
+                    "first": {
+                        "type": "boolean"
+                    },
+                    "last": {
+                        "type": "boolean"
+                    },
+                    "numberOfElements": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "size": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "content": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminAnnouncementVo"
+                        }
+                    },
+                    "number": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "empty": {
+                        "type": "boolean"
                     }
                 }
             }
