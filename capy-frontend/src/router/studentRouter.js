@@ -48,6 +48,7 @@ const studentRoutes = [
         path: "instructor/apply",
         name: "becomeInstructor",
         component: () => import("@/views/student/instructorApply/BecomeInstructorPage.vue"),
+        meta: { requiresAuth: true }
       },
       // 講師介紹頁面
       {
