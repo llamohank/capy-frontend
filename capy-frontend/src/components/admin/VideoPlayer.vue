@@ -2,7 +2,7 @@
 import "shaka-player/dist/shaka-player.ui.js"; // ensures the UI build is registered
 import "shaka-player/dist/controls.css"; // required styling for Shaka controls
 import VideoPlayer from "@llamohank/custom-shaka-player";
-import samplevideo from "@/assets/sample.mp4";
+// import samplevideo from "@/assets/sample.mp4";
 const videoPlayerRef = ref(null);
 const isLoading = ref(true);
 const isError = ref(false);
@@ -12,17 +12,8 @@ const videoDuration = computed(() => videoPlayerRef.value?.duration);
 let player = null;
 
 const play = async (src) => {
-  try {
-    await player.play(src);
-  } catch (e) {
-    isError.value = true;
-    throw new Error("播放錯誤");
-  } finally {
-    isLoading.value = false;
-  }
-
-  // isLoading.value = false;
-
+  // await player.play(samplevideo);
+  await player.play(src);
   // videoDuration = videoPlayerRef.value.duration;
   console.log(videoHeight.value);
   // videoWidth = videoPlayerRef.value.videoWidth;
@@ -78,7 +69,6 @@ defineExpose({
   height: auto;
   margin: 12px 0;
   /* margin-left: -12px; */
-  /* visibility: hidden; */
 }
 
 :deep(#shaka-player-ui-time-container) {

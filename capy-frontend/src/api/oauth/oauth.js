@@ -1,8 +1,11 @@
 import instance from "../../utils/http.js";
 import {
   sanitizeLoginParam,
+import {
+  sanitizeLoginParam,
   sanitizeRegisterParam,
   validateEmail,
+  validatePasswordStrength,
   validatePasswordStrength,
 } from "./oauthSchema.ts";
 
@@ -15,12 +18,16 @@ export const login = ({ email, password }) => {
   // 清理參數
   const cleanedParam = sanitizeLoginParam({ email, password });
 
+
   // 驗證電子郵件格式
   if (!validateEmail(cleanedParam.email)) {
     return Promise.reject(new Error("電子郵件格式不正確"));
+    return Promise.reject(new Error("電子郵件格式不正確"));
   }
 
+
   // 對應後端 API: POST /api/login
+  return instance.post("/auth/login", cleanedParam);
   return instance.post("/auth/login", cleanedParam);
 };
 
@@ -36,12 +43,16 @@ export const register = ({ email, password, nickname, googleId }) => {
     password,
     nickname,
     googleId,
+    googleId,
   });
+
 
   // 驗證電子郵件格式
   if (!validateEmail(cleanedParam.email)) {
     return Promise.reject(new Error("電子郵件格式不正確"));
+    return Promise.reject(new Error("電子郵件格式不正確"));
   }
+
 
   // 驗證密碼強度
   const passwordValidation = validatePasswordStrength(cleanedParam.password);
@@ -49,13 +60,16 @@ export const register = ({ email, password, nickname, googleId }) => {
     return Promise.reject(new Error(passwordValidation.message));
   }
 
+
   // 對應後端 API: POST /api/register
   // 後端使用 google_id (snake_case)
   const requestBody = {
     email: cleanedParam.email,
     password: cleanedParam.password,
     nickname: cleanedParam.nickname,
+    nickname: cleanedParam.nickname,
   };
+
 
   // 只有在有 googleId 時才加入
   if (cleanedParam.googleId) {
@@ -74,6 +88,7 @@ export const initiateGoogleOAuth = () => {
   // 導向後端的 Google OAuth 授權端點
   // 後端會處理 OAuth 流程並 redirect 回前端
   window.location.href = "http://localhost:8080/api/oauth2/authorization/google";
+  window.location.href = "http://localhost:8080/api/oauth2/authorization/google";
 };
 
 /**
@@ -83,6 +98,7 @@ export const initiateGoogleOAuth = () => {
  */
 export const forgotPassword = (email) => {
   if (!validateEmail(email)) {
+    return Promise.reject(new Error("電子郵件格式不正確"));
     return Promise.reject(new Error("電子郵件格式不正確"));
   }
 
@@ -105,6 +121,7 @@ export const resetPassword = ({ token, newPassword }) => {
 
   return instance.post("/auth/resetPassword", {
     token,
+    newPassword, // 使用 camelCase 符合後端格式
     newPassword, // 使用 camelCase 符合後端格式
   });
 };
@@ -135,6 +152,7 @@ export const changePassword = ({ oldPassword, newPassword }) => {
   if (!passwordValidation.isValid) {
     return Promise.reject(new Error(passwordValidation.message));
   }
+
 
   return instance.put("/password/change", {
     old_password: oldPassword,

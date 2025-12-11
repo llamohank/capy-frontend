@@ -1,77 +1,143 @@
 <script setup>
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import useIndex from "@/utils/useIndex";
-// useRouter
+import dayjs from "dayjs";
+import { getCourseApplications, getParentCategories } from "@/api/admin/course";
+
 const router = useRouter();
 
-const tableData = [
-  {
-    courseId: 101,
-    courseTitle: "Vue 3 從零到實戰",
-    category: "程式開發 / 前端",
-    applicant: "林柏安",
-    submittedAt: "2025-11-20 10:15",
-  },
-  {
-    courseId: 102,
-    courseTitle: "資料科學入門：用 Python 做分析",
-    category: "資料科學",
-    applicant: "張語婕",
-    submittedAt: "2025-11-21 09:40",
-  },
-  {
-    courseId: 103,
-    courseTitle: "UX 實務：設計流程與案例",
-    category: "設計 / UX",
-    applicant: "許庭榕",
-    submittedAt: "2025-11-22 14:05",
-  },
-  {
-    courseId: 104,
-    courseTitle: "Node.js 後端 API 開發",
-    category: "程式開發 / 後端",
-    applicant: "王建宇",
-    submittedAt: "2025-11-23 18:20",
-  },
-  {
-    courseId: 105,
-    courseTitle: "行銷企劃 101",
-    category: "行銷",
-    applicant: "陳姿穎",
-    submittedAt: "2025-11-24 08:55",
-  },
-  {
-    courseId: 106,
-    courseTitle: "AI 影音剪輯工作坊",
-    category: "攝影與影片",
-    applicant: "黃子翔",
-    submittedAt: "2025-11-24 16:30",
-  },
-];
-const data = computed(() => useIndex(tableData));
+const applications = ref([]);
+const categories = ref([]);
+const loading = ref(false);
+const totalElements = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+// 篩選條件
+const filters = ref({
+  parentCategoryId: "",
+});
+
+const displayData = computed(() => {
+  return applications.value.map((item, index) => ({
+    ...item,
+    index: (currentPage.value - 1) * pageSize.value + index + 1,
+  }));
+});
+
+const fetchCategories = async () => {
+  try {
+    const result = await getParentCategories();
+    if (result) {
+      // 依 displayOrder 排序
+      categories.value = result.sort((a, b) => a.displayOrder - b.displayOrder);
+    }
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+  }
+};
+
+const fetchApplications = async () => {
+  try {
+    loading.value = true;
+    const params = {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+    };
+
+    if (filters.value.parentCategoryId) {
+      params.parentCategoryId = filters.value.parentCategoryId;
+    }
+
+    const result = await getCourseApplications(params);
+    if (result) {
+      applications.value = result.content || [];
+      totalElements.value = result.totalElements || 0;
+    }
+  } catch (error) {
+    console.error("Failed to fetch course applications:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  fetchApplications();
+};
+
+const handleFilterChange = () => {
+  currentPage.value = 1;
+  fetchApplications();
+};
+
+const resetFilters = () => {
+  filters.value.parentCategoryId = "";
+  currentPage.value = 1;
+  fetchApplications();
+};
+
 const viewCourseDetail = (courseId) => {
   router.push({
     name: "viewCourseDetail",
-    params: {
-      courseId,
-    },
-    query: {
-      viewtype: "apply",
-    },
+    params: { courseId },
+    query: { viewtype: "apply" },
   });
 };
+
+const formatTime = (iso) => {
+  if (!iso) return "-";
+  return dayjs(iso).format("YYYY-MM-DD HH:mm");
+};
+
+watch(
+  () => filters.value.parentCategoryId,
+  () => {
+    handleFilterChange();
+  }
+);
+
+onMounted(() => {
+  fetchCategories();
+  fetchApplications();
+});
 </script>
+
 <template>
   <h2 class="section-heading">上架申請列表</h2>
+
+  <div class="wrapper" style="margin-bottom: 24px">
+    <div class="filter-bar">
+      <el-select
+        v-model="filters.parentCategoryId"
+        size="large"
+        placeholder="全部分類"
+        clearable
+        style="width: 200px"
+      >
+        <el-option
+          v-for="item in categories"
+          :key="item.id"
+          :label="item.name"
+          :value="item.id"
+        />
+      </el-select>
+
+      <el-button type="primary" size="large" @click="resetFilters">清除篩選</el-button>
+    </div>
+  </div>
+
   <div class="wrapper">
     <el-table
+      v-loading="loading"
       stripe
       :row-class-name="() => 'table-row'"
       :cell-class-name="() => 'tbody-cell'"
       :header-cell-class-name="() => 'table-head'"
       size="large"
-      :data="data"
+      :data="displayData"
       style="width: 100%"
+      empty-text="暫無申請"
     >
       <el-table-column label="序號" width="80">
         <template #default="{ row }">
@@ -85,51 +151,97 @@ const viewCourseDetail = (courseId) => {
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="category" label="分類" />
-      <el-table-column prop="applicant" label="申請人" />
-      <el-table-column prop="submittedAt" label="申請時間" />
-
+      <el-table-column prop="parentCategoryName" label="分類" />
+      <el-table-column label="申請人">
+        <template #default="{ row }">
+          {{ row.instructorName }} / {{ row.userNickname }}
+        </template>
+      </el-table-column>
+      <el-table-column label="申請時間">
+        <template #default="{ row }">
+          {{ formatTime(row.submittedAt) }}
+        </template>
+      </el-table-column>
       <el-table-column label="檢視">
         <template #default="{ row }">
           <el-button type="primary" link @click="viewCourseDetail(row.courseId)">查看</el-button>
         </template>
       </el-table-column>
     </el-table>
-    <div class="pagination-btn">
-      <el-pagination size="large" background layout="prev, pager, next" :total="100" />
+    <div class="pagination-btn" style="justify-content: center">
+      <el-pagination
+        size="large"
+        background
+        layout="total, prev, pager, next"
+        :page-size="pageSize"
+        :total="totalElements"
+        :current-page="currentPage"
+        @current-change="handlePageChange"
+      />
     </div>
   </div>
 </template>
+
 <style scoped>
+.filter-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-form {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .pagination-btn {
   margin-top: 48px;
   display: flex;
   justify-content: flex-end;
 }
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #F9FAFB;
+  --el-table-row-hover-bg-color: #F5F3FF;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 :deep(.tbody-cell .cell) {
   display: flex;
   justify-content: center;
-
-  padding: 8px 0;
+  padding: 16px 12px;
 }
+
 :deep(.table-row .cell) {
-  padding: 12px 0;
+  padding: 16px 12px;
 }
 
 :deep(.table-head .cell) {
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 600;
   text-align: center;
-  padding: 4px 0 28px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  color: #374151;
+  padding: 16px 12px;
 }
+
 .index {
   font-style: italic;
-  font-weight: 500;
-  font-size: 24px;
-  color: #909399;
-  opacity: 0.3;
-  transition: opacity 0.2s;
+  font-weight: 600;
+  font-size: 20px;
+  color: #9CA3AF;
+  opacity: 0.4;
+  transition: all 0.2s ease;
 }
+
 .table-row:hover .index {
   opacity: 1;
+  color: #4F46E5;
 }
 </style>
+

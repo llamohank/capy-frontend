@@ -1,38 +1,26 @@
-﻿<script setup>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import * as echarts from "echarts";
+import { getWeeklyCoursePublished } from "@/api/admin/dashboard";
 
 const stackedBarCharts = ref(null);
-const range = ref("all");
+const range = ref("ALL");
+const loading = ref(false);
+
 const rangeOptions = [
-  { label: "全部", value: "all" },
-  { label: "近7日", value: "7d" },
-  { label: "最近30日", value: "30d" },
-  { label: "近半年", value: "180d" },
+  { label: "全部", value: "ALL" },
+  { label: "近7日", value: "LAST_7_DAYS" },
+  { label: "最近30日", value: "LAST_30_DAYS" },
+  { label: "近半年", value: "LAST_HALF_YEAR" },
 ];
 
-const yAxisData = ref(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
-const rawSeries = ref([
-  {
-    name: "Mail Ad",
-    data: [120, 132, 181, 134, 90, 230, 210],
-  },
-  {
-    name: " Ad",
-    data: [120, 152, 101, 134, 90, 230, 210],
-  },
-  {
-    name: "d",
-    data: [120, 132, 151, 134, 90, 230, 210],
-  },
-  {
-    name: "M",
-    data: [120, 132, 101, 144, 90, 230, 210],
-  },
-]);
+const weekDayLabels = ref([]);
+const rawSeries = ref([]);
 
 const chartSeries = computed(() =>
   rawSeries.value.map((item) => ({
-    ...item,
+    name: item.name,
+    data: item.data,
     type: "bar",
     stack: "total",
     label: { show: true },
@@ -48,6 +36,12 @@ const config = {
     },
   },
   legend: {},
+  grid: {
+    left: "3%",
+    right: "4%",
+    bottom: "3%",
+    containLabel: true,
+  },
   xAxis: {
     type: "value",
   },
@@ -61,16 +55,41 @@ let resizeObserver;
 let chart;
 
 const render = () => {
-  config.yAxis.data = yAxisData.value;
+  config.yAxis.data = weekDayLabels.value;
   config.series = chartSeries.value;
   if (chart) {
+    chart.clear();
     chart.setOption(config);
+  }
+};
+
+const getTimestamps = () => {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return todayStart.getTime();
+};
+
+const fetchData = async () => {
+  try {
+    loading.value = true;
+    const todayStartEpochMillis = getTimestamps();
+    const zoneId = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const result = await getWeeklyCoursePublished(todayStartEpochMillis, zoneId, range.value);
+    if (result) {
+      weekDayLabels.value = result.weekDayLabels || [];
+      rawSeries.value = result.series || [];
+      render();
+    }
+  } catch (error) {
+    console.error("Failed to fetch weekly course published:", error);
+  } finally {
+    loading.value = false;
   }
 };
 
 onMounted(() => {
   chart = echarts.init(stackedBarCharts.value);
-  render();
+  fetchData();
 
   resizeObserver = new ResizeObserver(() => {
     chart?.resize();
@@ -79,12 +98,12 @@ onMounted(() => {
 });
 
 watch(range, () => {
-  // 後續可依 range 過濾資料，目前示範直接重繪
-  render();
+  fetchData();
 });
 
 onBeforeUnmount(() => {
   if (resizeObserver) resizeObserver.disconnect();
+  if (chart) chart.dispose();
 });
 </script>
 
@@ -97,7 +116,7 @@ onBeforeUnmount(() => {
       </el-radio-button>
     </el-radio-group>
   </div>
-  <div class="chart-wrapper">
+  <div class="chart-wrapper" v-loading="loading">
     <div class="chart" ref="stackedBarCharts"></div>
   </div>
 </template>

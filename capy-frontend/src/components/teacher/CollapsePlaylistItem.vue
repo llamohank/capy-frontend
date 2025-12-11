@@ -109,6 +109,9 @@ const handleSaveLesson = async (data) => {
 const checkIsUploading = (lessonId) => {
   return true;
 };
+const checkIsUploading = (lessonId) => {
+  return true;
+};
 /////////////////////////
 const tableData = ref([
   {
@@ -192,6 +195,7 @@ const deleteLessonVid = async () => {
     :lessonInfo="currentLesson"
   />
 
+
   <el-collapse-item>
     <template #icon="{ isActive }">
       <el-icon size="large" v-show="isActive"><ArrowDownBold /></el-icon>
@@ -217,6 +221,14 @@ const deleteLessonVid = async () => {
       >
       <ul v-if="sectionInfo.lessons?.length > 0" class="course-playlist">
         <Draggable v-model="tableData">
+          <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
+            <div style="display: flex; align-items: center">
+              <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
+              >{{ lesson.lessonTitle
+              }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
+            </div>
+            <div v-if="checkIsUploading(lesson.lessonId)">
+              {{ lesson.lessonDurationSeconds }}
           <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
             <div style="display: flex; align-items: center">
               <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
@@ -285,6 +297,7 @@ const deleteLessonVid = async () => {
 .dialogForm {
   padding: 16px;
 }
+
 
 .collapse-chapter-btns {
   position: absolute;

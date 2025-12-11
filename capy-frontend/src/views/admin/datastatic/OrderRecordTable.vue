@@ -1,53 +1,86 @@
-﻿<script setup>
-import { computed, ref } from "vue";
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
 import dayjs from "dayjs";
-import useIndex from "@/utils/useIndex";
+import { getOrders } from "@/api/admin/dashboard";
 
-const orders = ref([
-  { id: "ORD-202511-0001", createdAt: "2025-11-24T10:12:00", status: "paid", amount: 3200 },
-  { id: "ORD-202511-0002", createdAt: "2025-11-23T19:05:00", status: "pending", amount: 1880 },
-  { id: "ORD-202511-0003", createdAt: "2025-11-21T08:45:00", status: "failed", amount: 4200 },
-  { id: "ORD-202510-0021", createdAt: "2025-10-15T14:33:00", status: "paid", amount: 5600 },
-  { id: "ORD-202509-0131", createdAt: "2025-09-02T11:11:00", status: "paid", amount: 780 },
-]);
+const orders = ref([]);
+const loading = ref(false);
+const totalElements = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(10);
 
 const statusOptions = [
-  { label: "全部狀態", value: "all" },
+  { label: "全部狀態", value: "" },
   { label: "已付款", value: "paid" },
   { label: "待付款", value: "pending" },
   { label: "付款失敗", value: "failed" },
+  { label: "已取消", value: "cancelled" },
 ];
 
-const filters = ref({ status: "all", dateRange: [] });
+const filters = ref({ status: "", dateRange: [] });
 const dialogVisible = ref(false);
 const selectedOrder = ref(null);
 
-const filteredOrders = computed(() => {
-  const [start, end] = filters.value.dateRange || [];
-  return orders.value.filter((order) => {
-    const statusMatched = filters.value.status === "all" || order.status === filters.value.status;
-    let dateMatched = true;
-    if (start && end) {
-      const orderTs = dayjs(order.createdAt).valueOf();
-      const startTs = dayjs(start).startOf("day").valueOf();
-      const endTs = dayjs(end).endOf("day").valueOf();
-      dateMatched = orderTs >= startTs && orderTs <= endTs;
-    }
-    return statusMatched && dateMatched;
-  });
+const displayOrders = computed(() => {
+  return orders.value.map((item, index) => ({
+    ...item,
+    index: (currentPage.value - 1) * pageSize.value + index + 1,
+  }));
 });
-
-const displayOrders = computed(() => useIndex(filteredOrders.value));
 
 const statusTag = (status) => {
   if (status === "paid") return { text: "已付款", type: "success" };
   if (status === "pending") return { text: "待付款", type: "warning" };
   if (status === "failed") return { text: "付款失敗", type: "danger" };
+  if (status === "cancelled") return { text: "已取消", type: "info" };
   return { text: status, type: "info" };
 };
 
+const fetchOrders = async () => {
+  try {
+    loading.value = true;
+    const [start, end] = filters.value.dateRange || [];
+
+    const params = {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+    };
+
+    if (filters.value.status) {
+      params.status = filters.value.status;
+    }
+
+    if (start && end) {
+      params.startEpochMillis = dayjs(start).startOf("day").valueOf();
+      params.endEpochMillis = dayjs(end).endOf("day").valueOf();
+    }
+
+    const result = await getOrders(params);
+    if (result) {
+      orders.value = result.content || [];
+      totalElements.value = result.totalElements || 0;
+    }
+  } catch (error) {
+    console.error("Failed to fetch orders:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
 const resetFilters = () => {
-  filters.value = { status: "all", dateRange: [] };
+  filters.value = { status: "", dateRange: [] };
+  currentPage.value = 1;
+  fetchOrders();
+};
+
+const handleSearch = () => {
+  currentPage.value = 1;
+  fetchOrders();
+};
+
+const handlePageChange = (page) => {
+  currentPage.value = page;
+  fetchOrders();
 };
 
 const openOrder = (row) => {
@@ -56,6 +89,24 @@ const openOrder = (row) => {
 };
 
 const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
+
+onMounted(() => {
+  fetchOrders();
+});
+
+watch(
+  () => filters.value.status,
+  () => {
+    handleSearch();
+  }
+);
+
+watch(
+  () => filters.value.dateRange,
+  () => {
+    handleSearch();
+  }
+);
 </script>
 
 <template>
@@ -94,6 +145,7 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
 
     <div class="wrapper">
       <el-table
+        v-loading="loading"
         stripe
         :data="displayOrders"
         size="large"
@@ -108,7 +160,7 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
             <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="id" label="訂單編號" />
+        <el-table-column prop="transactionId" label="交易編號" />
         <el-table-column label="成立時間" width="200">
           <template #default="{ row }">
             <span class="time-text">{{ formatTime(row.createdAt) }}</span>
@@ -123,7 +175,7 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
         </el-table-column>
         <el-table-column label="總金額" align="right">
           <template #default="{ row }">
-            <span class="amount">$ {{ row.amount.toLocaleString() }}</span>
+            <span class="amount">$ {{ Number(row.totalAmount || 0).toLocaleString() }}</span>
           </template>
         </el-table-column>
       </el-table>
@@ -132,8 +184,10 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
           size="large"
           background
           layout="prev, pager, next"
-          :page-size="8"
-          :total="displayOrders.length"
+          :page-size="pageSize"
+          :total="totalElements"
+          :current-page="currentPage"
+          @current-change="handlePageChange"
         />
       </div>
     </div>
@@ -142,7 +196,11 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
       <div v-if="selectedOrder" class="detail-list">
         <div class="detail-row">
           <span class="detail-label">訂單編號</span>
-          <span class="detail-value">{{ selectedOrder.id }}</span>
+          <span class="detail-value">{{ selectedOrder.orderId }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">交易編號</span>
+          <span class="detail-value">{{ selectedOrder.transactionId }}</span>
         </div>
         <div class="detail-row">
           <span class="detail-label">成立時間</span>
@@ -156,7 +214,7 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
         </div>
         <div class="detail-row">
           <span class="detail-label">總金額</span>
-          <span class="detail-value">$ {{ selectedOrder.amount.toLocaleString() }}</span>
+          <span class="detail-value">$ {{ Number(selectedOrder.totalAmount || 0).toLocaleString() }}</span>
         </div>
       </div>
     </el-dialog>
@@ -167,7 +225,6 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
 .filter-bar {
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }
@@ -186,10 +243,6 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
 .amount {
   font-weight: 600;
 }
-
-/* .tbody-cell { */
-/* marker class holder for deep selector */
-/* } */
 
 :deep(.tbody-cell .cell) {
   display: flex;
@@ -257,9 +310,13 @@ const formatTime = (iso) => dayjs(iso).format("YYYY-MM-DD HH:mm");
 }
 
 .detail-value {
-  /* flex: 1; */
   font-size: 16px;
   word-break: break-word;
-  /* text-align: right; */
+}
+
+.pagination-btn {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
 }
 </style>

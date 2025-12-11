@@ -1,55 +1,55 @@
 /**
  * Element Plus 主題覆寫
- * 使用高優先級選擇器確保覆寫生效
+ * Modern SaaS Admin Dashboard - Indigo Theme
  */
 
 /* 使用 html 選擇器提高優先級 */
 html {
-  /* ==================== Primary Color ==================== */
-  --el-color-primary: #00BFA5;
-  --el-color-primary-light-1: #1ac9b3;
-  --el-color-primary-light-2: #33d3c1;
-  --el-color-primary-light-3: #4ddccf;
-  --el-color-primary-light-4: #66e6dd;
-  --el-color-primary-light-5: #80f0eb;
-  --el-color-primary-light-6: #99f4f0;
-  --el-color-primary-light-7: #b3f8f5;
-  --el-color-primary-light-8: #ccfbf9;
-  --el-color-primary-light-9: #e6fefe;
-  --el-color-primary-dark-1: #00ac94;
-  --el-color-primary-dark-2: #009983;
+  /* ==================== Primary Color - Indigo ==================== */
+  --el-color-primary: #4F46E5;
+  --el-color-primary-light-1: #6366F1;
+  --el-color-primary-light-2: #818CF8;
+  --el-color-primary-light-3: #A5B4FC;
+  --el-color-primary-light-4: #C7D2FE;
+  --el-color-primary-light-5: #DDD6FE;
+  --el-color-primary-light-6: #E9E4FF;
+  --el-color-primary-light-7: #EEF2FF;
+  --el-color-primary-light-8: #F5F3FF;
+  --el-color-primary-light-9: #FAFAFE;
+  --el-color-primary-dark-1: #4338CA;
+  --el-color-primary-dark-2: #3730A3;
 
-  /* ==================== Success Color ==================== */
-  --el-color-success: #67C23A;
-  --el-color-success-light-3: #95d475;
-  --el-color-success-light-5: #b3e19d;
-  --el-color-success-light-7: #d1edc4;
-  --el-color-success-light-9: #f0f9eb;
-  --el-color-success-dark-2: #529b2e;
+  /* ==================== Success Color - Soft Green ==================== */
+  --el-color-success: #10B981;
+  --el-color-success-light-3: #6EE7B7;
+  --el-color-success-light-5: #A7F3D0;
+  --el-color-success-light-7: #D1FAE5;
+  --el-color-success-light-9: #ECFDF5;
+  --el-color-success-dark-2: #059669;
 
-  /* ==================== Warning Color ==================== */
-  --el-color-warning: #E6A23C;
-  --el-color-warning-light-3: #eebe77;
-  --el-color-warning-light-5: #f3d19e;
-  --el-color-warning-light-7: #f8e3c5;
-  --el-color-warning-light-9: #fdf6ec;
-  --el-color-warning-dark-2: #b88230;
+  /* ==================== Warning Color - Soft Amber ==================== */
+  --el-color-warning: #F59E0B;
+  --el-color-warning-light-3: #FCD34D;
+  --el-color-warning-light-5: #FDE68A;
+  --el-color-warning-light-7: #FEF3C7;
+  --el-color-warning-light-9: #FFFBEB;
+  --el-color-warning-dark-2: #D97706;
 
-  /* ==================== Danger Color ==================== */
-  --el-color-danger: #F56C6C;
-  --el-color-danger-light-3: #f89898;
-  --el-color-danger-light-5: #fab6b6;
-  --el-color-danger-light-7: #fcd3d3;
-  --el-color-danger-light-9: #fef0f0;
-  --el-color-danger-dark-2: #c45656;
+  /* ==================== Danger Color - Soft Rose ==================== */
+  --el-color-danger: #EF4444;
+  --el-color-danger-light-3: #FCA5A5;
+  --el-color-danger-light-5: #FECACA;
+  --el-color-danger-light-7: #FEE2E2;
+  --el-color-danger-light-9: #FEF2F2;
+  --el-color-danger-dark-2: #DC2626;
 
   /* ==================== Info Color ==================== */
-  --el-color-info: #909399;
-  --el-color-info-light-3: #b1b3b8;
-  --el-color-info-light-5: #c8c9cc;
-  --el-color-info-light-7: #dedfe0;
-  --el-color-info-light-9: #f4f4f5;
-  --el-color-info-dark-2: #73767a;
+  --el-color-info: #6B7280;
+  --el-color-info-light-3: #9CA3AF;
+  --el-color-info-light-5: #D1D5DB;
+  --el-color-info-light-7: #E5E7EB;
+  --el-color-info-light-9: #F3F4F6;
+  --el-color-info-dark-2: #4B5563;
 
   /* ==================== Background Colors ==================== */
   --el-bg-color: #FFFFFF;
@@ -57,85 +57,118 @@ html {
   --el-bg-color-overlay: #FFFFFF;
 
   /* ==================== Text Colors ==================== */
-  --el-text-color-primary: #303133;
-  --el-text-color-regular: #606266;
-  --el-text-color-secondary: #909399;
-  --el-text-color-placeholder: #C0C4CC;
-  --el-text-color-disabled: #C0C4CC;
+  --el-text-color-primary: #1F2937;
+  --el-text-color-regular: #4B5563;
+  --el-text-color-secondary: #6B7280;
+  --el-text-color-placeholder: #9CA3AF;
+  --el-text-color-disabled: #D1D5DB;
 
   /* ==================== Border Colors ==================== */
-  --el-border-color: #DCDFE6;
-  --el-border-color-light: #E4E7ED;
-  --el-border-color-lighter: #EBEEF5;
-  --el-border-color-extra-light: #F2F6FC;
-  --el-border-color-dark: #D4D7DE;
-  --el-border-color-darker: #CDD0D6;
+  --el-border-color: #E5E7EB;
+  --el-border-color-light: #F3F4F6;
+  --el-border-color-lighter: #F9FAFB;
+  --el-border-color-extra-light: #FAFAFA;
+  --el-border-color-dark: #D1D5DB;
+  --el-border-color-darker: #9CA3AF;
 
   /* ==================== Fill Colors ==================== */
   --el-fill-color-blank: #FFFFFF;
-  --el-fill-color: #F0F2F5;
-  --el-fill-color-light: #F5F7FA;
+  --el-fill-color: #F3F4F6;
+  --el-fill-color-light: #F9FAFB;
   --el-fill-color-lighter: #FAFAFA;
-  --el-fill-color-extra-light: #FAFCFF;
-  --el-fill-color-dark: #EBEDF0;
-  --el-fill-color-darker: #E6E8EB;
+  --el-fill-color-extra-light: #FDFDFD;
+  --el-fill-color-dark: #E5E7EB;
+  --el-fill-color-darker: #D1D5DB;
+
+  /* ==================== Border Radius ==================== */
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+
+  /* ==================== Box Shadow ==================== */
+  --el-box-shadow-light: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --el-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --el-box-shadow-dark: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* 針對 body 也設定一次，確保覆寫 */
 body {
-  --el-color-primary: #00BFA5;
+  --el-color-primary: #4F46E5;
 }
 
 /* 強制覆寫所有 primary 按鈕 */
 .el-button--primary {
-  --el-button-bg-color: #00BFA5;
-  --el-button-border-color: #00BFA5;
-  --el-button-hover-bg-color: #1ac9b3;
-  --el-button-hover-border-color: #1ac9b3;
-  --el-button-active-bg-color: #00ac94;
-  --el-button-active-border-color: #00ac94;
+  --el-button-bg-color: #4F46E5;
+  --el-button-border-color: #4F46E5;
+  --el-button-hover-bg-color: #6366F1;
+  --el-button-hover-border-color: #6366F1;
+  --el-button-active-bg-color: #4338CA;
+  --el-button-active-border-color: #4338CA;
 }
 
 /* 強制覆寫 warning 按鈕的 hover 顏色 */
 .el-button--warning {
-  --el-button-bg-color: #E6A23C;
-  --el-button-border-color: #E6A23C;
-  --el-button-hover-bg-color: #eebe77;
-  --el-button-hover-border-color: #eebe77;
-  --el-button-active-bg-color: #b88230;
-  --el-button-active-border-color: #b88230;
+  --el-button-bg-color: #F59E0B;
+  --el-button-border-color: #F59E0B;
+  --el-button-hover-bg-color: #FBBF24;
+  --el-button-hover-border-color: #FBBF24;
+  --el-button-active-bg-color: #D97706;
+  --el-button-active-border-color: #D97706;
 }
 
 /* 強制覆寫所有使用 primary 色的元件 */
 .el-switch.is-checked .el-switch__core {
-  background-color: #00BFA5;
-  border-color: #00BFA5;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
 }
 
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #00BFA5;
-  border-color: #00BFA5;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
 }
 
 .el-radio__input.is-checked .el-radio__inner {
-  background-color: #00BFA5;
-  border-color: #00BFA5;
+  background-color: #4F46E5;
+  border-color: #4F46E5;
 }
 
 .el-progress__text {
-  color: #606266;
+  color: #4B5563;
 }
 
 .el-progress-bar__inner {
-  background-color: #00BFA5;
+  background-color: #4F46E5;
 }
 
 .el-link.el-link--primary {
-  color: #00BFA5;
+  color: #4F46E5;
 }
 
 .el-link.el-link--primary:hover {
-  color: #1ac9b3;
+  color: #6366F1;
+}
+
+/* Pagination 樣式優化 */
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: #4F46E5;
+}
+
+.el-pagination.is-background .el-pager li:not(.is-disabled):hover {
+  color: #4F46E5;
+}
+
+/* Input focus 狀態 */
+.el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px #4F46E5 inset;
+}
+
+.el-select .el-input.is-focus .el-input__wrapper {
+  box-shadow: 0 0 0 1px #4F46E5 inset !important;
+}
+
+/* Date picker */
+.el-date-editor .el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px #4F46E5 inset;
 }
 
 /* ==================== MessageBox 確認對話框樣式 ==================== */

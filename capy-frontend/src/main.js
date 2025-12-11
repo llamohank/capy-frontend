@@ -1,5 +1,6 @@
 import "./styles/style.css";
 import "./styles/common.css";
+import "./styles/admin-dashboard.css";
 import "./styles/theme-variables.css";
 // import "./styles/learning.scss";
 

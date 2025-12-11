@@ -1,130 +1,106 @@
 <script setup>
-import { useRoute } from "vue-router";
+import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import AppSidebar from '@/components/layout/AppSidebar.vue';
+
 const route = useRoute();
-const scrollbarRef = ref(null); // 指向 el-scrollbar
+const scrollbarRef = ref(null);
+const sidebarRef = ref(null);
+
 watch(
   () => route.fullPath,
   () => {
     const wrap = scrollbarRef.value?.wrapRef;
-    if (wrap) wrap.scrollTo({ top: 0, behavior: "smooth" });
+    if (wrap) wrap.scrollTo({ top: 0, behavior: 'smooth' });
   }
 );
-const isCollapse = ref(true);
+
+// 管理員選單配置
+const adminMenuItems = [
+  {
+    type: 'item',
+    route: 'adminWorkspace',
+    icon: 'House',
+    label: '工作台'
+  },
+  {
+    type: 'submenu',
+    key: 'course',
+    icon: 'Edit',
+    label: '課程管理',
+    children: [
+      { route: 'course_application_list', label: '上架申請列表' },
+      { route: 'courseManagement', label: '課程狀態管理' }
+    ]
+  },
+  {
+    type: 'submenu',
+    key: 'user',
+    icon: 'UserFilled',
+    label: '用戶管理',
+    children: [
+      { route: 'instructor_application_list', label: '教師申請列表' },
+      { route: 'userManagement', label: '用戶狀態管理' }
+    ]
+  },
+  {
+    type: 'submenu',
+    key: 'platform',
+    icon: 'Management',
+    label: '平台管理',
+    children: [
+      { route: 'platform_announcement', label: '平台公告' },
+      { route: 'category_management', label: '標籤管理' }
+    ]
+  },
+  {
+    type: 'item',
+    route: 'datastatic',
+    icon: 'DataAnalysis',
+    label: '數據分析'
+  },
+  {
+    type: 'item',
+    route: 'operationrecord',
+    icon: 'SetUp',
+    label: '操作紀錄查詢'
+  }
+];
 
 const userProfile = {
-  name: "Admin User",
-  avatar: "https://picsum.photos/seed/capy-admin/80",
+  name: 'Admin User',
+  avatar: 'https://picsum.photos/seed/capy-admin/80',
 };
 
 const handleUserCommand = (command) => {
-  if (command === "logout") {
-    ElMessage.info("已登出（待串接 API）");
+  if (command === 'logout') {
+    ElMessage.info('已登出（待串接 API）');
     return;
   }
-  if (command === "switch-teacher") {
-    ElMessage.info("切換至講師端（待串接路由）");
+  if (command === 'switch-teacher') {
+    ElMessage.info('切換至講師端（待串接路由）');
     return;
   }
-  if (command === "switch-student") {
-    ElMessage.info("切換至學生端（待串接路由）");
+  if (command === 'switch-student') {
+    ElMessage.info('切換至學生端（待串接路由）');
   }
 };
 </script>
+
 <template>
   <div class="common-layout">
     <el-container>
-      <el-aside :style="{ width: isCollapse ? '200px' : '64px' }">
-        <el-menu background-color="#545c64" :collapse="!isCollapse" class="aaa">
-          <router-link :to="{ name: 'adminWorkspace' }">
-            <el-menu-item index="adminWorkspace">
-              <el-icon><House /></el-icon>
-              <template #title>工作台</template>
-            </el-menu-item>
-          </router-link>
-          <el-sub-menu index="course">
-            <template #title>
-              <el-icon><Edit /></el-icon>
-              <span>課程管理</span>
-            </template>
-            <RouterLink :to="{ name: 'course_application_list' }">
-              <el-menu-item index="course_application_list">
-                <!-- <el-icon><Collection /></el-icon> -->
-                <template #title>上架申請列表</template>
-              </el-menu-item>
-            </RouterLink>
-            <RouterLink :to="{ name: 'courseManagement' }">
-              <el-menu-item index="courseManagement">
-                <!-- <el-icon><Operation /></el-icon> -->
-                <template #title>課程狀態管理</template>
-              </el-menu-item>
-            </RouterLink>
-          </el-sub-menu>
-          <el-sub-menu index="user">
-            <template #title>
-              <el-icon><UserFilled /></el-icon>
-              <span>用戶管理</span>
-            </template>
-            <RouterLink :to="{ name: 'instructor_application_list' }">
-              <el-menu-item index="instructor_application_list">
-                <!-- <el-icon><List /></el-icon> -->
-                <template #title>教師申請列表</template>
-              </el-menu-item>
-            </RouterLink>
-            <RouterLink :to="{ name: 'userManagement' }">
-              <el-menu-item index="userManagement">
-                <!-- <el-icon><SetUp /></el-icon> -->
-                <template #title>用戶狀態管理</template>
-              </el-menu-item>
-            </RouterLink>
-          </el-sub-menu>
-          <el-sub-menu index="platform">
-            <template #title>
-              <el-icon><Management /></el-icon>
-              <span>平台管理</span>
-            </template>
-            <RouterLink :to="{ name: 'platform_announcement' }">
-              <el-menu-item index="platform_announcement">
-                <!-- <el-icon><Document /></el-icon> -->
-                <template #title>平台公告</template>
-              </el-menu-item>
-            </RouterLink>
-            <RouterLink :to="{ name: 'category_management' }">
-              <el-menu-item index="category_management">
-                <!-- <el-icon><FolderAdd /></el-icon> -->
-                <template #title>分類管理</template>
-              </el-menu-item>
-            </RouterLink>
-          </el-sub-menu>
-          <RouterLink :to="{ name: 'datastatic' }">
-            <el-menu-item index="datastatic">
-              <el-icon><DataAnalysis /></el-icon>
-              <template #title>數據分析</template>
-            </el-menu-item>
-          </RouterLink>
-          <RouterLink :to="{ name: 'operationrecord' }">
-            <el-menu-item index="operationrecord">
-              <el-icon><SetUp /></el-icon>
-              <template #title>操作紀錄查詢</template>
-            </el-menu-item>
-          </RouterLink>
-        </el-menu>
-        <div>
-          <el-switch v-model="isCollapse" active-action-icon="View" inactive-action-icon="Hide">
-            <template #active-action>
-              <el-icon><Right /></el-icon>
-            </template>
-            <template #inactive-action>
-              <el-icon><Back /></el-icon>
-            </template>
-          </el-switch>
-          <p style="text-align: center; color: #fff; width: 60px; font-size: 12px">
-            {{ isCollapse ? "展開" : "收合" }}
-          </p>
-        </div>
-      </el-aside>
+      <AppSidebar
+        ref="sidebarRef"
+        :menu-items="adminMenuItems"
+        logo-text="CapyCourse"
+        logo-short="C"
+        home-route="adminWorkspace"
+      />
+
       <el-container
-        style="transition: margin 0.5s"
-        :style="{ 'margin-left': isCollapse ? '200px' : '64px' }"
+        class="main-wrapper"
+        :class="{ 'is-pinned': sidebarRef?.isPinned }"
       >
         <el-scrollbar ref="scrollbarRef" style="height: 100vh; width: 100%">
           <el-header>
@@ -139,13 +115,12 @@ const handleUserCommand = (command) => {
                   <el-dropdown-menu style="width: 200px">
                     <el-dropdown-item command="switch-teacher">切換至講師端</el-dropdown-item>
                     <el-dropdown-item command="switch-student">切換至學生端</el-dropdown-item>
-                    <el-dropdown-item divided command="logout"
-                      ><span
-                        ><el-icon size="large" style="vertical-align: middle"
-                          ><SwitchButton /></el-icon
-                        >退出登入</span
-                      ></el-dropdown-item
-                    >
+                    <el-dropdown-item divided command="logout">
+                      <span>
+                        <el-icon size="large" style="vertical-align: middle"><SwitchButton /></el-icon>
+                        退出登入
+                      </span>
+                    </el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -162,104 +137,103 @@ const handleUserCommand = (command) => {
     </el-container>
   </div>
 </template>
+
 <style scoped>
-:deep(.el-menu-item) {
-  color: inherit;
+/* ==================== Main Wrapper ==================== */
+.main-wrapper {
+  margin-left: 64px;
+  transition: margin-left 0.2s ease;
 }
-:deep(.el-sub-menu__title) {
-  color: inherit;
+
+.main-wrapper.is-pinned {
+  margin-left: 200px;
 }
-:deep(.el-sub-menu:has(.router-link-active) > .el-sub-menu__title) {
-  color: #6cf;
-}
-.router-link-active {
-  color: #6cf;
-}
-.el-menu--popup li {
-  color: #fff;
-}
-.el-menu--popup .router-link-active .el-menu-item {
-  color: #6cf;
-}
+
+/* ==================== Header ==================== */
 :deep(.el-header) {
-  border-bottom: 1px solid #d1d9e1;
-  background-color: #6cf;
-  /* padding: 24px 24px !important; */
-  /* height: 80px; */
+  border-bottom: 1px solid #E5E7EB;
+  background-color: #FFFFFF;
   height: auto;
-  padding: 8px 24px;
+  padding: 12px 28px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
-.el-aside {
-  overflow: hidden;
-  transition: width 0.5s;
-  height: 100vh;
-  position: fixed;
-  background-color: #545c64;
-}
+
+/* ==================== Main Content ==================== */
 .el-main {
-  background-color: #f0f3f5;
+  background-color: #F5F7FA;
   min-height: 100vh;
-  /* overflow-x: hidden; */
+  padding: 24px 32px;
 }
+
 .main-container {
-  max-width: 1296px;
+  max-width: 1320px;
   margin: 0 auto;
 }
+
+/* ==================== Footer ==================== */
 .el-footer {
   text-align: center;
-  color: #667f99;
-  font-size: 14px;
+  color: #6B7280;
+  font-size: 13px;
   font-weight: 400;
-  background-color: #f0f3f5;
+  background-color: #F5F7FA;
+  padding: 24px;
 }
-:deep(.el-menu) {
-  border-right: 0;
-  color: aliceblue;
-}
-.el-switch {
-  margin-top: 50px;
-  margin-left: 10px;
-}
+
+/* ==================== User Header Actions ==================== */
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
+
 .user-chip {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  background-color: #f5fbff;
-  color: #304455;
+  padding: 6px 16px;
+  border-radius: 50px;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  color: #374151;
   font-weight: 500;
   cursor: pointer;
   outline: none;
-  /* transition: box-shadow 0.2s; */
+  transition: all 0.2s ease;
 }
-/* .user-chip:hover { */
-/* box-shadow: 0 2px 10px #00000015; */
-/* transform: translateY(-1px); */
-/* } */
+
+.user-chip:hover {
+  background-color: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
 .user-name {
   max-width: 180px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .arrow {
   font-size: 14px;
-  color: #6c7a89;
+  color: #6B7280;
 }
+
+/* ==================== Dropdown Menu ==================== */
 :deep(.el-dropdown-menu__item) {
-  padding: 12px;
-  font-size: 16px;
-  letter-spacing: 0.5px;
+  padding: 14px 20px;
+  font-size: 15px;
+  letter-spacing: 0.3px;
   justify-content: center;
   font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background-color: #EEF2FF;
+  color: #4F46E5;
 }
 </style>

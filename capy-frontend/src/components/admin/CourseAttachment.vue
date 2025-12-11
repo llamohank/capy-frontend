@@ -1,80 +1,77 @@
 <script setup>
-const chapteroptions = ref([
-  {
-    value: "Option1",
-    label: "Option1",
-  },
-  {
-    value: "Option2",
-    label: "Option2",
-  },
-  {
-    value: "Option3",
-    label: "Option3",
-  },
-  {
-    value: "Option4",
-    label: "Option4",
-  },
-  {
-    value: "Option5",
-    label: "Option5",
-  },
-]);
-const currentchapter = ref(null);
-const tableData = [
-  {
-    date: "2016-05-03",
-    name: "Tom",
-    address: "No. 189, Grove St, Los Angeles",
-  },
-  {
-    date: "2016-05-02",
-    name: "Tom",
-    address: "No. 189, Grove St, Los Angeles",
-  },
-  {
-    date: "2016-05-04",
-    name: "Tom",
-    address: "No. 189, Grove St, Los Angeles",
-  },
-  {
-    date: "2016-05-01",
-    name: "Tom",
-    address: "No. 189, Grove St, Los Angeles",
-  },
-];
-const deleteAttachment = async () => {
+import { ref, inject, computed, watch } from "vue";
+import { downloadAttachment } from "@/api/admin/course";
+
+const attachmentsData = inject("attachmentsData");
+const sectionsData = inject("sectionsData");
+
+const currentSection = ref("");
+
+// 取得所有章節選項
+const sectionOptions = computed(() => {
+  if (!sectionsData?.value) return [];
+  return sectionsData.value
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map((section) => ({
+      value: section.sectionId,
+      label: section.title,
+    }));
+});
+
+// 篩選後的附件列表
+const filteredAttachments = computed(() => {
+  if (!attachmentsData?.value) return [];
+  let list = attachmentsData.value;
+
+  if (currentSection.value) {
+    list = list.filter((item) => item.sectionId === currentSection.value);
+  }
+
+  return list.map((item, index) => ({
+    ...item,
+    index: index + 1,
+  }));
+});
+
+// 格式化檔案大小
+const formatFileSize = (bytes) => {
+  if (!bytes) return "-";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+// 下載附件
+const handleDownload = async (attachment) => {
   try {
-    await ElMessageBox.confirm("是否確認刪除此文件?", "提示", {
-      confirmButtonText: "確認",
-      cancelButtonText: "取消",
-      type: "warning",
-      center: true,
-    });
-    ElMessage({
-      type: "success",
-      message: "Delete completed",
-    });
+    const blob = await downloadAttachment(attachment.attachmentId);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = attachment.fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   } catch (error) {
-    ElMessage({
-      type: "info",
-      message: "Delete canceled",
-    });
+    console.error("Failed to download attachment:", error);
+    ElMessage.error("下載失敗");
   }
 };
 </script>
+
 <template>
   <div class="wrapper">
     <h2 class="section-title">課程附件一覽</h2>
     <el-select
+      v-model="currentSection"
       size="large"
-      v-model="currentchapter"
-      placeholder="選擇章節"
+      placeholder="全部章節"
+      clearable
       style="width: 240px; margin-bottom: 12px"
     >
       <el-option
-        v-for="item in chapteroptions"
+        v-for="item in sectionOptions"
         :key="item.value"
         :label="item.label"
         :value="item.value"
@@ -86,22 +83,27 @@ const deleteAttachment = async () => {
       :cell-class-name="() => 'tbody-cell'"
       :header-cell-class-name="() => 'table-head'"
       size="large"
-      :data="tableData"
+      :data="filteredAttachments"
       style="width: 100%; margin-top: 24px"
+      empty-text="暫無附件"
     >
-      <el-table-column prop="date" label="所屬章節" width="180" />
-      <el-table-column prop="name" label="所屬單元" width="180" />
-      <el-table-column prop="address" label="文件名稱" />
-      <el-table-column label="操作">
-        <template #default>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <el-button type="primary">下載</el-button>
-          </div>
+      <el-table-column prop="sectionTitle" label="所屬章節" width="180" />
+      <el-table-column prop="lessonTitle" label="所屬單元" width="180" />
+      <el-table-column prop="fileName" label="文件名稱" />
+      <el-table-column label="檔案大小" width="120">
+        <template #default="{ row }">
+          {{ formatFileSize(row.fileSize) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" width="100">
+        <template #default="{ row }">
+          <el-button type="primary" @click="handleDownload(row)">下載</el-button>
         </template>
       </el-table-column>
     </el-table>
   </div>
 </template>
+
 <style scoped>
 :deep(.tbody-cell .cell) {
   display: flex;
