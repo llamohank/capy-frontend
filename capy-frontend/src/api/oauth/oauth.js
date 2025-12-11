@@ -1,11 +1,8 @@
 import instance from "../../utils/http.js";
 import {
   sanitizeLoginParam,
-import {
-  sanitizeLoginParam,
   sanitizeRegisterParam,
   validateEmail,
-  validatePasswordStrength,
   validatePasswordStrength,
 } from "./oauthSchema.ts";
 
