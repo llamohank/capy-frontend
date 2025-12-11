@@ -57,19 +57,19 @@ import request from '@/utils/http'
  *       totalSections: number,
  *       isEnrolled: boolean
  *     },
- *     sections: [
+ *     sections: [  // 章節列表
  *       {
  *         sectionId: number,
  *         displayOrder: number,
- *         title: string,
- *         lessons: [
+ *         title: string,  // 章節標題
+ *         lessons: [  // 該章節下的單元列表
  *           {
  *             lessonId: number,
- *             lessonTitle: string,
- *             lessonDurationMinutes: number,
- *             freePreview: boolean,
+ *             lessonTitle: string,  // 單元標題
+ *             lessonDurationMinutes: number,  // 單元時長（分鐘）
+ *             freePreview: boolean,  // 是否為免費試看單元
  *             displayOrder: number,
- *             description: string
+ *             description: string  // 單元描述
  *           }
  *         ]
  *       }
@@ -138,7 +138,7 @@ export const fetchCourseDetail = (courseId, params = {}) => {
  *
  * @description
  * 此 API 用於免費試看功能：
- * - 未登入用戶也可請求，但後端會驗證該 lesson 是否標記為 is_free_preview=true
+ * - 未登入用戶也可請求，但後端會驗證該單元是否標記為 is_free_preview=true
  * - 若用戶已購買課程，也可以透過此 API 播放
  * - 後端會自動處理子檔案路徑（/api/student/preview/{lessonId}/{filePath}）
  * - Content-Type 會根據檔案類型自動設定（m3u8/ts/m4s）
@@ -150,7 +150,7 @@ export const fetchCourseDetail = (courseId, params = {}) => {
  * // 開發環境回傳：'http://localhost:8080/api/student/preview/123/master'
  * // 生產環境回傳：'https://your-domain.com/api/student/preview/123/master'
  *
- * @throws {Error} 401 - 未登入且課程未標記為免費試看
+ * @throws {Error} 401 - 未登入且單元未標記為免費試看
  * @throws {Error} 403 - 無權限觀看（未購買且非免費試看）
  * @throws {Error} 404 - lessonId 不存在或轉檔檔案不存在
  */
@@ -198,7 +198,7 @@ export const checkPreviewAvailability = async (lessonId) => {
 
     // 根據錯誤狀態碼提供更詳細的錯誤訊息
     if (error.response?.status === 401) {
-      console.error('未登入且課程未標記為免費試看')
+      console.error('未登入且單元未標記為免費試看')
     } else if (error.response?.status === 403) {
       console.error('無權限觀看（未購買且非免費試看）')
     } else if (error.response?.status === 404) {
@@ -221,7 +221,7 @@ export const convertSecondsToHours = (seconds) => {
 
 /**
  * 輔助函數：計算課程總時長（分鐘）
- * @param {Array} sections - 課程章節陣列
+ * @param {Array} sections - 章節陣列
  * @returns {number} 總時長（分鐘）
  */
 export const calculateTotalDuration = (sections) => {
@@ -264,8 +264,8 @@ export const formatRatingDistribution = (rateTable) => {
 }
 
 /**
- * 輔助函數：從課程章節中提取學習重點（使用課程描述）
- * @param {Array} sections - 課程章節陣列
+ * 輔助函數：從章節中提取學習重點（使用單元描述）
+ * @param {Array} sections - 章節陣列
  * @returns {Array} 學習重點陣列
  */
 export const extractLearningPoints = (sections) => {

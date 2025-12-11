@@ -139,7 +139,7 @@ const studentRoutes = [
     component: () => import("@/views/student/layout/LearningLayout.vue"),
     meta: { requiresAuth: true },
     children: [
-      // 課程學習頁面 - 使用 courseId 和 lessonId
+      // 課程學習頁面 - 使用 courseId（課程ID）和 lessonId（單元ID）
       {
         path: "course/:courseId/lesson/:lessonId",
         name: "courseLearning",

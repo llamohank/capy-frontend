@@ -3,7 +3,6 @@ import { ref, computed } from 'vue'
 import { ElNotification, ElMessage } from 'element-plus'
 import { useUserStore } from './user'
 import notificationSSEService from '@/utils/notificationSSE'
-import notificationSoundManager from '@/utils/notificationSound'
 import * as notificationApi from '@/api/student/studentNotification'
 
 /**
@@ -47,11 +46,6 @@ export const useNotificationStore = defineStore('notification', () => {
    * 'disconnected' | 'connecting' | 'connected' | 'error'
    */
   const connectionState = ref('disconnected')
-
-  /**
-   * 音效是否啟用
-   */
-  const isSoundEnabled = ref(notificationSoundManager.isAudioEnabled())
 
   // ===== Getters =====
 
@@ -297,9 +291,6 @@ export const useNotificationStore = defineStore('notification', () => {
         // 添加到通知列表
         addNotification(notification)
 
-        // 播放通知音效
-        playNotificationSound(notification)
-
         // 顯示通知提示
         showNotificationToast(notification)
 
@@ -345,34 +336,6 @@ export const useNotificationStore = defineStore('notification', () => {
   }
 
   /**
-   * 播放通知音效
-   * @param {Object} notification - 通知物件
-   */
-  const playNotificationSound = (notification) => {
-    // 根據通知類型選擇音效
-    let soundType = 'default'
-
-    if (notification.notification_type) {
-      const type = notification.notification_type
-
-      // 重要/警告類型
-      if (['account_suspended', 'course_force_unpublished'].includes(type)) {
-        soundType = 'error'
-      }
-      // 成功類型
-      else if (['account_restored', 'instructor_application_approved'].includes(type)) {
-        soundType = 'success'
-      }
-      // 警告類型
-      else if (['transcoding_failed', 'payout_failed'].includes(type)) {
-        soundType = 'warning'
-      }
-    }
-
-    notificationSoundManager.play(soundType)
-  }
-
-  /**
    * 顯示通知提示（桌面通知）
    * @param {Object} notification - 通知物件
    */
@@ -405,56 +368,6 @@ export const useNotificationStore = defineStore('notification', () => {
     })
   }
 
-  /**
-   * 切換音效開關
-   * @returns {boolean} 新的啟用狀態
-   */
-  const toggleSound = () => {
-    const newState = notificationSoundManager.toggle()
-    isSoundEnabled.value = newState
-    return newState
-  }
-
-  /**
-   * 啟用音效
-   */
-  const enableSound = () => {
-    notificationSoundManager.enable()
-    isSoundEnabled.value = true
-  }
-
-  /**
-   * 停用音效
-   */
-  const disableSound = () => {
-    notificationSoundManager.disable()
-    isSoundEnabled.value = false
-  }
-
-  /**
-   * 設定音量
-   * @param {number} volume - 音量 (0.0 - 1.0)
-   */
-  const setSoundVolume = (volume) => {
-    notificationSoundManager.setVolume(volume)
-  }
-
-  /**
-   * 獲取音量
-   * @returns {number} 當前音量 (0.0 - 1.0)
-   */
-  const getSoundVolume = () => {
-    return notificationSoundManager.getVolume()
-  }
-
-  /**
-   * 測試音效
-   * @param {string} type - 音效類型
-   */
-  const testSound = (type = 'default') => {
-    notificationSoundManager.test(type)
-  }
-
   return {
     // State
     notifications,
@@ -478,15 +391,6 @@ export const useNotificationStore = defineStore('notification', () => {
     isSSEConnected,
     connectionState,
     startSSE,
-    stopSSE,
-
-    // 音效相關
-    isSoundEnabled,
-    toggleSound,
-    enableSound,
-    disableSound,
-    setSoundVolume,
-    getSoundVolume,
-    testSound
+    stopSSE
   }
 })

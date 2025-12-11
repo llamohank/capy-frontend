@@ -1,20 +1,22 @@
 /**
  * 課程學習頁面假資料
- * 包含課程結構、FAQ 等模擬資料
+ * 包含課程結構（章節與單元）、FAQ 等模擬資料
  */
 
 /**
  * 課程資料結構
+ * - chapters: 章節列表
+ * - lessons: 各章節下的單元列表
  */
 const coursesData = {
   'course-001': {
     courseId: 'course-001',
     courseTitle: 'Vue 3 完整開發指南',
-    chapters: [
+    chapters: [  // 章節列表
       {
         id: 'chapter-1',
         title: '第一章：Vue 3 基礎入門',
-        lessons: [
+        lessons: [  // 該章節下的單元列表
           {
             id: 'lesson-1-1',
             title: '1-1 Vue 3 簡介與特性',
@@ -479,8 +481,8 @@ export function getAllCourses() {
   return Object.values(coursesData).map(course => ({
     id: course.courseId,
     title: course.courseTitle,
-    chaptersCount: course.chapters.length,
-    lessonsCount: course.chapters.reduce((total, chapter) => total + chapter.lessons.length, 0)
+    chaptersCount: course.chapters.length,  // 章節數量
+    lessonsCount: course.chapters.reduce((total, chapter) => total + chapter.lessons.length, 0)  // 總單元數量
   }))
 }
 
@@ -499,7 +501,7 @@ export function getLessonById(courseId, lessonId) {
     if (lesson) {
       return {
         ...lesson,
-        chapterTitle: chapter.title
+        chapterTitle: chapter.title  // 所屬章節標題
       }
     }
   }

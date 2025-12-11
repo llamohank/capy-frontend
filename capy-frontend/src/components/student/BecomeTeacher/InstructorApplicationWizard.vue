@@ -88,6 +88,7 @@
                         placeholder="選擇月份"
                         value-format="YYYY-MM"
                         style="width: 100%"
+                        :disabled-date="disabledStartDate"
                       />
                     </el-form-item>
                   </el-col>
@@ -107,6 +108,7 @@
                         placeholder="選擇月份"
                         value-format="YYYY-MM"
                         style="width: 100%"
+                        :disabled-date="(date) => disabledEndDate(date, experience.start_date)"
                       />
                     </el-form-item>
                   </el-col>
@@ -227,7 +229,9 @@
               :limit="5"
               :on-exceed="handleExceed"
               :on-change="handleFileChange"
-              accept="image/*,.pdf,.doc,.docx"
+              :before-upload="beforeFileUpload"
+              accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+              :disabled="applicationForm.files.length >= 5"
             >
               <el-icon class="upload-icon"><UploadFilled /></el-icon>
               <div class="upload-text">
@@ -277,16 +281,16 @@
 
             <el-descriptions-item label="銀行代碼">
               <span class="review-value">{{ applicationForm.bank_code }}</span>
-              <el-tag type="warning" size="small" class="ml-2">送出後無法修改</el-tag>
+              <el-tag type="warning" size="small" class="ml-2 bank-warning-tag">送出後無法修改</el-tag>
             </el-descriptions-item>
 
             <el-descriptions-item label="銀行帳號">
               <span class="review-value">{{ applicationForm.account_number }}</span>
-              <el-tag type="warning" size="small" class="ml-2">送出後無法修改</el-tag>
+              <el-tag type="warning" size="small" class="ml-2 bank-warning-tag">送出後無法修改</el-tag>
             </el-descriptions-item>
 
             <el-descriptions-item label="個人簡介">
-              <div class="review-resume">{{ applicationForm.resume }}</div>
+              <div class="review-bio-content">{{ applicationForm.resume }}</div>
             </el-descriptions-item>
 
             <el-descriptions-item label="工作經驗">
@@ -329,6 +333,10 @@
             show-icon
             class="submit-notice"
           />
+
+          <el-checkbox v-model="isBankConfirmed" class="bank-confirmation-checkbox">
+            我已確認銀行帳戶資訊正確，了解送出後無法自行修改
+          </el-checkbox>
         </div>
       </div>
     </div>
@@ -339,6 +347,7 @@
         v-if="activeStep > 0"
         size="large"
         @click="handlePrevious"
+        class="previous-button"
       >
         上一步
       </el-button>
@@ -358,6 +367,7 @@
         type="primary"
         size="large"
         :loading="submitting"
+        :disabled="!isBankConfirmed"
         @click="handleSubmit"
         class="submit-button"
       >
@@ -369,6 +379,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   User,
@@ -379,13 +390,16 @@ import {
   Delete,
   Plus
 } from '@element-plus/icons-vue'
+import { becomeTeacher } from '@/api/student/becomTeacher.js'
 
 // Refs
+const router = useRouter()
 const profileFormRef = ref(null)
 const documentsFormRef = ref(null)
 const uploadRef = ref(null)
 const activeStep = ref(0)
 const submitting = ref(false)
+const isBankConfirmed = ref(false)
 
 // Application Form Data
 const applicationForm = ref({
@@ -443,10 +457,48 @@ const fileCountTagType = computed(() => {
   return 'success'
 })
 
+// Allowed file types
+const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+]
+
+// Before file upload validation
+const beforeFileUpload = (file) => {
+  // Check file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    ElMessage.error(`檔案 ${file.name} 格式不支援，僅支援 JPG、PNG、PDF、DOC、DOCX`)
+    return false
+  }
+
+  // Check file size (10MB)
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
+    ElMessage.error(`檔案 ${file.name} 超過 10MB 限制`)
+    return false
+  }
+
+  return true
+}
+
 // Handle file change
 const handleFileChange = (file, fileList) => {
+  // Validate file type
+  if (!ALLOWED_FILE_TYPES.includes(file.raw.type)) {
+    ElMessage.error(`檔案 ${file.name} 格式不支援，僅支援 JPG、PNG、PDF、DOC、DOCX`)
+    const index = fileList.indexOf(file)
+    if (index > -1) {
+      fileList.splice(index, 1)
+    }
+    return
+  }
+
   // Validate file size (10MB)
-  if (file.size > 10 * 1024 * 1024) {
+  const maxSize = 10 * 1024 * 1024
+  if (file.size > maxSize) {
     ElMessage.error(`檔案 ${file.name} 超過 10MB 限制`)
     const index = fileList.indexOf(file)
     if (index > -1) {
@@ -502,9 +554,29 @@ const handlePrevious = () => {
   }
 }
 
+// Date picker validation - disable future dates for start date
+const disabledStartDate = (date) => {
+  return date.getTime() > Date.now()
+}
+
+// Date picker validation - disable dates before start date or after today
+const disabledEndDate = (date, startDate) => {
+  if (!startDate) {
+    return date.getTime() > Date.now()
+  }
+  const start = new Date(startDate)
+  return date.getTime() < start.getTime() || date.getTime() > Date.now()
+}
+
 // Handle Submit
 const handleSubmit = async () => {
   try {
+    // Check bank confirmation
+    if (!isBankConfirmed.value) {
+      ElMessage.warning('請確認銀行帳戶資訊正確')
+      return
+    }
+
     // Confirm submission
     await ElMessageBox.confirm(
       '確定要送出申請嗎？送出後銀行資訊將無法修改。',
@@ -518,36 +590,19 @@ const handleSubmit = async () => {
 
     submitting.value = true
 
-    // Create FormData for file upload
-    const formData = new FormData()
-
-    // Append text fields
-    formData.append('full_name', applicationForm.value.full_name)
-    formData.append('bank_code', applicationForm.value.bank_code)
-    formData.append('account_number', applicationForm.value.account_number)
-    formData.append('resume', applicationForm.value.resume)
-
-    // Append work experience as JSON
-    formData.append('work_experience', JSON.stringify(applicationForm.value.work_experience))
-
-    // Append files
-    applicationForm.value.files.forEach((file, index) => {
-      formData.append(`files[${index}]`, file.raw)
-    })
-
-    // TODO: Replace with actual API endpoint
-    const response = await fetch('/api/instructors/apply', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-      },
-      body: formData
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || '申請送出失敗')
+    // Prepare application data
+    const applicationData = {
+      fullName: applicationForm.value.full_name,
+      resume: JSON.stringify(applicationForm.value.work_experience), // Serialize work experience to JSON
+      bankCode: applicationForm.value.bank_code,
+      accountNumber: applicationForm.value.account_number
     }
+
+    // Prepare certificate files
+    const certificates = applicationForm.value.files.map(file => file.raw)
+
+    // Call API
+    const response = await becomeTeacher(applicationData, certificates)
 
     // Success
     ElMessage.success('申請已送出！我們將在 3-5 個工作天內審核您的資料')
@@ -555,8 +610,10 @@ const handleSubmit = async () => {
     // Reset form
     resetForm()
 
-    // Redirect or emit event
-    // emit('submit-success')
+    // Redirect to success page or instructor landing
+    setTimeout(() => {
+      router.push('/instructor-landing')
+    }, 1500)
 
   } catch (error) {
     if (error !== 'cancel') {
@@ -593,6 +650,7 @@ const resetForm = () => {
     work_experience: [],
     files: []
   }
+  isBankConfirmed.value = false
   activeStep.value = 0
   profileFormRef.value?.clearValidate()
   documentsFormRef.value?.clearValidate()
@@ -708,6 +766,11 @@ defineExpose({
   background-color: var(--el-color-primary-light-9);
 }
 
+.upload-area :deep(.el-upload.is-disabled .el-upload-dragger) {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .upload-icon {
   font-size: 64px;
   color: var(--capy-primary);
@@ -795,10 +858,16 @@ defineExpose({
   color: var(--capy-text-primary);
 }
 
-.review-resume {
+.review-bio-content {
   white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
   line-height: 1.6;
   color: var(--capy-text-regular);
+}
+
+.bank-warning-tag {
+  color: var(--el-color-warning-dark-2);
 }
 
 .review-files {
@@ -819,6 +888,17 @@ defineExpose({
 
 .submit-notice {
   margin-top: var(--capy-spacing-lg);
+}
+
+.bank-confirmation-checkbox {
+  margin-top: var(--capy-spacing-lg);
+  font-size: var(--capy-font-size-base);
+  color: var(--capy-text-primary);
+}
+
+.bank-confirmation-checkbox :deep(.el-checkbox__label) {
+  color: var(--capy-text-primary);
+  font-weight: var(--capy-font-weight-medium);
 }
 
 /* Section Titles */
@@ -925,6 +1005,19 @@ defineExpose({
   margin-top: var(--capy-spacing-xl);
   padding-top: var(--capy-spacing-xl);
   border-top: 1px solid var(--capy-border-light);
+}
+
+.previous-button {
+  background-color: #ffffff;
+  border-color: var(--capy-border-base);
+  color: var(--capy-text-primary);
+  transition: all var(--capy-transition-base);
+}
+
+.previous-button:hover {
+  border-color: var(--capy-primary-light-5);
+  background-color: var(--el-color-primary-light-9);
+  color: var(--capy-primary);
 }
 
 .next-button,

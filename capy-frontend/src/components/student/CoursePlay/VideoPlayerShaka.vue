@@ -24,6 +24,7 @@
         class="video-element"
         :poster="poster"
         playsinline
+        crossorigin="use-credentials"
       ></video>
     </div>
   </div>
@@ -98,6 +99,14 @@ const initPlayer = async () => {
     const initialized = await player.initialize()
     if (!initialized) {
       throw new Error('您的瀏覽器不支援影片播放功能')
+    }
+
+    // 配置 Shaka Player 網路請求，確保所有 HLS 請求都帶上憑證
+    if (player.shakaPlayer) {
+      player.shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
+        // 為所有請求添加 withCredentials
+        request.allowCrossSiteCredentials = true
+      })
     }
 
     // 載入影片
@@ -289,7 +298,7 @@ onBeforeUnmount(async () => {
 .video-player-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9; 
+  aspect-ratio: 16 / 9;
   background-color: #000;
   overflow: hidden;
 }
@@ -297,7 +306,7 @@ onBeforeUnmount(async () => {
 .video-wrapper {
   position: relative;
   width: 100%;
-  height: 100%;  
+  height: 100%;
   background-color: #000;
 
   .video-element {

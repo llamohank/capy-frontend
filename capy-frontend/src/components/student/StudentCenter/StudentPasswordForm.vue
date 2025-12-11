@@ -160,6 +160,8 @@ const validateConfirmPassword = (rule, value, callback) => {
 const validateNewPassword = (rule, value, callback) => {
   if (value === '') {
     callback(new Error('請輸入新密碼'))
+  } else if (value === passwordForm.currentPassword) {
+    callback(new Error('新密碼不能與目前密碼相同'))
   } else if (value.length < 8) {
     callback(new Error('密碼長度至少為 8 個字元'))
   } else if (value.length > 64) {

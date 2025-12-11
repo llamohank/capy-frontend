@@ -333,7 +333,7 @@ const handleRemoveItem = async (courseId) => {
  * 前往探索頁面
  */
 const goToExplore = () => {
-  router.push({ name: 'Explore' })
+  router.push({ name: 'courseExplore' })
 }
 
 /**

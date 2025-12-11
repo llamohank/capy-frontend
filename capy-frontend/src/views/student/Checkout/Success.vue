@@ -116,9 +116,8 @@
                 v-for="item in orderData.items"
                 :key="item.courseId"
                 class="course-card"
-                @click="goToCourse(item.courseId)"
               >
-                <div class="course-image">
+                <div class="course-image" @click="goToCourseDetail(item.courseId)">
                   <el-image
                     :src="item.coverImageUrl"
                     fit="cover"
@@ -131,13 +130,13 @@
                     </template>
                   </el-image>
                 </div>
-                <div class="course-info">
+                <div class="course-info" @click="goToCourseDetail(item.courseId)">
                   <h3 class="course-title">{{ item.courseTitle }}</h3>
                   <p class="course-instructor">講師：{{ item.instructorName }}</p>
                   <p class="course-price">NT$ {{ item.price.toLocaleString('zh-TW') }}</p>
                 </div>
                 <div class="course-action">
-                  <el-button type="primary" size="small">
+                  <el-button type="primary" size="small" @click="goToCourseLearning(item.courseId)">
                     開始學習
                   </el-button>
                 </div>
@@ -401,7 +400,18 @@ const formatAmount = (amount) => {
 /**
  * 前往課程詳情頁
  */
-const goToCourse = (courseId) => {
+const goToCourseDetail = (courseId) => {
+  router.push(`/courses/${courseId}`)
+}
+
+/**
+ * 前往課程學習頁面
+ * 剛購買的課程通常沒有進度，導向課程詳情頁讓用戶點擊「開始學習」
+ * 這樣可以利用 CourseDetail 頁面的智能導航功能
+ */
+const goToCourseLearning = (courseId) => {
+  // 導向課程詳情頁，讓用戶點擊「開始學習」按鈕
+  // CourseDetail 頁面會自動處理導向第一個單元的邏輯
   router.push(`/courses/${courseId}`)
 }
 

@@ -45,7 +45,7 @@
                 <el-icon class="chapter-icon">
                   <Folder />
                 </el-icon>
-                <span class="chapter-text">{{ chapter.title }}</span>
+                <span class="chapter-text">{{ formatChapterTitle(chapter.title) }}</span>
                 <span class="chapter-count">({{ getChapterLessonCount(chapter) }})</span>
               </div>
             </template>
@@ -79,7 +79,7 @@
 
                 <!-- 單元資訊 -->
                 <div class="lesson-info">
-                  <div class="lesson-title">{{ lesson.title }}</div>
+                  <div class="lesson-title">{{ formatLessonTitle(lesson.title) }}</div>
                   <div class="lesson-meta">
                     <span class="lesson-duration">
                       <el-icon><Clock /></el-icon>
@@ -181,17 +181,46 @@ const getChapterLessonCount = (chapter) => {
 }
 
 /**
- * 格式化時長
+ * 格式化章節標題，將 Module 替換為章節
  */
-const formatDuration = (seconds) => {
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
+const formatChapterTitle = (title) => {
+  if (!title) return ''
+  // 將 "Module X" 替換為 "章節 X"
+  return title.replace(/Module\s+(\d+)/gi, '章節 $1')
+}
 
-  if (hours > 0) {
-    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+/**
+ * 格式化單元標題，將 Lesson 替換為單元
+ */
+const formatLessonTitle = (title) => {
+  if (!title) return ''
+  // 將 "Lesson X-Y" 替換為 "單元 X-Y"
+  return title.replace(/Lesson\s+([\d-]+)/gi, '單元 $1')
+}
+
+/**
+ * 格式化時長
+ * 後端回傳的 duration 已經是 "MM:SS" 格式的字串，直接返回即可
+ */
+const formatDuration = (duration) => {
+  // 如果已經是字串格式（MM:SS），直接返回
+  if (typeof duration === 'string') {
+    return duration
   }
-  return `${minutes}:${String(secs).padStart(2, '0')}`
+
+  // 如果是數字（秒數），轉換為 MM:SS 格式
+  if (typeof duration === 'number') {
+    const hours = Math.floor(duration / 3600)
+    const minutes = Math.floor((duration % 3600) / 60)
+    const secs = duration % 60
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    }
+    return `${minutes}:${String(secs).padStart(2, '0')}`
+  }
+
+  return '00:00'
 }
 
 /**

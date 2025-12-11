@@ -154,9 +154,60 @@ const handlePageChange = (page) => {
 
 /**
  * Navigate to course learning page
+ * 跳轉到播放頁面：如果有上次觀看的單元則跳到該單元，否則跳到第一個單元
  */
-const goToCourse = (courseId) => {
-  router.push(`/courses/${courseId}`)
+const goToCourse = async (courseId) => {
+  try {
+    // 找到對應的課程資料
+    const course = myLearningContent.value.find(c => c.courseId === courseId)
+
+    if (!course) {
+      ElMessage.error('找不到課程資訊')
+      return
+    }
+
+    // 如果有上次觀看的單元 ID，直接跳轉
+    if (course.lastWatchedLessonId) {
+      router.push({
+        name: 'courseLearning',
+        params: {
+          courseId: courseId,
+          lessonId: course.lastWatchedLessonId
+        }
+      })
+      return
+    }
+
+    // 否則需要取得課程章節資料，跳轉到第一個單元
+    // 動態導入 API
+    const { getCourseSections } = await import('@/api/student/courseLearning')
+    const sectionsData = await getCourseSections(courseId)
+
+    // 找到第一個章節的第一個單元
+    // 注意：後端回傳的是 section（單數），不是 sections（複數）
+    const sections = sectionsData.section || sectionsData.sections || []
+
+    if (sections.length > 0) {
+      const firstSection = sections[0]
+      if (firstSection.lessons && firstSection.lessons.length > 0) {
+        const firstLesson = firstSection.lessons[0]
+        router.push({
+          name: 'courseLearning',
+          params: {
+            courseId: courseId,
+            lessonId: firstLesson.id
+          }
+        })
+        return
+      }
+    }
+
+    // 如果都沒有，顯示錯誤
+    ElMessage.error('課程尚無可播放的單元')
+  } catch (error) {
+    console.error('跳轉到課程失敗:', error)
+    ElMessage.error('無法開啟課程，請稍後再試')
+  }
 }
 
 /**

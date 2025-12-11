@@ -197,7 +197,7 @@ const handleClose = (done) => {
  */
 const goToExplore = () => {
   visible.value = false
-  router.push({ name: 'Explore' })
+  router.push({ name: 'courseExplore' })
 }
 
 /**

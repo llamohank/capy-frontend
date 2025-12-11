@@ -71,12 +71,19 @@
 
           <!-- 學習進度：已購買用戶顯示進度條 -->
           <div v-if="course.isEnrolled && course.progress > 0" class="progress-section">
-            <div class="progress-label">學習進度</div>
+            <div class="progress-label">
+              學習進度 {{ Math.round(course.progress) }}%
+            </div>
             <el-progress
-              :percentage="course.progress"
+              :percentage="Math.round(course.progress)"
               :stroke-width="8"
               :color="'#7ec8a3'"
             />
+            <!-- 顯示最後觀看資訊 -->
+            <div v-if="course.lastWatchedLessonTitle" class="last-watched-info">
+              <el-icon><VideoPlay /></el-icon>
+              <span>上次觀看：{{ course.lastWatchedLessonTitle }}</span>
+            </div>
           </div>
 
           <!-- 主要按鈕：根據購買狀態切換 -->
@@ -226,7 +233,10 @@ const course = computed(() => {
       contentSections: [],
       reviews: [],
       isEnrolled: false,
-      progress: 0
+      progress: 0,
+      lastWatchedProgressId: null,
+      lastWatchedLessonTitle: null,
+      lastWatchedSectionTitle: null
     }
   }
 
@@ -289,8 +299,11 @@ const course = computed(() => {
     })),
     // 從後端 API 取得購買狀態（在 courseInfo 層級）
     isEnrolled: isEnrolled || false,
-    // 進度資訊（目前後端未提供，預設為 0）
-    progress: courseBasic?.progress || 0
+    // 從 CourseProgressVo 取得進度資訊
+    progress: courseBasic?.completionPercentage || 0,
+    lastWatchedProgressId: courseBasic?.lastWatchedLessonId || null,
+    lastWatchedLessonTitle: courseBasic?.lastWatchedLessonTitle || null,
+    lastWatchedSectionTitle: courseBasic?.lastWatchedSectionTitle || null
   }
 })
 
@@ -418,6 +431,7 @@ const handleLessonClick = (lessonInfo) => {
 
 /**
  * 導航到學習頁面
+ * 優先導向上次學習的單元，否則導向第一個單元
  */
 const navigateToLearning = () => {
   if (!course.value.id) {
@@ -425,9 +439,25 @@ const navigateToLearning = () => {
     return
   }
 
+  // 優先使用後端提供的上次觀看單元 ID (lastWatchedLessonId)
+  let targetLessonId = course.value.lastWatchedProgressId
+
+  // 如果沒有學習記錄，使用第一個單元
+  if (!targetLessonId) {
+    const firstLesson = course.value.contentSections?.[0]?.lessons?.[0]
+    if (!firstLesson) {
+      ElMessage.error('課程尚無單元')
+      return
+    }
+    targetLessonId = firstLesson.id
+  }
+
   router.push({
     name: 'courseLearning',
-    params: { id: course.value.id }
+    params: {
+      courseId: course.value.id,
+      lessonId: targetLessonId
+    }
   })
 }
 
@@ -855,6 +885,23 @@ onBeforeUnmount(async () => {
   font-weight: 600;
   color: #666;
   margin-bottom: 12px;
+}
+
+.last-watched-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: #909399;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 6px;
+}
+
+.last-watched-info .el-icon {
+  color: #7ec8a3;
+  font-size: 16px;
 }
 
 .buy-btn,

@@ -35,7 +35,7 @@
         <div class="info-bar">
           <div class="info-left">
             <h2 class="lesson-title">{{ currentLesson?.title || '載入中...' }}</h2>
-            <p class="course-subtitle">{{ courseData.courseTitle }}</p>
+            <p class="course-subtitle">{{ courseData.courseTitle || '載入中...' }}</p>
           </div>
           <div class="info-right">
             <div class="rating-cta" @click.stop>
@@ -76,26 +76,30 @@
 
                   <!-- 課程介紹 -->
                   <div class="course-intro-section">
-                    <h3 class="section-title">
+                    <h3 class="section-title-student">
                       <el-icon><Reading /></el-icon>
                       課程介紹
                     </h3>
-                    <div class="course-description" v-html="sanitizeHtml(courseData.description || '暫無課程介紹')"></div>
+                    <div class="course-description" v-html="sanitizeHtml(courseData.courseDescription || '暫無課程介紹')"></div>
                   </div>
 
                   <!-- 講師資訊 -->
                   <div class="instructor-section">
-                    <h3 class="section-title">
+                    <h3 class="section-title-student">
                       <el-icon><User /></el-icon>
                       講師資訊
                     </h3>
                     <div class="instructor-card">
-                      <el-avatar :size="64" :src="courseData.instructor?.avatar" class="instructor-avatar">
-                        {{ courseData.instructor?.name?.charAt(0) }}
+                      <el-avatar :size="64" :src="lessonSummary.instructorInfo?.avatarUrl" class="instructor-avatar">
+                        {{ lessonSummary.instructorInfo?.instructorName?.charAt(0) || '講' }}
                       </el-avatar>
                       <div class="instructor-info">
-                        <h4 class="instructor-name">{{ courseData.instructor?.name || '講師名稱' }}</h4>
-                        <p class="instructor-bio">{{ courseData.instructor?.bio || '暫無講師簡介' }}</p>
+                        <h4 class="instructor-name">{{ lessonSummary.instructorInfo?.instructorName || '講師名稱' }}</h4>
+                        <p class="instructor-bio">{{ lessonSummary.instructorInfo?.bio || '暫無講師簡介' }}</p>
+                        <div class="instructor-stats" v-if="lessonSummary.instructorInfo">
+                          <span>👥 {{ lessonSummary.instructorInfo.totalStudents || 0 }} 位學生</span>
+                          <span>📚 {{ lessonSummary.instructorInfo.totalCourses || 0 }} 門課程</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -108,8 +112,8 @@
                   <!-- 操作列：篩選器 + 提問按鈕 -->
                   <div class="qa-action-bar">
                     <el-radio-group v-model="qaFilter" size="large">
-                      <el-radio-button label="current">當前單元</el-radio-button>
-                      <el-radio-button label="all">全部課程</el-radio-button>
+                      <el-radio-button value="current">當前單元</el-radio-button>
+                      <el-radio-button value="all">全部課程</el-radio-button>
                     </el-radio-group>
 
                     <el-button
@@ -210,19 +214,12 @@
                     stripe
                     style="width: 100%"
                   >
-                    <el-table-column prop="name" label="檔案名稱" min-width="200">
+                    <el-table-column prop="fileName" label="檔案名稱" min-width="200">
                       <template #default="{ row }">
                         <div class="file-name">
                           <el-icon><Document /></el-icon>
-                          <span>{{ row.name }}</span>
+                          <span>{{ row.fileName }}</span>
                         </div>
-                      </template>
-                    </el-table-column>
-                    <el-table-column prop="type" label="類型" width="100">
-                      <template #default="{ row }">
-                        <el-tag :type="getFileTagType(row.type)" size="small">
-                          {{ row.type.toUpperCase() }}
-                        </el-tag>
                       </template>
                     </el-table-column>
                     <el-table-column prop="size" label="大小" width="120" />
@@ -255,7 +252,7 @@
       >
         <div class="sidebar-content">
           <ChaptersSidebar
-            :chapters="courseData.chapters"
+            :chapters="courseData.sections"
             :current-lesson-id="currentLessonId"
             :is-collapsed="isSidebarCollapsed"
             @lesson-click="handleLessonClick"
@@ -329,8 +326,17 @@ import CourseRatingDialog from '@/components/student/StudentCenter/MyLearning/Co
 // Pinia Store
 import { useCourseStore } from '@/stores/courseStore'
 
-// 導入假資料
-import { getCourseData } from '@/mockData'
+// 導入 API
+import {
+  getLessonSummary,
+  getCourseSections,
+  getLessonAttachments,
+  getCourseQA,
+  getMyQA,
+  postQuestion,
+  buildHlsUrl,
+  triggerAttachmentDownload
+} from '@/api/student/courseLearning'
 
 const route = useRoute()
 const router = useRouter()
@@ -344,23 +350,35 @@ const activeTab = ref('details')
 const isSidebarCollapsed = computed(() => courseStore.isSidebarCollapsed)
 const toggleSidebar = () => courseStore.toggleSidebar()
 
-// 課程資料
+// 課程資料（對應後端 Response 結構）
 const courseData = ref({
   courseId: '',
   courseTitle: '',
-  description: '',
-  instructor: {
-    name: '',
-    avatar: '',
-    bio: ''
-  },
-  chapters: []
+  courseDescription: '',
+  publishedDate: '',
+  totalSections: 0,
+  totalLessons: 0,
+  sections: [] // 章節列表（原 chapters）
 })
+
+// 單元摘要資料
+const lessonSummary = ref({
+  lessonDescription: '',
+  course: null,
+  instructorInfo: null
+})
+
+// 附件列表
+const attachments = ref([])
 
 // Q&A 資料
 const qaFilter = ref('current')
 const allQA = ref([])
-const currentUserId = ref('user-001') // Mock 當前用戶 ID
+const myQuestionsData = ref([])
+const qaHasMore = ref(false)
+const qaCursor = ref({ createdAt: null, id: null })
+const myQAHasMore = ref(false)
+const myQACursor = ref({ createdAt: null, id: null })
 
 // 評分相關
 const userRating = ref(0)
@@ -380,10 +398,17 @@ const currentLessonId = computed(() => route.params.lessonId)
  * 取得當前播放的單元
  */
 const currentLesson = computed(() => {
-  for (const chapter of courseData.value.chapters) {
-    const lesson = chapter.lessons.find(l => l.id === currentLessonId.value)
+  for (const section of courseData.value.sections) {
+    // 使用寬鬆比較來處理 number vs string 的問題
+    const lesson = section.lessons?.find(l => l.id == currentLessonId.value)
+
     if (lesson) {
-      return lesson
+      return {
+        ...lesson,
+        description: lessonSummary.value.lessonDescription,
+        attachments: attachments.value,
+        videoUrl: buildHlsUrl(currentLessonId.value)
+      }
     }
   }
   return null
@@ -403,7 +428,7 @@ const filteredQA = computed(() => {
  * 我的提問列表
  */
 const myQuestions = computed(() => {
-  return allQA.value.filter(qa => qa.student.id === currentUserId.value)
+  return myQuestionsData.value
 })
 
 /**
@@ -415,7 +440,7 @@ const courseInfoForRating = computed(() => {
   return {
     courseId: courseData.value.courseId,
     courseTitle: courseData.value.courseTitle,
-    instructorName: courseData.value.instructor?.name || '講師',
+    instructorName: lessonSummary.value.instructorInfo?.instructorName || '講師',
     coverImageUrl: currentLesson.value?.poster || 'https://via.placeholder.com/400x225'
   }
 })
@@ -440,36 +465,76 @@ const displayRating = computed({
 })
 
 /**
- * 載入課程資料
+ * 載入單元摘要資料
+ */
+const loadLessonSummary = async () => {
+  try {
+    const data = await getLessonSummary(currentLessonId.value)
+    lessonSummary.value = data
+
+    // 更新課程基本資訊
+    if (data.course) {
+      courseData.value = {
+        ...courseData.value,
+        courseId: data.course.courseId,
+        courseTitle: data.course.courseTitle,
+        courseDescription: data.course.courseDescription,
+        publishedDate: data.course.publishedDate,
+        totalSections: data.course.totalSections,
+        totalLessons: data.course.totalLessons
+      }
+    }
+  } catch (error) {
+    console.error('載入單元摘要失敗:', error)
+    ElMessage.error('載入單元資訊失敗')
+  }
+}
+
+/**
+ * 載入課程章節資料
+ */
+const loadCourseSections = async () => {
+  try {
+    const data = await getCourseSections(route.params.courseId)
+    // 注意：後端回傳的是 section（單數），不是 sections（複數）
+    courseData.value.sections = data.section || data.sections || []
+  } catch (error) {
+    console.error('載入章節資料失敗:', error)
+    ElMessage.error('載入課程章節失敗')
+  }
+}
+
+/**
+ * 載入附件列表
+ */
+const loadAttachments = async () => {
+  try {
+    const data = await getLessonAttachments(currentLessonId.value)
+    attachments.value = data || []
+  } catch (error) {
+    console.error('載入附件失敗:', error)
+    // 附件載入失敗不影響主要功能，僅記錄錯誤
+  }
+}
+
+/**
+ * 載入課程資料（整合所有資料載入）
  */
 const loadCourseData = async () => {
   try {
     pageLoading.value = true
 
-    // 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    const courseId = route.params.courseId
-    const data = getCourseData(courseId)
-
-    if (!data) {
-      throw new Error('課程不存在')
-    }
-
-    courseData.value = {
-      ...data,
-      description: data.description || '<p>這是一門精心設計的課程，將帶領您深入了解相關知識與技能。</p>',
-      instructor: {
-        name: '王小明',
-        avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-        bio: '資深講師，擁有 10 年以上教學經驗，專注於提供高品質的線上課程內容。'
-      }
-    }
+    // 並行載入所有資料
+    await Promise.all([
+      loadLessonSummary(),
+      loadCourseSections(),
+      loadAttachments()
+    ])
 
     // 更新路由 meta
-    route.meta.courseTitle = data.courseTitle
+    route.meta.courseTitle = courseData.value.courseTitle
 
-    // 檢查當前單元是否存在
+    // 檢查當前單元是否存在（在所有資料載入完成後）
     if (!currentLesson.value) {
       ElMessage.error('單元不存在')
       router.push('/')
@@ -488,53 +553,131 @@ const loadCourseData = async () => {
 /**
  * 載入 Q&A 資料
  */
-const loadQAData = async () => {
+const loadQAData = async (loadMore = false) => {
   try {
-    // 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 300))
+    const params = {
+      limit: 10
+    }
 
-    // Mock Q&A 資料
-    allQA.value = [
-      {
-        id: 'qa-001',
-        lessonId: currentLessonId.value,
-        student: {
-          id: 'user-001',
-          name: '學生 A',
-          avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-        },
-        question: '請問這個概念可以應用在實際專案中嗎？',
-        createdAt: '2024-01-15 10:30',
-        instructor: {
-          name: '王小明',
-          avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-        },
-        answer: '當然可以！這個概念在實際開發中非常常見，我建議您可以先從小型專案開始練習。',
-        answeredAt: '2024-01-15 14:20'
+    // 根據篩選條件設定參數
+    if (qaFilter.value === 'current') {
+      params.lessonId = currentLessonId.value
+    }
+
+    // 載入更多時使用游標
+    if (loadMore && qaCursor.value.createdAt) {
+      params.cursorCreatedAt = qaCursor.value.createdAt
+      params.cursorId = qaCursor.value.id
+    }
+
+    const data = await getCourseQA(route.params.courseId, params)
+
+    // 轉換後端資料格式為前端格式
+    const formattedItems = (data.items || []).map(item => ({
+      id: item.questionId,
+      lessonId: params.lessonId || null,
+      student: {
+        id: item.userId,
+        name: item.userName,
+        avatar: '' // 後端未提供，使用預設
       },
-      {
-        id: 'qa-002',
-        lessonId: 'lesson-002',
-        student: {
-          id: 'user-002',
-          name: '學生 B',
-          avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-        },
-        question: '有沒有推薦的延伸閱讀資源？',
-        createdAt: '2024-01-16 09:15',
-        instructor: {
-          name: '王小明',
-          avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-        },
-        answer: '我推薦您閱讀官方文檔，裡面有更詳細的說明和範例。',
-        answeredAt: '2024-01-16 11:30'
-      }
-    ]
+      question: item.content,
+      createdAt: formatDateTime(item.createdAt),
+      instructor: item.answer ? {
+        name: item.answer.instructorName,
+        avatar: item.answer.avatarUrl
+      } : null,
+      answer: item.answer?.content || null,
+      answeredAt: item.answer ? formatDateTime(item.answer.createdAt) : null
+    }))
+
+    if (loadMore) {
+      allQA.value = [...allQA.value, ...formattedItems]
+    } else {
+      allQA.value = formattedItems
+    }
+
+    qaHasMore.value = data.hasMore
+    qaCursor.value = {
+      createdAt: data.nextCursorCreatedAt,
+      id: data.nextCursorId
+    }
 
   } catch (error) {
     console.error('載入 Q&A 失敗:', error)
     ElMessage.error('載入問答失敗')
   }
+}
+
+/**
+ * 載入我的提問
+ */
+const loadMyQuestions = async (loadMore = false) => {
+  try {
+    const params = {
+      limit: 10,
+      order: 'desc',
+      answered: 'all'
+    }
+
+    // 載入更多時使用游標
+    if (loadMore && myQACursor.value.createdAt) {
+      params.cursorCreatedAt = myQACursor.value.createdAt
+      params.cursorId = myQACursor.value.id
+    }
+
+    const data = await getMyQA(route.params.courseId, params)
+
+    // 轉換後端資料格式為前端格式
+    const formattedItems = (data.items || []).map(item => ({
+      id: item.questionId,
+      lessonId: null, // 我的提問不需要 lessonId
+      student: {
+        id: item.userId,
+        name: item.userName,
+        avatar: ''
+      },
+      question: item.content,
+      createdAt: formatDateTime(item.createdAt),
+      instructor: item.answer ? {
+        name: item.answer.instructorName,
+        avatar: item.answer.avatarUrl
+      } : null,
+      answer: item.answer?.content || null,
+      answeredAt: item.answer ? formatDateTime(item.answer.createdAt) : null
+    }))
+
+    if (loadMore) {
+      myQuestionsData.value = [...myQuestionsData.value, ...formattedItems]
+    } else {
+      myQuestionsData.value = formattedItems
+    }
+
+    myQAHasMore.value = data.hasMore
+    myQACursor.value = {
+      createdAt: data.nextCursorCreatedAt,
+      id: data.nextCursorId
+    }
+
+  } catch (error) {
+    console.error('載入我的提問失敗:', error)
+    ElMessage.error('載入我的提問失敗')
+  }
+}
+
+/**
+ * 格式化日期時間
+ */
+const formatDateTime = (isoString) => {
+  if (!isoString) return ''
+  const date = new Date(isoString)
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 /**
@@ -546,7 +689,7 @@ const handleLessonClick = (lesson) => {
   }
 
   router.push({
-    name: 'CourseLearning',
+    name: 'courseLearning',
     params: {
       courseId: route.params.courseId,
       lessonId: lesson.id
@@ -593,8 +736,8 @@ const handleVideoError = (error) => {
 const getNextLesson = () => {
   let foundCurrent = false
 
-  for (const chapter of courseData.value.chapters) {
-    for (const lesson of chapter.lessons) {
+  for (const section of courseData.value.sections) {
+    for (const lesson of section.lessons || []) {
       if (foundCurrent && !lesson.isLocked) {
         return lesson
       }
@@ -610,13 +753,15 @@ const getNextLesson = () => {
 /**
  * 處理附件下載
  */
-const handleDownload = (attachment) => {
-  ElMessage.success(`開始下載：${attachment.name}`)
-
-  const link = document.createElement('a')
-  link.href = attachment.url
-  link.download = attachment.name
-  link.click()
+const handleDownload = async (attachment) => {
+  try {
+    ElMessage.info(`開始下載：${attachment.fileName}`)
+    await triggerAttachmentDownload(attachment.attachmentId, attachment.fileName)
+    ElMessage.success(`下載完成：${attachment.fileName}`)
+  } catch (error) {
+    console.error('下載附件失敗:', error)
+    ElMessage.error('下載附件失敗，請稍後再試')
+  }
 }
 
 /**
@@ -705,37 +850,32 @@ const submitQuestion = async () => {
       return
     }
 
-    // 模擬 API 呼叫 POST /api/questions
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    const payload = {
-      course_id: route.params.courseId,
-      lesson_id: currentLessonId.value,
+    const questionDto = {
+      courseId: route.params.courseId,
+      lessonId: currentLessonId.value,
       content: askForm.value.content.trim()
     }
 
-    console.log('提交問題:', payload)
+    const result = await postQuestion(questionDto)
 
-    // 模擬新增問題到列表
+    // 將新問題加入列表
     const newQuestion = {
-      id: `qa-${Date.now()}`,
+      id: result.questionId,
       lessonId: currentLessonId.value,
       student: {
-        id: currentUserId.value,
-        name: '我',
-        avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
+        id: result.userId,
+        name: result.userName,
+        avatar: ''
       },
-      question: askForm.value.content.trim(),
-      createdAt: new Date().toLocaleString('zh-TW'),
-      instructor: {
-        name: '王小明',
-        avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png'
-      },
+      question: result.content,
+      createdAt: formatDateTime(result.createdAt),
+      instructor: null,
       answer: null,
       answeredAt: null
     }
 
     allQA.value.unshift(newQuestion)
+    myQuestionsData.value.unshift(newQuestion)
 
     // 關閉對話框並清空表單
     showAskDialog.value = false
@@ -751,10 +891,27 @@ const submitQuestion = async () => {
 /**
  * 監聽路由參數變化
  */
-watch(() => route.params.lessonId, (newLessonId) => {
+watch(() => route.params.lessonId, async (newLessonId) => {
   if (newLessonId && !pageLoading.value) {
     activeTab.value = 'details'
-    loadQAData()
+    // 重新載入單元相關資料
+    await Promise.all([
+      loadLessonSummary(),
+      loadAttachments(),
+      loadQAData()
+    ])
+  }
+})
+
+// 監聽 Q&A 篩選變化
+watch(qaFilter, () => {
+  loadQAData()
+})
+
+// 監聽 Tab 切換
+watch(activeTab, (newTab) => {
+  if (newTab === 'my-questions' && myQuestionsData.value.length === 0) {
+    loadMyQuestions()
   }
 })
 
@@ -762,6 +919,7 @@ watch(() => route.params.lessonId, (newLessonId) => {
 onMounted(async () => {
   await loadCourseData()
   await loadQAData()
+  // 我的提問在切換到該 Tab 時才載入
 })
 </script>
 
@@ -796,42 +954,44 @@ onMounted(async () => {
   overflow-y: auto;  // 允許內容滾動
   overflow-x: hidden;
 
-  // Theater Mode 狀態
+  // Theater Mode 狀態覆寫
   &.is-theater-mode {
     .video-stage {
-      height: 85vh;  // Theater Mode：更高的舞台
+      aspect-ratio: unset;  // 🔑 移除比例限制
+      height: 85vh;         // 🔑 強制高度
+      max-height: 85vh;
     }
 
     .video-player-box {
-      height: 100%;  // 🔑 優先級切換：高度優先
-      width: auto;   // 🔑 寬度根據比例計算
+      height: 100%;   // 🔑 填滿舞台高度
+      width: auto;    // 🔑 寬度根據比例計算
+      max-width: 100%;
     }
   }
 }
 
-// 影片舞台區域
+// 影片舞台區域（標準模式：零黑邊）
 .video-stage {
   position: relative;
   width: 100%;
-  height: 60vh;  // 預設固定高度
+  height: auto;          // 🔑 標準模式：自動高度
+  aspect-ratio: 16 / 9;  // 🔑 標準模式：保持比例
+  max-height: 70vh;      // 🔑 安全上限
   background-color: #000;
   display: flex;
-  justify-content: center;  // 水平居中
-  align-items: center;      // 垂直居中
-  flex-shrink: 0;           // 防止被壓縮
-  overflow: hidden;         // 🔑 防止內容溢出
-  transition: height 0.3s ease;  // 平滑高度過渡
-  will-change: height;      // 🔑 瀏覽器優化提示
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
-// 影片播放器盒子（優先級切換策略）
+// 影片播放器盒子
 .video-player-box {
   position: relative;
-  aspect-ratio: 16 / 9;  // 🔑 始終保持 16:9 比例
-  width: 100%;           // 🔑 預設：寬度優先
-  height: auto;          // 🔑 預設：高度自動計算
-  max-width: 100%;       // 不超過舞台寬度
-  max-height: 100%;      // 不超過舞台高度
+  aspect-ratio: 16 / 9;  // 🔑 始終保持比例
+  width: 100%;           // 🔑 標準模式：寬度優先
+  height: 100%;          // 🔑 填滿舞台
 
   :deep(.video-player-container) {
     width: 100%;
@@ -1084,7 +1244,7 @@ onMounted(async () => {
 .instructor-section {
   margin-bottom: 24px;
 
-  .section-title {
+  .section-title-student {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1161,7 +1321,20 @@ onMounted(async () => {
       font-size: 14px;
       line-height: 1.6;
       color: #606266;
-      margin: 0;
+      margin: 0 0 8px 0;
+    }
+
+    .instructor-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #909399;
+
+      span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
     }
   }
 }
@@ -1284,7 +1457,7 @@ onMounted(async () => {
   .course-intro-section,
   .instructor-section {
     .intro-title,
-    .section-title {
+    .section-title-student {
       font-size: 16px;
     }
   }
