@@ -1,0 +1,15 @@
+import { defineStore } from "pinia";
+export const useVideoStore = defineStore("videoStore", () => {
+  const uploadingVideoList = ref([]);
+  const append = (id) => {
+    uploadingVideoList.value.push(id);
+  };
+  const remove = (id) => {
+    uploadingVideoList.value = uploadingVideoList.value.filter((vid) => vid !== id);
+  };
+  return {
+    uploadingVideoList,
+    append,
+    remove,
+  };
+});

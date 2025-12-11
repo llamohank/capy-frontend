@@ -3,7 +3,7 @@ import {
   sanitizeLoginParam,
   sanitizeRegisterParam,
   validateEmail,
-  validatePasswordStrength
+  validatePasswordStrength,
 } from "./oauthSchema.ts";
 
 /**
@@ -17,7 +17,7 @@ export const login = ({ email, password }) => {
 
   // 驗證電子郵件格式
   if (!validateEmail(cleanedParam.email)) {
-    return Promise.reject(new Error('電子郵件格式不正確'));
+    return Promise.reject(new Error("電子郵件格式不正確"));
   }
 
   // 對應後端 API: POST /api/login
@@ -35,12 +35,12 @@ export const register = ({ email, password, nickname, googleId }) => {
     email,
     password,
     nickname,
-    googleId
+    googleId,
   });
 
   // 驗證電子郵件格式
   if (!validateEmail(cleanedParam.email)) {
-    return Promise.reject(new Error('電子郵件格式不正確'));
+    return Promise.reject(new Error("電子郵件格式不正確"));
   }
 
   // 驗證密碼強度
@@ -54,7 +54,7 @@ export const register = ({ email, password, nickname, googleId }) => {
   const requestBody = {
     email: cleanedParam.email,
     password: cleanedParam.password,
-    nickname: cleanedParam.nickname
+    nickname: cleanedParam.nickname,
   };
 
   // 只有在有 googleId 時才加入
@@ -73,7 +73,7 @@ export const register = ({ email, password, nickname, googleId }) => {
 export const initiateGoogleOAuth = () => {
   // 導向後端的 Google OAuth 授權端點
   // 後端會處理 OAuth 流程並 redirect 回前端
-  window.location.href = 'http://localhost:8080/api/oauth2/authorization/google';
+  window.location.href = "http://localhost:8080/api/oauth2/authorization/google";
 };
 
 /**
@@ -83,11 +83,11 @@ export const initiateGoogleOAuth = () => {
  */
 export const forgotPassword = (email) => {
   if (!validateEmail(email)) {
-    return Promise.reject(new Error('電子郵件格式不正確'));
+    return Promise.reject(new Error("電子郵件格式不正確"));
   }
 
   return instance.post("/auth/forgotPassword", {
-    email: email.trim().toLowerCase()
+    email: email.trim().toLowerCase(),
   });
 };
 
@@ -105,7 +105,7 @@ export const resetPassword = ({ token, newPassword }) => {
 
   return instance.post("/auth/resetPassword", {
     token,
-    newPassword  // 使用 camelCase 符合後端格式
+    newPassword, // 使用 camelCase 符合後端格式
   });
 };
 
@@ -138,7 +138,7 @@ export const changePassword = ({ oldPassword, newPassword }) => {
 
   return instance.put("/password/change", {
     old_password: oldPassword,
-    new_password: newPassword
+    new_password: newPassword,
   });
 };
 
@@ -152,12 +152,12 @@ export const changePassword = ({ oldPassword, newPassword }) => {
 export const bindGoogleAccount = ({ googleId, password }) => {
   // 驗證必要參數
   if (!googleId || !password) {
-    return Promise.reject(new Error('缺少必要參數'));
+    return Promise.reject(new Error("缺少必要參數"));
   }
 
   return instance.post("/student/account/bindGoogle", {
     googleId,
-    password
+    password,
   });
 };
 
@@ -168,4 +168,12 @@ export const bindGoogleAccount = ({ googleId, password }) => {
  */
 export const logout = () => {
   return instance.post("/auth/logout");
+};
+//進老師頁面前檢查
+export const CheckIsTeacher = () => {
+  return instance.get("/teacher/health");
+};
+//進管理員頁面前檢查
+export const CheckIsAdmin = () => {
+  return instance.get("/admin/health");
 };

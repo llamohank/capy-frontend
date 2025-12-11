@@ -29,7 +29,10 @@ const open = () => {
 const close = () => {
   emit("update:visible", false);
 };
-const confirm = () => emit("confirm");
+const confirm = () => {
+  emit("confirm");
+  close();
+};
 const emit = defineEmits(["update:visible", "confirm"]);
 defineExpose({ open, close });
 </script>

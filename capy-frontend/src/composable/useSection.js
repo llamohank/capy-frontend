@@ -39,17 +39,20 @@ export const useSection = () => {
     ElMessage.success("更新成功");
   };
   const deleteCourseSection = async (sectionId) => {
-    if (
-      courseSections.value.find((section) => section.sectionId === sectionId).lessons.length > 0
-    ) {
-      ElMessage.error("該章節下尚有單元影片");
+    const target = courseSections.value.find((section) => section.sectionId === sectionId);
+    console.log(target);
+    if (target) {
+      if (target.lessons?.length > 0) {
+        ElMessage.error("該章節下尚有單元影片");
+        return;
+      }
+      await deleteSection(sectionId);
+      //id是section entity sectionId是overview的
+      courseSections.value = courseSections.value.filter(
+        (section) => section.id ?? section.sectionId !== sectionId
+      );
+      ElMessage.success("刪除成功");
     }
-    await deleteSection(sectionId);
-    //id是section entity sectionId是overview的
-    courseSections.value = courseSections.value.filter(
-      (section) => section.id ?? section.sectionId !== sectionId
-    );
-    ElMessage.success("刪除成功");
   };
   const reorderCourseSection = async () => {
     await reorderSection(currentCourseId, sortedSectionIds.value);

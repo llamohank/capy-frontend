@@ -43,6 +43,7 @@ const close = () => {
 const confirm = () => {
   emit("confirm", inputValue.value);
   emit("update:visible", false);
+  inputValue.value = "";
 };
 defineExpose({ open, close });
 </script>

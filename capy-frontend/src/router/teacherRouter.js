@@ -1,3 +1,4 @@
+import { useVideo } from "@/composable/useVideo";
 import useCourseSwitch from "@/hooks/useCourseSwitch";
 import { useCourseStore } from "@/stores/course";
 
@@ -24,11 +25,13 @@ export default [
         path: "coursedetail/:courseId/edit",
         name: "editcoursedetail",
         component: () => import("@/views/teacher/CourseDetail/EditCourseDetail.vue"),
-        beforeEnter: (to, from, next) => {
+        beforeEnter: async (to, from, next) => {
           const courseStore = useCourseStore();
           courseStore.setCurrentCourseId(to.params.courseId);
 
-          courseStore.fetchCourseOverview();
+          await courseStore.fetchCourseOverview();
+          //取代查詢參數獲得課程狀態
+          // const status =courseStore.courseInfo
           if (to.query.status !== "draft") {
             next({
               name: "coursedetail",
@@ -40,6 +43,8 @@ export default [
               },
             });
           } else {
+            const { allUploadingFailed } = useVideo();
+            allUploadingFailed();
             next();
           }
         },

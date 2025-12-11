@@ -1,7 +1,7 @@
 import axios from "@/utils/http";
 //course
 export const getCourseList = () => {
-  return axios.get("/teacher/courses/courseList");
+  return axios.get("/teacher/courses/course-list");
 };
 export const getCategory = () => {
   return axios.get("/teacher/courses/categories");
@@ -37,4 +37,7 @@ export const createLesson = (data) => {
 };
 export const updateLesson = (data) => {
   return axios.post("teacher/videos/create-update-lesson", data);
+};
+export const deleteLesson = (lessonId) => {
+  return axios.delete(`/teacher/courses/${lessonId}/delete-lesson`);
 };
