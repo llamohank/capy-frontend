@@ -23,6 +23,8 @@ export const useVideo = (videoAssetId) => {
   const uploadVideoToGCP = async (initiateURL, file) => {
     const sessionURI = await getSessionURI(initiateURL);
     await uploadVideoChunks(sessionURI, file);
+    videoStore.remove(videoAssetId);
+    await courseStore.fetchCourseOverview();
   };
   const getSessionURI = async (initiateURL) => {
     const res = await axios.post(initiateURL, null, {

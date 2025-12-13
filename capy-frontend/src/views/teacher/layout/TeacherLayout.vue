@@ -1,5 +1,32 @@
 <script setup>
+import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import { logout } from "@/api/oauth/oauth";
+const userStore = useUserStore();
+const route = useRoute();
+const router = useRouter();
 const isCollapse = ref(true);
+const scrollbarRef = ref(null);
+watch(
+  () => route.fullPath,
+  () => {
+    const wrap = scrollbarRef.value?.wrapRef;
+    if (wrap) wrap.scrollTo({ top: 0, behavior: "smooth" });
+  }
+);
+
+const handleUserCommand = async (command) => {
+  if (command === "logout") {
+    await logout();
+    router.push("/");
+    return;
+  }
+
+  if (command === "switch-student") {
+    router.push("/student");
+    ElMessage.success("已切換至學生中心");
+  }
+};
 </script>
 <template>
   <div class="common-layout">
@@ -57,8 +84,30 @@ const isCollapse = ref(true);
         style="transition: margin 0.5s"
         :style="{ 'margin-left': isCollapse ? '200px' : '64px' }"
       >
-        <el-scrollbar style="height: 100vh; width: 100%">
-          <el-header>hello,user123</el-header>
+        <el-scrollbar ref="scrollbarRef" style="height: 100vh; width: 100%">
+          <el-header>
+            <div class="header-actions">
+              <el-dropdown trigger="hover" @command="handleUserCommand">
+                <span class="user-chip">
+                  <el-avatar :size="40" :src="userStore.userInfo.avatarUrl" />
+                  <span class="user-name">{{ userStore.userInfo.nickname }}</span>
+                  <el-icon class="arrow"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu style="width: 200px">
+                    <el-dropdown-item command="switch-student">切換至學生端</el-dropdown-item>
+                    <el-dropdown-item divided command="logout"
+                      ><span
+                        ><el-icon size="large" style="vertical-align: middle"
+                          ><SwitchButton /></el-icon
+                        >退出登入</span
+                      ></el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </el-header>
           <el-main>
             <div class="main-container">
               <RouterView></RouterView>
@@ -111,5 +160,44 @@ const isCollapse = ref(true);
 .el-switch {
   margin-top: 50px;
   margin-left: 10px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background-color: #f5fbff;
+  color: #304455;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  /* transition: box-shadow 0.2s; */
+}
+/* .user-chip:hover { */
+/* box-shadow: 0 2px 10px #00000015; */
+/* transform: translateY(-1px); */
+/* } */
+.user-name {
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.arrow {
+  font-size: 14px;
+  color: #6c7a89;
+}
+:deep(.el-dropdown-menu__item) {
+  padding: 12px;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  justify-content: center;
+  font-weight: 500;
 }
 </style>

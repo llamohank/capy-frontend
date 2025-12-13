@@ -13,39 +13,12 @@ const handleAddSection = async (value) => {
   await addCourseSection(value);
 };
 
-const jsondata = [
-  {
-    chapter_name: "code",
-    index: "1",
-    chapter_id: "1",
-    lesson_info: [
-      {
-        lessonid: "1",
-        lesson_index: "1",
-        lesson_name: "python basic",
-        isFree: true,
-        lesson_description: "python introduction",
-        video_url: "www.example.com",
-        duration_time: "23.06",
-        attachment_url: "www.example.com",
-      },
-      {
-        lessonid: "2",
-        lesson_index: "2",
-        lesson_name: "java",
-        isFree: false,
-        lesson_description: "java introduction",
-        video_url: "www.example.com",
-        duration_time: "24.31",
-        attachment_url: "www.example.com",
-      },
-    ],
-  },
-];
-
-onMounted(() => {
-  console.log(courseSections.value);
-});
+const next = () => {
+  if (5) {
+    throw new Error("至少須包含一單元且影片時長總和須達30分鐘");
+  }
+};
+defineExpose({ next });
 </script>
 <template>
   <div class="wrapper">

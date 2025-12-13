@@ -41,3 +41,6 @@ export const updateLesson = (data) => {
 export const deleteLesson = (lessonId) => {
   return axios.delete(`/teacher/courses/${lessonId}/delete-lesson`);
 };
+export const reorderLesson = (sectionId, data) => {
+  return axios.post(`/teacher/courses/sections/${sectionId}/lessons/reorder`, data);
+};

@@ -9,7 +9,7 @@
  * @see /instruction/STUDENT_CENTER_API_DESIGN.md
  */
 
-import request from '@/utils/http'
+import request from "@/utils/http";
 
 /**
  * 獲取學生 Profile 和統計資料
@@ -36,10 +36,10 @@ import request from '@/utils/http'
  */
 export const fetchStudentProfile = () => {
   return request({
-    url: '/student/center/profile',
-    method: 'GET'
-  })
-}
+    url: "/student/center/profile",
+    method: "GET",
+  });
+};
 
 /**
  * 獲取我的課程學習記錄
@@ -110,16 +110,16 @@ export const fetchStudentProfile = () => {
  */
 export const fetchMyLearning = (params = {}) => {
   return request({
-    url: '/student/center/my-learning',
-    method: 'GET',
+    url: "/student/center/my-learning",
+    method: "GET",
     params: {
       page: params.page ?? 0,
       size: params.size ?? 10,
-      status: params.status ?? 'all',
-      sort: params.sort ?? 'lastWatchedAt,desc'
-    }
-  })
-}
+      status: params.status ?? "all",
+      sort: params.sort ?? "lastWatchedAt,desc",
+    },
+  });
+};
 
 /**
  * 更新學生 Profile
@@ -163,11 +163,11 @@ export const fetchMyLearning = (params = {}) => {
  */
 export const updateStudentProfile = (data) => {
   return request({
-    url: '/student/profile/update',
-    method: 'PUT',
-    data
-  })
-}
+    url: "/student/profile/update",
+    method: "PUT",
+    data,
+  });
+};
 
 /**
  * 上傳學生頭像
@@ -191,15 +191,15 @@ export const updateStudentProfile = (data) => {
  * })
  */
 export const uploadStudentAvatar = (file) => {
-  const formData = new FormData()
-  formData.append('avatar', file)
+  const formData = new FormData();
+  formData.append("avatar", file);
 
   return request({
-    url: '/student/profile/avatar',
-    method: 'POST',
-    data: formData
-  })
-}
+    url: "/student/profile/avatar",
+    method: "POST",
+    data: formData,
+  });
+};
 
 /**
  * 提交課程評分
@@ -225,10 +225,10 @@ export const uploadStudentAvatar = (file) => {
 export const submitCourseRating = (progressId, data) => {
   return request({
     url: `/student/center/my-learning/${progressId}/rating`,
-    method: 'POST',
-    data
-  })
-}
+    method: "POST",
+    data,
+  });
+};
 
 /**
  * 更新課程評分
@@ -254,10 +254,10 @@ export const submitCourseRating = (progressId, data) => {
 export const updateCourseRating = (progressId, data) => {
   return request({
     url: `/student/center/my-learning/${progressId}/rating`,
-    method: 'PUT',
-    data
-  })
-}
+    method: "PUT",
+    data,
+  });
+};
 
 /**
  * 變更學生密碼
@@ -313,11 +313,11 @@ export const updateCourseRating = (progressId, data) => {
  */
 export const changeStudentPassword = (data) => {
   return request({
-    url: '/student/change-password',
-    method: 'PUT',
-    data
-  })
-}
+    url: "/student/change-password",
+    method: "PUT",
+    data,
+  });
+};
 
 /**
  * 刪除學生帳號
@@ -340,11 +340,11 @@ export const changeStudentPassword = (data) => {
  */
 export const deleteStudentAccount = (data) => {
   return request({
-    url: '/student/delete-account',
-    method: 'DELETE',
-    data
-  })
-}
+    url: "/student/delete-account",
+    method: "DELETE",
+    data,
+  });
+};
 
 /**
  * 解綁定 Google 帳號
@@ -367,11 +367,11 @@ export const deleteStudentAccount = (data) => {
  */
 export const unlinkGoogleAccount = (data) => {
   return request({
-    url: '/student/account/unlinkGoogle',
-    method: 'POST',
-    data
-  })
-}
+    url: "/student/account/unlinkGoogle",
+    method: "POST",
+    data,
+  });
+};
 
 /**
  * 評分課程（需已購買且未評過）
@@ -422,11 +422,11 @@ export const unlinkGoogleAccount = (data) => {
  */
 export const rateCourse = (data) => {
   return request({
-    url: '/student/course/rate',
-    method: 'POST',
-    data
-  })
-}
+    url: "/student/course/rate",
+    method: "POST",
+    data,
+  });
+};
 
 // 匯出所有 API 函數
 export default {
@@ -439,5 +439,5 @@ export default {
   changeStudentPassword,
   deleteStudentAccount,
   unlinkGoogleAccount,
-  rateCourse
-}
+  rateCourse,
+};

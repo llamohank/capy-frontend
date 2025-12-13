@@ -83,6 +83,7 @@ const deleteAttachment = async () => {
       <el-table-column prop="date" label="所屬章節" width="180" />
       <el-table-column prop="name" label="所屬單元" width="180" />
       <el-table-column prop="address" label="文件名稱" />
+      <el-table-column prop="address" label="文件大小" />
       <el-table-column label="操作">
         <template #default>
           <div style="display: flex; flex-wrap: wrap; gap: 8px">

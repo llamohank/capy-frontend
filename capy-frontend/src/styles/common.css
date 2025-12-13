@@ -33,22 +33,30 @@
 
 .el-message-box__header {
   /* background-color: #409eff; */
-  padding: 16px 20px;
+
+  padding-top: 24px;
+  /* padding: 12px; */
+  padding-left: 0;
+
   font-weight: 500;
 }
 
 .el-message-box__title {
   padding-bottom: 12px;
+  font-weight: 600;
   /* color: #fff !important; */
 }
 
 .el-message-box__content {
-  padding: 24px 20px;
+  padding: 24px 0;
+  line-height: 1.5;
 }
 
 .el-message-box__btns {
   gap: 12px;
-  padding-bottom: 20px;
+
+  padding-top: 16px !important;
+  padding-bottom: 16px;
 }
 
 body.no-scroll {
@@ -57,12 +65,12 @@ body.no-scroll {
 }
 
 body {
-  font-family: 'Inter', 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Noto Sans TC", system-ui, -apple-system, sans-serif;
 }
 
 /* ==================== Wrapper Card ==================== */
 .wrapper {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.08);
   padding: 32px;
   border-radius: 16px;
@@ -80,7 +88,7 @@ body {
   margin-top: 32px;
   font-size: 28px;
   font-weight: 600;
-  color: #1F2937;
+  color: #1f2937;
   padding-left: 16px;
   display: flex;
   align-items: center;
@@ -92,7 +100,7 @@ body {
   display: block;
   width: 12px;
   height: 12px;
-  background-color: #4F46E5;
+  background-color: #4f46e5;
   border-radius: 50%;
   margin-right: 12px;
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
@@ -113,7 +121,7 @@ body {
   display: block;
   width: 4px;
   height: 24px;
-  background: linear-gradient(180deg, #4F46E5 0%, #818CF8 100%);
+  background: linear-gradient(180deg, #4f46e5 0%, #818cf8 100%);
   border-radius: 4px;
   margin-right: 12px;
 }

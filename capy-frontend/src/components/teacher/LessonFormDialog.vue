@@ -29,10 +29,9 @@ const props = defineProps({
   },
 });
 
-
 const { defaultLessonInfo, currentSectionInfo } = useLesson(props.sectionInfo);
 const emit = defineEmits(["update:visible", "confirm", "update:videoUrl"]);
-const emit = defineEmits(["update:visible", "confirm", "update:videoUrl"]);
+
 const dialogVisible = computed({
   get() {
     return props.visible;
@@ -41,12 +40,6 @@ const dialogVisible = computed({
     emit("update:visible", val);
   },
 });
-const formModel = ref({
-  ...props.lessonInfo,
-  videoUrl: props.videoUrl,
-  attachments: props.lessonInfo?.attachments?.map((item) => ({ ...item })) ?? [],
-});
-
 const formModel = ref({
   ...props.lessonInfo,
   videoUrl: props.videoUrl,
@@ -64,11 +57,7 @@ const requestData = computed(() => {
 });
 let currentUploadVideo;
 const videoPlayerRef = ref(null);
-const videoMeta = ref({
-  rawVideoHeight: videoPlayerRef.value?.videoHeight,
-  fileSize: null,
-  durationSeconds: videoPlayerRef.value?.videoDuration,
-});
+
 const videoMeta = ref({
   rawVideoHeight: videoPlayerRef.value?.videoHeight,
   fileSize: null,
@@ -103,6 +92,7 @@ watch(
         videoUrl: props.videoUrl,
         attachments: props.lessonInfo?.attachments?.map((item) => ({ ...item })) ?? [],
       };
+      console.log(props.videoUrl);
     } else {
       emit("update:videoUrl", null);
       attachmentUploadRef.value.clearFiles();
@@ -181,17 +171,7 @@ const handleDownloadAttachment = async (attachmentId) => {
   const { download } = useAttachment(attachmentId);
   await download();
 };
-const handleDeleteAttachment = (attachmentId) => {
-  const target = formModel.value.attachments.find((item) => item.attachmentId === attachmentId);
-  if (!target) {
-    return;
-  }
-  target.isDelete = true;
-};
-const handleDownloadAttachment = async (attachmentId) => {
-  const { download } = useAttachment(attachmentId);
-  await download();
-};
+
 const attachmentList = ref([]);
 //新增的Ops
 const newAttachmentList = computed(() =>
@@ -203,12 +183,7 @@ const defaultAttachmentList = computed(() => {
   }
   return [];
 });
-const defaultAttachmentList = computed(() => {
-  if (props.isEdit) {
-    return formModel.value.attachments.filter((attachment) => !attachment.isDelete);
-  }
-  return [];
-});
+
 const deleteAttachmentList = computed(() => {
   if (props.isEdit) {
     return formModel.value.attachments.filter((attachment) => attachment.isDelete);
@@ -270,7 +245,7 @@ const save = () => {
           inactive-text="否"
         />
       </el-form-item>
-      <el-form-item v-if="!formModel.videoUrl" label="上傳影片檔案 :">
+
       <el-form-item v-if="!formModel.videoUrl" label="上傳影片檔案 :">
         <div style="width: 100%">
           <el-upload
@@ -297,6 +272,7 @@ const save = () => {
           <div>
             <el-button type="primary">重新選擇影片檔案</el-button>
             <el-button type="info">清空</el-button>
+          </div>
         </div>
       </el-form-item>
       <el-form-item v-else label="預覽影片 :">
@@ -308,7 +284,6 @@ const save = () => {
           </div>
         </div>
       </el-form-item>
-      <el-form-item label="新增單元附件 :">
       <el-form-item label="新增單元附件 :">
         <!-- <el-upload class="upload" style="width: 100%" drag>
           <el-icon class="el-icon--upload"><upload-filled /></el-icon>

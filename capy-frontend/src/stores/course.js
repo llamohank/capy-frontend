@@ -47,11 +47,15 @@ export const useCourseStore = defineStore("course", () => {
       return;
     }
     const res = currentCourseId.value ? await updateCourseDetail(data) : await createCourse(data);
-    currentCourseId.value = res.id;
+    currentCourseId.value = res;
     await fetchCourseOverview();
     console.log("setcourseinfo");
   };
   const setCurrentCourseId = (id) => {
+    if (!id) {
+      courseSections.value = [];
+      courseAttachments.value = [];
+    }
     currentCourseId.value = id;
   };
   return {

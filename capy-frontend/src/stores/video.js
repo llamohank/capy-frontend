@@ -4,8 +4,10 @@ export const useVideoStore = defineStore("videoStore", () => {
   const append = (id) => {
     uploadingVideoList.value.push(id);
   };
-  const remove = (id) => {
-    uploadingVideoList.value = uploadingVideoList.value.filter((vid) => vid !== id);
+  const remove = (videoAssetId) => {
+    uploadingVideoList.value = uploadingVideoList.value.filter(
+      (vid) => vid.videoAssetId !== videoAssetId
+    );
   };
   return {
     uploadingVideoList,

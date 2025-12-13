@@ -1,1 +1,13 @@
-//提供一個將秒數轉為分鐘的函數
+export default function timetransform(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  if (h > 0) {
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  } else {
+    return `${pad(m)}:${pad(s)}`;
+  }
+}

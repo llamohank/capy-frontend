@@ -1,10 +1,11 @@
 import { useSection } from "./useSection";
-import { deleteLesson } from "@/api/teacher/course";
+import { deleteLesson, reorderLesson } from "@/api/teacher/course";
+import { useCourseStore } from "@/stores/course";
 const { updateCourseSection, deleteCourseSection } = useSection();
 export const useLesson = (sectionInfo) => {
+  const courseStore = useCourseStore();
   const currentSectionInfo = sectionInfo;
-  //pinia
-  // const currentUploadingLesson = [];
+
   const updateSection = async (title) => {
     await updateCourseSection(currentSectionInfo.sectionId, title);
   };
@@ -31,15 +32,32 @@ export const useLesson = (sectionInfo) => {
     try {
       await deleteLesson(lessonId);
       ElMessage.success("刪除成功");
+      await courseStore.fetchCourseOverview();
     } catch (e) {
       ElMessage.error("刪除失敗");
     }
   };
-
+  const reorderCourseLesson = async (ids) => {
+    try {
+      await reorderLesson(currentSectionInfo.sectionId, { ids });
+      ElMessage.success("單元影片順序更新!");
+    } catch (e) {
+      console.log(e);
+      ElMessage.error("影片順序更新失敗!");
+    } finally {
+      try {
+        await courseStore.fetchCourseOverview();
+      } catch (e) {
+        console.log(e);
+      }
+    }
+  };
   return {
     currentSectionInfo,
     updateSection,
     deleteSection,
     defaultLessonInfo,
+    deleteCourseLesson,
+    reorderCourseLesson,
   };
 };

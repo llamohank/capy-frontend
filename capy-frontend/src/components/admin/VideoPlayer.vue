@@ -2,7 +2,9 @@
 import "shaka-player/dist/shaka-player.ui.js"; // ensures the UI build is registered
 import "shaka-player/dist/controls.css"; // required styling for Shaka controls
 import VideoPlayer from "@llamohank/custom-shaka-player";
-// import samplevideo from "@/assets/sample.mp4";
+
+import { nextTick } from "vue";
+
 const videoPlayerRef = ref(null);
 const isLoading = ref(true);
 const isError = ref(false);
@@ -12,8 +14,18 @@ const videoDuration = computed(() => videoPlayerRef.value?.duration);
 let player = null;
 
 const play = async (src) => {
-  // await player.play(samplevideo);
   await player.play(src);
+
+  try {
+    await player.play(src);
+  } catch (e) {
+    isError.value = true;
+    throw new Error("播放錯誤");
+  } finally {
+    await nextTick();
+    isLoading.value = false;
+  }
+
   // videoDuration = videoPlayerRef.value.duration;
   console.log(videoHeight.value);
   // videoWidth = videoPlayerRef.value.videoWidth;
@@ -56,12 +68,10 @@ defineExpose({
       ></div>
     </div>
     <div style="height: 300px; width: 500px" v-if="isError">
-      <p>影片播放錯誤</p>
+      <el-result icon="error" title="影片播放錯誤" sub-title="請重新嘗試" />
+      <!-- <p>影片播放錯誤</p> -->
     </div>
   </div>
-  <!-- <div>
-    <video style="width: 100%" :src="samplevideo"></video>
-  </div> -->
 </template>
 <style scoped>
 .player-shell {

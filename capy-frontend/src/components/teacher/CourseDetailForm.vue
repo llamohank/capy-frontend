@@ -58,6 +58,9 @@ const next = async () => {
     throw new Error("表單驗證失敗，請填寫必要欄位");
   }
   try {
+    if (currentCourseId) {
+      formModel.value.courseId = currentCourseId;
+    }
     const fd = new FormData();
 
     fd.append(
