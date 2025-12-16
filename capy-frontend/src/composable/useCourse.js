@@ -11,10 +11,6 @@ export const useCourse = () => {
     courseAttachments,
     courseSections,
   } = storeToRefs(courseStore);
-  onMounted(() => {
-    courseStore.fetchCategoryData();
-    courseStore.fetchTagListData();
-  });
 
   return {
     currentCourseId,

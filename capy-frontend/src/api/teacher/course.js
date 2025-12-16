@@ -18,6 +18,12 @@ export const updateCourseDetail = (data) => {
 export const getCourseOverview = (id) => {
   return axios.get(`teacher/courses/${id}/overview`);
 };
+export const deleteCourse = (courseId) => {
+  return axios.delete(`/teacher/courses/${courseId}/delete-course`);
+};
+export const submitCourse = (courseId) => {
+  return axios.post(`/teacher/courses/${courseId}/submit-review`);
+};
 //section
 export const createSection = (data) => {
   return axios.post("/teacher/courses/add-section", data);

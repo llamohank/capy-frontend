@@ -302,6 +302,16 @@ const userStore = useUserStore();
 
 // Turnstile 配置
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+
+// 檢查 Site Key 是否存在
+if (!turnstileSiteKey) {
+  console.error('❌ 缺少 Turnstile Site Key！');
+  console.error('請確認：');
+  console.error('1. 專案根目錄是否有 .env 檔案');
+  console.error('2. .env 檔案中是否包含 VITE_TURNSTILE_SITE_KEY=你的site_key');
+  console.error('3. 修改 .env 後需要重新啟動開發伺服器 (npm run dev)');
+}
+
 const loginTurnstileRef = ref(null);
 const registerTurnstileRef = ref(null);
 const loginTurnstileToken = ref('');
@@ -336,6 +346,13 @@ const renderLoginTurnstile = () => {
     return;
   }
 
+  // 檢查 Site Key
+  if (!turnstileSiteKey) {
+    console.error('❌ 無法渲染 Turnstile：缺少 Site Key');
+    ElMessage.error('系統配置錯誤：缺少 Turnstile Site Key，請聯絡管理員');
+    return;
+  }
+
   try {
     loginWidgetId.value = window.turnstile.render(loginTurnstileRef.value, {
       sitekey: turnstileSiteKey,
@@ -343,15 +360,23 @@ const renderLoginTurnstile = () => {
       'expired-callback': onLoginTurnstileExpire,
       theme: 'light',
     });
-    console.log('登入 Turnstile Widget 已渲染，ID:', loginWidgetId.value);
+    console.log('✅ 登入 Turnstile Widget 已渲染，ID:', loginWidgetId.value);
   } catch (error) {
-    console.error('渲染登入 Turnstile 失敗:', error);
+    console.error('❌ 渲染登入 Turnstile 失敗:', error);
+    ElMessage.error('人機驗證載入失敗，請重新整理頁面');
   }
 };
 
 const renderRegisterTurnstile = () => {
   if (!window.turnstile || !registerTurnstileRef.value) {
     console.log('Turnstile 尚未載入或元素不存在');
+    return;
+  }
+
+  // 檢查 Site Key
+  if (!turnstileSiteKey) {
+    console.error('❌ 無法渲染 Turnstile：缺少 Site Key');
+    ElMessage.error('系統配置錯誤：缺少 Turnstile Site Key，請聯絡管理員');
     return;
   }
 
@@ -362,9 +387,10 @@ const renderRegisterTurnstile = () => {
       'expired-callback': onRegisterTurnstileExpire,
       theme: 'light',
     });
-    console.log('註冊 Turnstile Widget 已渲染，ID:', registerWidgetId.value);
+    console.log('✅ 註冊 Turnstile Widget 已渲染，ID:', registerWidgetId.value);
   } catch (error) {
-    console.error('渲染註冊 Turnstile 失敗:', error);
+    console.error('❌ 渲染註冊 Turnstile 失敗:', error);
+    ElMessage.error('人機驗證載入失敗，請重新整理頁面');
   }
 };
 

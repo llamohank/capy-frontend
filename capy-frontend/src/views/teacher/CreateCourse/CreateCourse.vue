@@ -2,6 +2,11 @@
 import CourseDetailForm from "@/components/teacher/CourseDetailForm.vue";
 import CourseAttachment from "@/components/teacher/CourseAttachment.vue";
 import CoursePlaylist from "@/components/teacher/CoursePlaylist.vue";
+import { submitCourse } from "@/api/teacher/course";
+import { useCourseStore } from "@/stores/course";
+import { useRouter } from "vue-router";
+const courseStore = useCourseStore();
+const router = useRouter();
 const stepComponentList = [CourseDetailForm, CoursePlaylist, CourseAttachment];
 // import { usecreateCourseStore } from "@/stores/createCourse";
 // const createCourseStore = usecreateCourseStore();
@@ -35,10 +40,39 @@ const goPreviousStep = () => {
   // currentStep.value = stepComponentList[activeStep.value];
 };
 const saveToDraft = () => {
-  console.log("draft");
+  router.push({ name: "mycourse" });
+  ElMessage.success("已儲存為草稿");
 };
-const saveAndPublish = () => {
-  console.log("publish");
+const saveAndPublish = async () => {
+  try {
+    await submitCourse(courseStore.currentCourseId);
+    ElMessage.success("申請上架成功");
+    router.push({ name: "mycourse" });
+  } catch (e) {
+    ElMessage.error("申請上架失敗");
+  }
+};
+const deleteCourse = async () => {
+  try {
+    await ElMessageBox.confirm("是否刪除此課程?", "警告", {
+      confirmButtonText: "確認",
+      cancelButtonText: "取消",
+      type: "warning",
+      center: true,
+    });
+  } catch (error) {
+    ElMessage({
+      type: "info",
+      message: "已取消刪除",
+    });
+    return;
+  }
+  try {
+    await courseStore.fetchDeleteCourse();
+    router.push({ name: "mycourse" });
+  } catch (e) {
+    console.log(e);
+  }
 };
 </script>
 <template>
@@ -51,9 +85,9 @@ const saveAndPublish = () => {
         finish-status="wait"
         process-status="finish"
       >
-        <el-step title="完成課程資訊" description="Some description" />
-        <el-step title="上傳單元影片" description="Some description" />
-        <el-step title="確認課程詳情" description="Some description" />
+        <el-step title="完成課程資訊" />
+        <el-step title="上傳單元影片" />
+        <el-step title="確認課程詳情" />
       </el-steps>
     </div>
     <div class="step-component">
@@ -66,6 +100,9 @@ const saveAndPublish = () => {
       <el-button size="large" v-show="activeStep > 0" @click="goPreviousStep">上一步</el-button>
       <el-button size="large" v-show="activeStep !== 2" type="primary" @click="goNextStep"
         >下一步</el-button
+      >
+      <el-button size="large" v-show="activeStep === 2" type="danger" @click="deleteCourse"
+        >刪除此課程</el-button
       >
       <el-button size="large" v-show="activeStep === 2" type="info" @click="saveToDraft"
         >暫存為草稿</el-button
@@ -80,7 +117,8 @@ const saveAndPublish = () => {
 .step-bar {
   display: flex;
   justify-content: center;
-  margin-bottom: 48px;
+  margin-top: 32px;
+  margin-bottom: 32px;
 }
 .step-component {
   margin-bottom: 48px;
@@ -99,8 +137,8 @@ const saveAndPublish = () => {
   /* transform: translateX(50%); */
 }
 :deep(.el-step__head.is-finish .el-step__icon) {
-  background-color: pink;
-  border-color: pink;
+  background-color: #409eff;
+  /* border-color: pink; */
   color: #fff;
 }
 :deep(.el-step__icon) {

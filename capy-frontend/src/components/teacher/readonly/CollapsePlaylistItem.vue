@@ -1,10 +1,9 @@
 <script setup>
 import { VueDraggable as Draggable } from "vue-draggable-plus";
-import TextInputDialog from "../common/TextInputDialog.vue";
+import TextInputDialog from "../../common/TextInputDialog.vue";
 import { useLesson } from "@/composable/useLesson";
 import { useCourseStore } from "@/stores/course";
 import { useVideo } from "@/composable/useVideo";
-import AlertDialog from "../common/AlertDialog.vue";
 import LessonFormDialog from "./LessonFormDialog.vue";
 import { getVideoUrl } from "@/api/teacher/video";
 import { createLesson, updateLesson } from "@/api/teacher/course";
@@ -21,31 +20,16 @@ const { deleteSection, updateSection, deleteCourseLesson, reorderCourseLesson } 
   props.sectionInfo
 );
 
-const sectionTitle = ref(props.sectionInfo.title);
-const showSectionEditDialog = ref(false);
-const handleEditSection = async (val) => {
-  await updateSection(val);
-};
-const showSectionDeleteDialog = ref(false);
-const handleDeleteSection = async () => {
-  await deleteSection();
-};
 //lesson
-const lessonDialogRef = ref(null);
 const isEditLesson = ref(false);
 const currentLesson = ref(null);
 const showLessonDialog = ref(false);
 const lessonVideoUrl = ref(null);
-const handleCreateLesson = () => {
-  isEditLesson.value = false;
-  lessonVideoUrl.value = null;
-  showLessonDialog.value = true;
-};
+
 const handleEditLesson = async (lessonInfo) => {
   isEditLesson.value = true;
   currentLesson.value = lessonInfo;
   const res = await getVideoUrl(lessonInfo.lessonId);
-  console.log(res);
   if (res?.signedUrl) {
     lessonVideoUrl.value = res.signedUrl;
   }
@@ -108,42 +92,12 @@ const handleSaveLesson = async (data) => {
     ElMessage.error(message);
   }
 };
-const checkIsUploading = (lessonId) => {
-  const { isUploading } = useVideo();
-  return isUploading(lessonId);
-};
-
-const handleDeleteLesson = async (lessonId) => {
-  await deleteCourseLesson(lessonId);
-};
-
-const lessonOrderList = computed(() => {
-  return props.sectionInfo.lessons.map((lesson) => lesson.lessonId);
-});
-const handleReorderLesson = () => {
-  reorderCourseLesson(lessonOrderList.value);
-};
 </script>
 <template>
-  <TextInputDialog
-    @confirm="handleEditSection"
-    v-model:visible="showSectionEditDialog"
-    v-model:inputValue="sectionTitle"
-    title="編輯章節名稱"
-    placeholder="輸入章節名稱"
-  />
-  <AlertDialog
-    @confirm="handleDeleteSection"
-    v-model:visible="showSectionDeleteDialog"
-    title="刪除章節"
-    alert-text="確定要刪除"
-    :highlight="props.sectionInfo.title"
-  />
   <!-- //添加單元影片dialog form -->
   <LessonFormDialog
     :sectionInfo="props.sectionInfo"
     v-model:videoUrl="lessonVideoUrl"
-    @confirm="handleSaveLesson"
     ref="lessonDialogRef"
     v-model:visible="showLessonDialog"
     :isEdit="isEditLesson"
@@ -172,47 +126,28 @@ const handleReorderLesson = () => {
             | 共{{ sectionInfo?.lessons?.length }}單元 時長:992分鐘</span
           >
         </p>
-        <div>
-          <el-button @click.stop="showSectionEditDialog = true">編輯</el-button
-          ><el-button @click.stop="showSectionDeleteDialog = true" type="info">刪除</el-button>
-        </div>
       </div>
     </template>
     <div>
-      <el-button plain class="upload-btn" @click="handleCreateLesson">
-        <el-icon><CirclePlus /></el-icon>上傳單元影片</el-button
-      >
       <ul v-if="sectionInfo.lessons?.length > 0" class="course-playlist">
-        <Draggable @update="handleReorderLesson" v-model="sectionInfo.lessons">
-          <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
-            <div style="display: flex; align-items: center; flex: 2">
-              <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
-              >{{ lesson.lessonTitle
-              }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
-            </div>
-            <div v-if="!checkIsUploading(lesson.lessonId)">
-              {{
-                lesson.videoAssetStatus === "upload_failed"
-                  ? "暫無影片"
-                  : transformSeconds(lesson.lessonDurationSeconds)
-              }}
+        <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
+          <div style="display: flex; align-items: center; flex: 2">
+            <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
+            >{{ lesson.lessonTitle
+            }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
+          </div>
+          <div>
+            {{
+              lesson.videoAssetStatus === "upload_failed"
+                ? "暫無影片"
+                : transformSeconds(lesson.lessonDurationSeconds)
+            }}
 
-              <el-button style="margin-left: 8px" @click="handleEditLesson(lesson)"
-                >編輯
-              </el-button>
-              <el-button type="info" @click="handleDeleteLesson(lesson.lessonId)">刪除 </el-button>
-            </div>
-            <div v-else style="flex: 1">
-              上傳中...請稍後
-              <el-progress
-                :percentage="100"
-                :show-text="false"
-                :indeterminate="true"
-                :duration="5"
-              />
-            </div>
-          </li>
-        </Draggable>
+            <el-button style="margin-left: 8px" type="primary" @click="handleEditLesson(lesson)"
+              >查看
+            </el-button>
+          </div>
+        </li>
       </ul>
     </div>
   </el-collapse-item>

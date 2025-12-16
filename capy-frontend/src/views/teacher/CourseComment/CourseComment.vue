@@ -1,81 +1,146 @@
 <script setup>
 import CommentDetailDialog from "./CommentDetailDialog.vue";
+import { getCourseOptions, getQuestionList, answerQuestion } from "@/api/teacher/comment";
+// import { useCourseStore } from "@/stores/course";
+// const courseStore = useCourseStore();
 const queryForm = ref({});
 const isVisible = ref(false);
-const currentComment = ref({
-  questionid: 1,
-  answerId: 2,
-});
+// const currentComment = ref({
+//   questionid: 1,
+//   answerId: 2,
+// });
 const open = () => {
   isVisible.value = true;
+};
+///
+const courseOptions = ref([]);
+const currentCourseOption = ref(null);
+const fetchQuestionList = async () => {
+  const res = await getQuestionList(params.value);
+  questionList.value = res.content;
+  totalPage.value = res.totalElements;
+};
+onMounted(async () => {
+  courseOptions.value = await getCourseOptions();
+  await fetchQuestionList();
+  // console.log(res);
+  // console.log(questionList.value);
+});
+const currentPage = ref(1);
+const totalPage = ref(1);
+const answerType = ref(null);
+const selectOptions = computed(() => {
+  return {
+    courseId: currentCourseOption.value,
+    answered: answerType.value,
+  };
+});
+const params = computed(() => {
+  return {
+    ...selectOptions.value,
+    page: currentPage.value - 1,
+  };
+});
+watch(selectOptions, async () => {
+  currentPage.value = 1;
+  await fetchQuestionList();
+});
+const questionList = ref([]);
+const currentComment = ref(null);
+const handleCheckQuestion = (item) => {
+  currentComment.value = item;
+  isVisible.value = true;
+};
+const handleAnswerQuestion = async (val) => {
+  const responsedanswer = currentComment.value.id;
+  try {
+    const res = await answerQuestion(currentComment.id, { content: val });
+    const target = questionList.value.find((item) => item.id === responsedanswer);
+    if (target) {
+      target.answer = res;
+    }
+    ElMessage.success("回覆成功");
+  } catch (e) {
+    console.log(e);
+    ElMessage.error("回覆失敗");
+  }
 };
 </script>
 <template>
   <div>
-    <CommentDetailDialog v-model:isVisible="isVisible" :detail="currentComment" />
+    <CommentDetailDialog
+      @response="handleAnswerQuestion"
+      v-model:isVisible="isVisible"
+      :detail="currentComment"
+    />
     <h2 class="section-heading">課程留言</h2>
     <div>
       <el-select
         size="large"
-        v-model="value"
+        v-model="currentCourseOption"
+        clearable
         placeholder="全部課程"
         style="width: 240px; margin-right: 24px"
       >
         <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
+          v-for="item in courseOptions"
+          :key="item.courseId"
+          :label="item.title"
+          :value="item.courseId"
         />
       </el-select>
-      <el-select size="large" v-model="value" placeholder="顯示全部" style="width: 240px">
-        <el-option
-          v-for="item in options"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value"
-        />
+      <el-select
+        size="large"
+        clearable
+        v-model="answerType"
+        placeholder="顯示全部"
+        style="width: 240px"
+      >
+        <el-option label="已回覆" :value="true" />
+        <el-option label="未回覆" :value="false" />
       </el-select>
     </div>
-    <ul class="comment-list">
-      <li class="comment-list-item" @click="open">
-        <el-tag type="info" color="#fff" round size="large">未回覆</el-tag>
-        <div>
-          <el-avatar
-            :size="60"
-            src="https://picsum.photos/200
-"
-          />
-        </div>
-        <div class="comment-text">
-          <p style="font-weight: 500; font-size: 18px">somebody</p>
-          <p>老師上的好棒喔</p>
-          <div style="font-size: 14px; font-weight: 400">
-            <p style="margin-bottom: 8px">來自: Java零基礎入門 - 1-1 認識Java中的資料型別</p>
-            <span>1個月前</span>
+    <div v-if="questionList.length > 0">
+      <ul class="comment-list">
+        <li
+          v-for="item in questionList"
+          :key="item.id"
+          class="comment-list-item"
+          :class="{ 'no-answer': !item.isAnswered }"
+          @click="handleCheckQuestion(item)"
+        >
+          <el-tag color="#fff" round size="large">{{
+            item.isAnswered ? "已回覆" : "未回覆"
+          }}</el-tag>
+          <div><el-avatar :size="60" :src="item.avatarUrl" /></div>
+          <div class="comment-text">
+            <p style="font-weight: 500; font-size: 18px">{{ item.userName }}</p>
+            <p>{{ item.content }}</p>
+            <div style="font-size: 14px; font-weight: 400">
+              <p style="margin-bottom: 12px">
+                來自: {{ item.courseTitle }} - {{ item.lessonTitle }}
+              </p>
+              <span class="end-text">{{ item.createdAt }}</span>
+            </div>
           </div>
-        </div>
-      </li>
-      <li class="comment-list-item">
-        <el-tag type="primary" color="#fff" round size="large">未回覆</el-tag>
-        <div>
-          <el-avatar
-            :size="60"
-            src="https://picsum.photos/200
-"
-          />
-        </div>
-        <div class="comment-text">
-          <p style="font-weight: 500; font-size: 18px">somebody</p>
-          <p>23:02的部分聽不懂...</p>
-          <div style="font-size: 14px">
-            <p style="margin-bottom: 8px">來自: Java零基礎入門 - 1-1 認識Java中的資料型別</p>
-            <span>1個月前</span>
-          </div>
-        </div>
-      </li>
-    </ul>
-    <p class="end-text">已經到底了</p>
+        </li>
+      </ul>
+      <div class="bottom-pagination">
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          size="large"
+          :pager-count="5"
+          @current-page="fetchQuestionList"
+          v-model:current-page="currentPage"
+          :page-size="20"
+          :total="totalPage"
+        />
+      </div>
+    </div>
+    <div v-else>
+      <el-empty description="還沒有通知喔..." />
+    </div>
   </div>
 </template>
 <style scoped>
@@ -86,7 +151,7 @@ const open = () => {
   margin-top: 48px;
 }
 .comment-list-item {
-  padding: 12px 20px;
+  padding: 24px 20px;
   display: flex;
   gap: 20px;
   border-radius: 8px;
@@ -94,6 +159,14 @@ const open = () => {
   background-color: #fcfcfd;
   border-left: 5px solid rgb(216, 230, 237);
   /* transition:; */
+}
+.end-text {
+  margin-top: 12px;
+  text-align: center;
+  color: rgb(153, 173, 183);
+}
+.no-answer {
+  border-left-color: #409eff;
 }
 .el-tag {
   position: absolute;
@@ -104,14 +177,19 @@ const open = () => {
 .comment-text {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 18px;
 }
 .comment-list-item:hover {
   cursor: pointer;
 }
-.end-text {
-  margin-top: 12px;
+.bottom-pagination {
+  display: flex;
+  margin-top: 48px;
+  justify-content: center;
+}
+.el-select-dropdown__item {
+  padding: 8px 4px;
+  height: auto;
   text-align: center;
-  color: rgb(153, 173, 183);
 }
 </style>

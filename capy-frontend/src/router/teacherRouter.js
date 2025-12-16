@@ -1,6 +1,7 @@
 import { useVideo } from "@/composable/useVideo";
 import useCourseSwitch from "@/hooks/useCourseSwitch";
 import { useCourseStore } from "@/stores/course";
+import { useInstructorNotificationStore } from "@/stores/instructorNotification";
 
 const { switchCourseStatus } = useCourseSwitch();
 
@@ -28,11 +29,12 @@ export default [
         beforeEnter: async (to, from, next) => {
           const courseStore = useCourseStore();
           courseStore.setCurrentCourseId(to.params.courseId);
-
-          await courseStore.fetchCourseOverview();
+          courseStore.fetchCategoryData();
+          courseStore.fetchTagListData();
           //取代查詢參數獲得課程狀態
           // const status =courseStore.courseInfo
           if (to.query.status !== "draft") {
+            await courseStore.fetchCourseOverview();
             next({
               name: "coursedetail",
               params: {
@@ -44,7 +46,9 @@ export default [
             });
           } else {
             const { allUploadingFailed } = useVideo();
-            allUploadingFailed();
+            await allUploadingFailed();
+
+            await courseStore.fetchCourseOverview();
             next();
           }
         },
@@ -62,6 +66,8 @@ export default [
         beforeEnter: (to, from, next) => {
           const courseStore = useCourseStore();
           courseStore.setCurrentCourseId(null);
+          courseStore.fetchCategoryData();
+          courseStore.fetchTagListData();
           next();
         },
       },
@@ -70,6 +76,10 @@ export default [
         path: "notification",
         name: "notification",
         component: () => import("@/views/teacher/Notification/Notification.vue"),
+        beforeEnter: async () => {
+          const instructorNotificationStore = useInstructorNotificationStore();
+          await instructorNotificationStore.fetchUnreadNotifications();
+        },
       },
       {
         path: "coursecomment",

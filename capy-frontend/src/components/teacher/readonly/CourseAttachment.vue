@@ -17,24 +17,7 @@ watch(currentchapter, (val) => {
     attachmentList.value = [...courseStore.courseAttachments];
   }
 });
-const handleDeleteAttachment = async (id) => {
-  try {
-    await ElMessageBox.confirm("是否刪除此文件?", "提示", {
-      confirmButtonText: "確認",
-      cancelButtonText: "取消",
-      type: "warning",
-      center: true,
-    });
-  } catch (error) {
-    ElMessage({
-      type: "info",
-      message: "已取消刪除",
-    });
-    return;
-  }
-  const { deleteFile } = useAttachment(id);
-  await deleteFile();
-};
+
 const handleDownloadAttachment = async (id) => {
   const { download } = useAttachment(id);
   await download();
@@ -83,15 +66,9 @@ const handleDownloadAttachment = async (id) => {
         </el-table-column>
         <el-table-column label="操作">
           <template #default="{ row }">
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center">
+            <div style="display: flex; justify-content: center">
               <el-button type="primary" @click="handleDownloadAttachment(row.attachmentId)"
                 >下載</el-button
-              >
-              <el-button
-                type="info"
-                style="margin: 0"
-                @click="handleDeleteAttachment(row.attachmentId)"
-                >刪除</el-button
               >
             </div>
           </template>

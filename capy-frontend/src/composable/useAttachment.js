@@ -67,7 +67,20 @@ export const useAttachment = (attachmentId) => {
     await getAttachment(courseStore.currentCourseId);
   };
   const deleteFile = async () => {
-    await deleteAttachment(targetId);
+    try {
+      await deleteAttachment(targetId);
+      ElMessage({
+        type: "success",
+        message: "刪除成功",
+      });
+      await courseStore.fetchCourseOverview();
+    } catch (e) {
+      console.log(e);
+      ElMessage({
+        type: "error",
+        message: "刪除附件失敗",
+      });
+    }
   };
   return {
     download,

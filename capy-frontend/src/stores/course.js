@@ -5,6 +5,7 @@ import {
   getCourseOverview,
   getTagList,
   updateCourseDetail,
+  deleteCourse,
 } from "@/api/teacher/course";
 export const useCourseStore = defineStore("course", () => {
   const currentCourseId = ref(null);
@@ -23,6 +24,50 @@ export const useCourseStore = defineStore("course", () => {
   const courseInfo = ref(null);
   const courseSections = ref([]);
   const courseAttachments = ref([]);
+  const totalCourseDuration = computed(() => {
+    return courseSections.value.reduce((sum, section) => {
+      return (
+        sum +
+        section.lessons.reduce((sum, lesson) => {
+          let lessonSeconds = lesson.lessonDurationSeconds;
+          if (
+            lesson.videoAssetStatus === "uploading" ||
+            lesson.videoAssetStatus === "upload_failed"
+          ) {
+            lessonSeconds = 0;
+          }
+          return sum + lessonSeconds;
+        }, 0)
+      );
+    }, 0);
+  });
+  const currentCourseCategory = computed(() => {
+    let list = [];
+    let children = [];
+    for (let i = 0; i < courseInfo.value?.categories.length; i++) {
+      if (i === 0) {
+        const target = categoryList.value.find(
+          (item) => item.id === courseInfo.value?.categories[i]
+        );
+        list.push(target);
+        children = target.children;
+      } else {
+        const target = children.find((item) => item.id === courseInfo.value?.categories[i]);
+        list.push(target);
+        children = target.children;
+      }
+      // list.push(target);
+
+      // children = target.children;
+    }
+    return list;
+  });
+  const currentCourseTag = computed(() => {
+    return courseInfo.value?.tagIds.map((item) => ({
+      id: item,
+      name: tagList.value.find((tag) => tag.id === item)?.name,
+    }));
+  });
   const fetchCategoryData = async () => {
     const res = await getCategory();
     categoryList.value = res;
@@ -58,17 +103,31 @@ export const useCourseStore = defineStore("course", () => {
     }
     currentCourseId.value = id;
   };
+  const fetchDeleteCourse = async () => {
+    if (!currentCourseId.value) {
+      return;
+    }
+    try {
+      await deleteCourse(currentCourseId.value);
+    } catch (e) {
+      ElMessage.error("刪除課程失敗");
+    }
+  };
   return {
     currentCourseId,
+    currentCourseTag,
+    currentCourseCategory,
     categoryList,
     categoryOptions,
     tagList,
     courseInfo,
     courseSections,
     courseAttachments,
+    totalCourseDuration,
     fetchCategoryData,
     fetchTagListData,
     fetchCourseOverview,
+    fetchDeleteCourse,
     setCourseInfo,
     setCurrentCourseId,
   };

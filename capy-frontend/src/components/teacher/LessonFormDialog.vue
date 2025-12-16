@@ -245,13 +245,6 @@ const save = () => {
         </div>
       </el-form-item>
       <el-form-item label="新增單元附件 :">
-        <!-- <el-upload class="upload" style="width: 100%" drag>
-          <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-          <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-          <template #tip>
-            <div class="el-upload__tip">jpg/png files with a size less than 500kb</div>
-          </template>
-        </el-upload> -->
         <div style="width: 100%">
           <div>
             <el-upload
@@ -280,10 +273,10 @@ const save = () => {
               v-for="attachment in defaultAttachmentList"
               :key="attachment.attachmentId"
             >
-              <p style="width: 250px">
-                <span style="margin-right: 4px"
+              <p style="width: 250px; display: flex">
+                <span style="margin-right: 8px"
                   ><el-icon><Document /></el-icon></span
-                >{{ attachment.fileName }}
+                ><el-text truncated>{{ attachment.fileName }}</el-text>
               </p>
               <div>
                 <el-button link @click="handleDeleteAttachment(attachment.attachmentId)"

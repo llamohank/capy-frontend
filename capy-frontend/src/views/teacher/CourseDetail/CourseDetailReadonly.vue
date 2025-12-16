@@ -1,7 +1,7 @@
 <script setup>
-import CourseDetailForm from "@/components/admin/CourseDetailForm.vue";
-import CourseAttachment from "@/components/admin/CourseAttachment.vue";
-import CoursePlaylist from "@/components/admin/CoursePlaylist.vue";
+import CourseDetailForm from "@/components/teacher/readonly/CourseDetailForm.vue";
+import CourseAttachment from "@/components/teacher/readonly/CourseAttachment.vue";
+import CoursePlaylist from "@/components/teacher/readonly/CoursePlaylist.vue";
 const props = defineProps({
   status: {
     type: String,

@@ -1,4 +1,5 @@
 <script setup>
+import { getAnnouncementList, createAnnouncement } from "@/api/teacher/announcement";
 const dialogVisible = ref(false);
 const addDialogVisible = ref(false);
 const currentAnnouncement = ref(null);
@@ -6,26 +7,72 @@ const checkoutDetail = (item) => {
   currentAnnouncement.value = item;
   dialogVisible.value = true;
 };
-const announcementlist = ref([
-  {
-    id: 1,
-    title: "新年優惠 課程全面85折",
-    detail: "老師缺錢了 大家來買課",
-    time: "2025-11-18",
-  },
-  {
-    id: 2,
-    title: "新年優惠 課程全面75折",
-    detail: "老師缺錢了 大家快來買",
-    time: "2025-11-18",
-  },
-]);
+///
+const announcementList = ref([]);
+const currentPage = ref(1);
+const params = computed(() => {
+  return {
+    page: currentPage.value - 1,
+  };
+});
+
+const totalPage = ref(1);
+const fetchAnnouncementList = async () => {
+  console.log(params.value);
+  const res = await getAnnouncementList(params.value);
+  totalPage.value = res.totalElements;
+  announcementList.value = res.content;
+  console.log(announcementList.value);
+};
+onMounted(async () => {
+  fetchAnnouncementList();
+});
+const formModel = ref({
+  title: "",
+  content: "",
+});
+const formRef = ref(null);
+const formRule = {
+  title: [
+    { required: true, message: "標題為必填項", trigger: "blur" },
+    { min: 10, max: 20, message: "標題需在10到15字內", trigger: "blur" },
+  ],
+  content: [
+    { required: true, message: "內容為必填項", trigger: "blur" },
+    { max: 50, message: "公告內容不得超過100字", trigger: "blur" },
+  ],
+};
+const handleCreateAnnouncement = async () => {
+  try {
+    await formRef.value.validate();
+  } catch (e) {
+    ElMessage.error("請填寫必要欄位");
+    return;
+  }
+  try {
+    await createAnnouncement(formModel.value);
+    ElMessage.success("發布成功");
+  } catch (e) {
+    console.log(e);
+    ElMessage.error("發布公告失敗");
+  } finally {
+    currentPage.value = 1;
+    await fetchAnnouncementList();
+    addDialogVisible.value = false;
+  }
+};
+watch(addDialogVisible, (val) => {
+  if (!val) {
+    formRef.value.resetFields();
+  }
+});
 </script>
 <template>
   <div>
     <el-dialog v-model="dialogVisible" center title="公告詳情" width="500">
       <div style="padding: 20px">
-        <p>{{ currentAnnouncement?.detail }}</p>
+        <p>{{ currentAnnouncement?.content }}</p>
+        <span>{{ currentAnnouncement?.createdAt }}</span>
       </div>
     </el-dialog>
     <el-dialog
@@ -36,52 +83,81 @@ const announcementlist = ref([
       width="500"
     >
       <el-form
+        status-icon
+        scroll-to-error
+        :rules="formRule"
         style="padding: 12px"
         label-position="top"
         size="large"
         ref="formRef"
         :model="formModel"
       >
-        <el-form-item>
-          <template #label>
-            <span style="display: block; font-size: 16px; font-weight: 500">標題 :</span>
-          </template>
-          <el-input />
+        <el-form-item prop="title" label="標題 :" style="margin-bottom: 48px">
+          <el-input placeholder="請輸入公告標題" v-model="formModel.title" />
         </el-form-item>
-        <el-form-item>
-          <template #label>
-            <span style="display: block; font-size: 16px; font-weight: 500">內容 :</span>
-          </template>
-          <el-input type="textarea" :rows="5" />
+        <el-form-item prop="content" label="內容 :">
+          <el-input
+            placeholder="請輸入公告內容"
+            :max="100"
+            v-model="formModel.content"
+            type="textarea"
+            :rows="5"
+          />
         </el-form-item>
         <el-form-item>
           <div
             style="display: flex; justify-content: center; gap: 12px; width: 100%; margin-top: 12px"
           >
             <el-button size="large" @click="addDialogVisible = false">取消</el-button>
-            <el-button size="large" type="primary">發布</el-button>
+            <el-button size="large" @click="handleCreateAnnouncement" type="primary"
+              >發布</el-button
+            >
           </div>
         </el-form-item>
       </el-form>
     </el-dialog>
     <h2 class="section-heading">公告管理</h2>
     <div style="text-align: end; padding-right: 24px">
-      <el-tooltip effect="dark" content="發布公告" placement="left">
-        <el-button @click="addDialogVisible = true" type="primary" circle size="large"
-          ><el-icon size="large"><CirclePlus /></el-icon
-        ></el-button>
-      </el-tooltip>
+      <el-button
+        class="create-announce-btn"
+        @click="addDialogVisible = true"
+        type="primary"
+        round
+        size="large"
+        ><el-icon size="large" style="margin-right: 8px"><CirclePlus /></el-icon>發布公告</el-button
+      >
     </div>
-    <ul class="message-list">
-      <li v-for="item in announcementlist" @click="checkoutDetail(item)" class="message-list-item">
-        <div>
-          <h3 class="message-title">{{ item.title }}</h3>
-          <span style="font-style: italic; font-size: 14px">{{ item.time }}</span>
-        </div>
-        <span class="checkout">點擊查看詳情</span>
-      </li>
-    </ul>
-    <p class="end-text">已經到底了</p>
+    <div v-if="announcementList.length > 0">
+      <ul class="message-list">
+        <li
+          v-for="item in announcementList"
+          :key="item.id"
+          @click="checkoutDetail(item)"
+          class="message-list-item"
+        >
+          <div>
+            <h3 class="message-title">{{ item.title }}</h3>
+            <p style="margin-bottom: 12px">{{ item.content }}</p>
+            <span class="checkout">{{ item.createdAt }}</span>
+          </div>
+          <!-- <span class="checkout">點擊查看詳情</span> -->
+        </li>
+      </ul>
+      <div class="bottom-pagination">
+        <el-pagination
+          background
+          layout="prev, pager, next"
+          size="large"
+          :pager-count="5"
+          v-model:current-page="currentPage"
+          :page-size="20"
+          :total="totalPage"
+        />
+      </div>
+    </div>
+    <div v-else>
+      <el-empty description="還沒有通知喔..." />
+    </div>
   </div>
 </template>
 <style scoped>
@@ -92,7 +168,7 @@ const announcementlist = ref([
   margin-top: 20px;
 }
 .message-list-item {
-  padding: 10px 20px;
+  padding: 24px 20px;
   display: flex;
   gap: 20px;
   border-radius: 8px;
@@ -119,5 +195,20 @@ const announcementlist = ref([
   margin-top: 12px;
   text-align: center;
   color: rgb(153, 173, 183);
+}
+.create-announce-btn {
+  padding: 18px 24px;
+}
+.bottom-pagination {
+  display: flex;
+  margin-top: 48px;
+  justify-content: center;
+}
+:deep(.el-form-item__label) {
+  font-weight: 500;
+}
+:deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 500;
 }
 </style>
