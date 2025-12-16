@@ -56,17 +56,39 @@ const scrollToTop = () => {
 onMounted(async () => {
   console.log('App.vue mounted')
 
-  // 頁面重整時使用驗證模式（呼叫 /auth/verify）
-  await userStore.init(false)
+  // 頁面重整時初始化用戶資訊
+  await userStore.init()
 
   // 只有在已登入時才從 localStorage 載入購物車和願望清單
   if (userStore.isAuthenticated) {
+    console.log('✅ 用戶已登入，開始載入資料...')
+
     cartStore.loadFromStorage()
     wishlistStore.loadFromStorage()
 
-    // 注意：通知列表、未讀數量和 SSE 連線會由 watch 監聽器統一處理
-    // 這裡不需要重複呼叫，避免 API 重複請求
+    // 🔥 關鍵修改：立即啟動 SSE（不依賴 watch）
+    try {
+      await notificationStore.fetchStudentNotifications({
+        page: 0,
+        size: 10
+      })
+      await notificationStore.fetchUnreadCount()
+      notificationStore.startSSE()
+      console.log('✅ SSE 連線已在 onMounted 中啟動')
+    } catch (error) {
+      console.error('❌ 初始化通知服務失敗:', error)
+    }
+  } else {
+    console.log('👤 訪客模式')
   }
+
+  // 🔥 關鍵：監聽頁面卸載事件，確保 SSE 連線被關閉
+  window.addEventListener('beforeunload', () => {
+    console.log('⚠️ 頁面即將卸載，關閉 SSE 連線')
+    if (userStore.isAuthenticated) {
+      notificationStore.stopSSE()
+    }
+  })
 
   // 添加滾動監聽 - 同時監聽 window 和 document
   window.addEventListener('scroll', handleScroll, { passive: true })
@@ -90,17 +112,31 @@ onMounted(async () => {
   }, 3000)
 })
 
-// 監聽用戶登入狀態變化
-watch(() => userStore.isAuthenticated, async (isAuth) => {
+// 監聽用戶登入狀態變化（用於登入/登出事件）
+watch(() => userStore.isAuthenticated, async (isAuth, oldIsAuth) => {
+  console.log('🔄 isAuthenticated 變化:', { from: oldIsAuth, to: isAuth })
+
+  // 只在狀態真正變化時處理（避免初始化時重複執行）
+  if (isAuth === oldIsAuth) {
+    console.log('⏭️ 狀態未變化，跳過處理')
+    return
+  }
+
   if (isAuth) {
+    console.log('✅ 用戶登入，啟動通知服務')
     // 用戶登入時載入通知列表、獲取未讀數量並啟動 SSE
-    await notificationStore.fetchStudentNotifications({
-      page: 0,
-      size: 10
-    })
-    await notificationStore.fetchUnreadCount()
-    notificationStore.startSSE()
+    try {
+      await notificationStore.fetchStudentNotifications({
+        page: 0,
+        size: 10
+      })
+      await notificationStore.fetchUnreadCount()
+      notificationStore.startSSE()
+    } catch (error) {
+      console.error('❌ 啟動通知服務失敗:', error)
+    }
   } else {
+    console.log('👋 用戶登出，停止通知服務')
     // 用戶登出時停止 SSE 並清空通知列表
     notificationStore.stopSSE()
     // 清空通知數據

@@ -294,11 +294,33 @@ export const useNotificationStore = defineStore("notification", () => {
    * 開始接收即時通知
    */
   const startSSE = () => {
-    if (isSSEConnected.value) {
-      console.log("SSE 連線已存在");
+    // 檢查 SSE 服務本身的連線狀態，而不是 store 的狀態
+    const actualState = notificationSSEService.getConnectionState();
+    const isActuallyConnected = notificationSSEService.isConnected();
+
+    console.log('🔍 startSSE 檢查:', {
+      storeConnected: isSSEConnected.value,
+      actualState: actualState,
+      isActuallyConnected: isActuallyConnected
+    });
+
+    // 如果實際連線是活躍的，就不需要重新連線
+    if (isActuallyConnected) {
+      console.log("✅ SSE 連線已存在且活躍");
+      // 同步 store 狀態
+      isSSEConnected.value = true;
+      connectionState.value = actualState;
       return;
     }
 
+    // 如果 store 認為已連線但實際沒有，重置狀態
+    if (isSSEConnected.value && !isActuallyConnected) {
+      console.log("🔄 重置不一致的連線狀態");
+      isSSEConnected.value = false;
+      connectionState.value = "disconnected";
+    }
+
+    console.log("🚀 開始建立 SSE 連線...");
     notificationSSEService.connect(
       // 收到新通知時的回調
       (notification) => {

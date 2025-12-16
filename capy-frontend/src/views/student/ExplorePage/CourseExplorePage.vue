@@ -507,6 +507,8 @@ onMounted(async () => {
 
     // 使用 Store 的並行載入方法
     const { courses } = await exploreStore.loadAllData(courseParams)
+    console.log(courses);
+
     coursesData.value = courses
   } catch (error) {
     console.error('並行載入失敗:', error)
