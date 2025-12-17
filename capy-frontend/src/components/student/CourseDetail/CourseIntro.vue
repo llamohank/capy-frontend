@@ -108,6 +108,9 @@ const handlePreview = () => {
   font-size: 16px;
   line-height: 1.8;
   margin: 0 0 24px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .preview-section {

@@ -158,20 +158,6 @@
 </template>
 
 <script setup>
-<<<<<<< HEAD
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { Filter } from "@element-plus/icons-vue";
-import ExploreCourseCard from "@/components/student/Explore/ExploreCard/ExploreCourseCard.vue";
-import CategoryTreeMulti from "@/components/student/Explore/FilterDrawer/CategoryTreeMulti.vue";
-import CategoryRadioGroup from "@/components/student/Explore/FilterDrawer/CategoryRadioGroup.vue";
-import RatingOptions from "@/components/student/Explore/FilterDrawer/RatingOptions.vue";
-import ActiveFiltersBar from "@/components/student/Explore/ActiveFiltersBar.vue";
-import { useWishlistStore } from "@/stores/wishlist";
-import { useUserStore } from "@/stores/user";
-import { useExploreStore } from "@/stores/explore";
-=======
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -183,7 +169,6 @@ import ActiveFiltersBar from '@/components/student/Explore/ActiveFiltersBar.vue'
 import { useWishlistStore } from '@/stores/wishlist'
 import { useUserStore } from '@/stores/user'
 import { useExploreStore } from '@/stores/explore'
->>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 
 // Router
 const route = useRoute();
@@ -549,15 +534,11 @@ onMounted(async () => {
     }
 
     // 使用 Store 的並行載入方法
-<<<<<<< HEAD
-    const { courses } = await exploreStore.loadAllData(courseParams);
-    coursesData.value = courses;
-=======
+
     const { courses } = await exploreStore.loadAllData(courseParams)
     console.log(courses);
 
     coursesData.value = courses
->>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
   } catch (error) {
     console.error("並行載入失敗:", error);
     ElMessage.error("載入資料失敗，請稍後再試");
@@ -581,11 +562,8 @@ onUnmounted(() => {
 
 .explore-page {
   min-height: 100vh;
-<<<<<<< HEAD
-  background: #fcf9f4;
-=======
+
   background: var(--capy-bg-base); /* 使用變數 #FCF9F4 */
->>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 }
 
 .loading-wrapper {

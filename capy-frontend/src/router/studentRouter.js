@@ -29,7 +29,11 @@ const studentRoutes = [
         name: "courseExplore",
         component: () => import("@/views/student/ExplorePage/CourseExplorePage.vue"),
         beforeEnter: async (to, from, next) => {
-          await searchCourses();
+          try {
+            await searchCourses();
+          } catch (error) {
+            console.error("預先載入探索課程失敗，將繼續導向頁面：", error);
+          }
           next();
         },
       },
