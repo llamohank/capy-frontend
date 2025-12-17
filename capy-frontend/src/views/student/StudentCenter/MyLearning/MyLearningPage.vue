@@ -279,7 +279,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .my-learning-page {
   padding: 0;
 }
@@ -290,6 +290,12 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
 }
 
 .page-title {
@@ -297,12 +303,25 @@ onMounted(() => {
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
+
+  @include mobile {
+    font-size: 22px;
+  }
+
+  @include small-mobile {
+    font-size: 20px;
+  }
 }
 
 .header-actions {
   display: flex;
   gap: 12px;
   align-items: center;
+
+  @include mobile {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 
 .filter-status-btn {
@@ -314,12 +333,18 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-}
 
-.filter-status-btn:hover,
-.filter-status-btn:focus {
-  background: var(--capy-primary-dark);
-  border-color: var(--capy-primary-dark);
+  &:hover,
+  &:focus {
+    background: var(--capy-primary-dark);
+    border-color: var(--capy-primary-dark);
+  }
+
+  @include small-mobile {
+    padding: 8px 16px;
+    height: 36px;
+    font-size: 14px;
+  }
 }
 
 .filter-icon {
@@ -330,15 +355,15 @@ onMounted(() => {
 :deep(.el-dropdown-menu__item) {
   padding: 10px 20px;
   font-size: 14px;
-}
 
-:deep(.el-dropdown-menu__item.active) {
-  color: var(--capy-primary);
-  font-weight: 600;
-}
+  &.active {
+    color: var(--capy-primary);
+    font-weight: 600;
+  }
 
-:deep(.el-dropdown-menu__item:hover) {
-  background: #f5f5f5;
+  &:hover {
+    background: #f5f5f5;
+  }
 }
 
 /* Course List */
@@ -347,6 +372,10 @@ onMounted(() => {
   flex-direction: column;
   gap: 20px;
   margin-bottom: 32px;
+
+  @include mobile {
+    gap: 16px;
+  }
 }
 
 /* Loading State */
@@ -358,15 +387,15 @@ onMounted(() => {
   gap: 12px;
   padding: 60px 20px;
   color: var(--capy-text-secondary);
-}
 
-.loading-wrapper .el-icon {
-  font-size: 32px;
-  color: var(--capy-primary);
-}
+  .el-icon {
+    font-size: 32px;
+    color: var(--capy-primary);
+  }
 
-.loading-wrapper span {
-  font-size: 14px;
+  span {
+    font-size: 14px;
+  }
 }
 
 /* Pagination */
@@ -378,57 +407,23 @@ onMounted(() => {
 
 :deep(.el-pagination) {
   gap: 8px;
-}
 
-:deep(.el-pagination button),
-:deep(.el-pager li) {
-  min-width: 36px;
-  height: 36px;
-  line-height: 36px;
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-:deep(.el-pager li.is-active) {
-  background: #1a1a1a;
-  color: white;
-}
-
-:deep(.el-pager li:hover) {
-  color: var(--capy-primary);
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-
-  .page-title {
-    font-size: 22px;
-  }
-
-  .header-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .course-list {
-    gap: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-title {
-    font-size: 20px;
-  }
-
-  .filter-status-btn {
-    padding: 8px 16px;
+  button,
+  .el-pager li {
+    min-width: 36px;
     height: 36px;
-    font-size: 14px;
+    line-height: 36px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .el-pager li.is-active {
+    background: #1a1a1a;
+    color: white;
+  }
+
+  .el-pager li:hover {
+    color: var(--capy-primary);
   }
 }
 </style>

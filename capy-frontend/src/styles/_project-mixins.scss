@@ -1,0 +1,192 @@
+// src/styles/_project-mixins.scss
+// ============================================
+// 專案特定的 Mixins（依賴其他檔案）
+// ============================================
+
+@import './breakpoints';
+@import './typography';
+
+// 1. HomePage 相關 Mixins
+// --------------------------------------------------
+
+// 首頁區塊標題
+@mixin section-title {
+  font-size: 32px;
+  font-weight: $font-weight-bold;
+  color: var(--capy-text-primary);
+  letter-spacing: -0.5px;
+
+  @include below($bp-lg) {
+    font-size: 28px;
+  }
+
+  @include below($bp-md) {
+    font-size: 22px;
+  }
+
+  @include below($bp-sm) {
+    font-size: 20px;
+  }
+}
+
+// 首頁區塊標題底線
+@mixin section-title-underline {
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--capy-primary) 0%,
+    var(--capy-brand) 100%
+  );
+  margin: 0 auto;
+  border-radius: 2px;
+
+  @include below($bp-lg) {
+    width: 50px;
+    height: 3px;
+  }
+
+  @include below($bp-md) {
+    width: 45px;
+    height: 3px;
+  }
+
+  @include below($bp-sm) {
+    width: 40px;
+    height: 3px;
+  }
+}
+
+// 2. 卡片相關 Mixins
+// --------------------------------------------------
+
+// 卡片標題
+@mixin card-title {
+  font-size: $font-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--capy-text-primary);
+
+  @include below($bp-md) {
+    font-size: $font-base;
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-sm;
+  }
+}
+
+// 卡片描述
+@mixin card-description {
+  font-size: $font-sm;
+  color: var(--capy-text-secondary);
+  line-height: $line-height-base;
+
+  @include below($bp-sm) {
+    font-size: $font-xs;
+  }
+}
+
+// 3. 按鈕文字 Mixins
+// --------------------------------------------------
+
+// 主要按鈕文字
+@mixin button-text-primary {
+  font-size: $font-base;
+  font-weight: $font-weight-semibold;
+
+  @include below($bp-md) {
+    font-size: $font-sm;
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-xs;
+  }
+}
+
+// 次要按鈕文字
+@mixin button-text-secondary {
+  font-size: $font-sm;
+  font-weight: $font-weight-medium;
+
+  @include below($bp-sm) {
+    font-size: $font-xs;
+  }
+}
+
+// 4. 表單相關 Mixins
+// --------------------------------------------------
+
+// 表單標籤
+@mixin form-label {
+  font-size: $font-sm;
+  font-weight: $font-weight-medium;
+  color: var(--capy-text-primary);
+
+  @include below($bp-sm) {
+    font-size: $font-xs;
+  }
+}
+
+// 表單輸入框文字
+@mixin form-input-text {
+  font-size: $font-base;
+  font-weight: $font-weight-regular;
+
+  @include below($bp-sm) {
+    font-size: $font-sm;
+  }
+}
+
+// 5. 導航相關 Mixins
+// --------------------------------------------------
+
+// 導航連結文字
+@mixin nav-link-text {
+  font-size: $font-base;
+  font-weight: $font-weight-medium;
+
+  @include below($bp-md) {
+    font-size: $font-sm;
+  }
+}
+
+// 6. 其他專案特定 Mixins
+// --------------------------------------------------
+
+// 價格文字
+@mixin price-text {
+  font-size: $font-xl;
+  font-weight: $font-weight-bold;
+  color: var(--capy-primary);
+
+  @include below($bp-md) {
+    font-size: $font-lg;
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-base;
+  }
+}
+
+// 標籤文字
+@mixin tag-text {
+  font-size: $font-xs;
+  font-weight: $font-weight-medium;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// 統計數字
+@mixin stat-number {
+  font-size: $font-2xl;
+  font-weight: $font-weight-bold;
+  line-height: $line-height-tight;
+
+  @include below($bp-md) {
+    font-size: $font-xl;
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-lg;
+  }
+}

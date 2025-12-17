@@ -36,22 +36,20 @@ watch(() => props.modelValue, (newVal) => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .search-bar {
   flex: 1;
   max-width: 600px;
+
+  /* RWD */
+  @include mobile {
+    max-width: none;
+  }
 }
 
 .search-bar :deep(.el-input__wrapper) {
   background: #fff;
   border-radius: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-/* RWD */
-@media (max-width: 768px) {
-  .search-bar {
-    max-width: none;
-  }
 }
 </style>

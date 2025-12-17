@@ -45,8 +45,11 @@ const handleClick = () => {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background 0.3s, transform 0.3s;
   z-index: 10;
+  /* 使用 will-change 提升性能，並設定 transform-origin */
+  will-change: transform;
+  transform-origin: center center;
 }
 
 .wishlist-btn:hover {

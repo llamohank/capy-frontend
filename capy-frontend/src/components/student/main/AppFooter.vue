@@ -97,7 +97,9 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+/* _breakpoints.scss, _typography.scss 已由 vite.config.js 自動引入 */
+
 .footer-wrapper {
   width: 100%;
 }
@@ -107,23 +109,61 @@ onMounted(async () => {
   background: #232f3e;
   color: #ffffff;
   padding: 60px 0;
+
+  @include tablet {
+    padding: 48px 0;
+  }
+
+  @include mobile {
+    padding: 40px 0;
+  }
 }
 
 .footer-container {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--capy-spacing-lg);
+
+  @include tablet {
+    padding: 0 var(--capy-spacing-md);
+  }
+
+  @include mobile {
+    padding: 0 var(--capy-spacing-md);
+  }
 }
 
 .footer-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 48px;
+
+  /* 平板：改為 2x2 矩陣，平衡佈局 */
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px 24px; /* 垂直間距大，水平間距適中 */
+  }
+
+  /* 手機：單欄堆疊 */
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
 }
 
 /* Brand Column */
 .brand-column {
   grid-column: span 1;
+
+  /* 平板時保持佔 1 欄，形成左上角區塊 */
+  @include tablet {
+    grid-column: span 1;
+  }
+
+  @include mobile {
+    grid-column: span 1;
+    text-align: center;
+  }
 }
 
 .footer-logo h3 {
@@ -131,6 +171,10 @@ onMounted(async () => {
   font-weight: var(--capy-font-weight-bold);
   color: var(--capy-primary);
   margin: 0 0 12px 0;
+
+  @include mobile {
+    font-size: 20px;
+  }
 }
 
 .brand-tagline {
@@ -143,6 +187,10 @@ onMounted(async () => {
 .social-links {
   display: flex;
   gap: 12px;
+
+  @include mobile {
+    justify-content: center;
+  }
 }
 
 .social-link {
@@ -168,6 +216,10 @@ onMounted(async () => {
 .footer-column {
   display: flex;
   flex-direction: column;
+
+  @include mobile {
+    text-align: center;
+  }
 }
 
 .column-title {
@@ -176,6 +228,11 @@ onMounted(async () => {
   color: #ffffff;
   margin: 0 0 20px 0;
   letter-spacing: 0.5px;
+
+  @include mobile {
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
 }
 
 .footer-links {
@@ -185,6 +242,10 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  @include mobile {
+    align-items: center;
+  }
 }
 
 .footer-links li {
@@ -206,6 +267,10 @@ onMounted(async () => {
 .footer-links .router-link-exact-active:hover {
   color: var(--capy-primary);
   transform: translateX(4px);
+
+  @include mobile {
+    transform: translateX(0);
+  }
 }
 
 /* Copyright Bar */
@@ -213,6 +278,11 @@ onMounted(async () => {
   background: #1a252f;
   padding: 24px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+  @include mobile {
+    padding: 20px 0;
+    padding-bottom: 80px; /* 防止 "Back to Top" 浮動按鈕重疊文字 */
+  }
 }
 
 .copyright-text {
@@ -220,80 +290,8 @@ onMounted(async () => {
   font-size: 14px;
   color: #b3b9c5;
   margin: 0;
-}
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .footer-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
-  }
-
-  .brand-column {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-footer {
-    padding: 40px 0;
-  }
-
-  .footer-grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .brand-column {
-    grid-column: span 1;
-    text-align: center;
-  }
-
-  .social-links {
-    justify-content: center;
-  }
-
-  .footer-column {
-    text-align: center;
-  }
-
-  .footer-links {
-    align-items: center;
-  }
-
-  .footer-links a:hover {
-    transform: translateX(0);
-  }
-}
-
-@media (max-width: 480px) {
-  .main-footer {
-    padding: 32px 0;
-  }
-
-  .footer-container {
-    padding: 0 var(--capy-spacing-md);
-  }
-
-  .footer-grid {
-    gap: 24px;
-  }
-
-  .footer-logo h3 {
-    font-size: 20px;
-  }
-
-  .column-title {
-    font-size: 15px;
-    margin-bottom: 16px;
-  }
-
-  .copyright-bar {
-    padding: 20px 0;
-    padding-bottom: 80px; /* 防止 "Back to Top" 浮動按鈕重疊文字 */
-  }
-
-  .copyright-text {
+  @include mobile {
     font-size: 13px;
   }
 }

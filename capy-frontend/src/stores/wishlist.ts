@@ -349,6 +349,30 @@ export const useWishlistStore = defineStore('wishlist', () => {
         return false
       }
 
+      // 處理 400 錯誤（可能是已購買課程或其他業務邏輯錯誤）
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || ''
+
+        // 檢查是否為已購買課程的錯誤
+        if (errorMessage.includes('已購買') || errorMessage.includes('已擁有') || errorMessage.includes('enrolled')) {
+          ElMessage({
+            message: '您已購買此課程，無需加入願望清單',
+            type: 'info',
+            grouping: true,
+            duration: 3000
+          })
+        } else {
+          // 其他 400 錯誤，顯示後端訊息
+          ElMessage({
+            message: errorMessage || '無法加入願望清單',
+            type: 'warning',
+            grouping: true,
+            duration: 3000
+          })
+        }
+        return false
+      }
+
       // 處理 403 禁止存取
       if (error.response?.status === 403) {
         ElMessage({

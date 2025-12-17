@@ -37,7 +37,7 @@ const slides = ref([
     badge: "講師招募",
     title: "將你的專業變現，影響全世界",
     subtitle: "建立課程、追蹤收益，成為 CapyCourse 合作講師",
-    route: "/instructor/apply"
+    route: "/instructor/landing"
   },
   {
     id: 3,
@@ -133,18 +133,59 @@ const setActiveSlide = (index) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/styles/breakpoints';
+
 .hero-carousel-wrapper {
   position: relative;
   width: 100%;
-  padding: var(--capy-spacing-xxl) 0;
+  padding: var(--capy-spacing-xxl) var(--capy-spacing-lg);
   background: linear-gradient(180deg, var(--capy-bg-base) 0%, var(--capy-bg-surface) 100%);
+  overflow: hidden;
+
+  @include below($bp-lg) {
+    padding: var(--capy-spacing-xl) var(--capy-spacing-md);
+    padding-bottom: var(--capy-spacing-xxl);
+    overflow: visible;
+  }
+
+  @include below($bp-md) {
+    padding: var(--capy-spacing-md) var(--capy-spacing-sm);
+  }
+
+  @include below($bp-sm) {
+    padding: var(--capy-spacing-sm) var(--capy-spacing-xs);
+  }
 }
 
 .hero-carousel {
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+
+  @include below($bp-lg) {
+    margin-bottom: var(--capy-spacing-lg);
+    overflow: visible;
+  }
+
+  // 在 768-1024px 區間使用自動高度，配合圖片比例
+  @include between($bp-md, $bp-lg) {
+    height: auto;
+  }
+
+  // 其他區間使用固定高度
+  @include below($bp-md) {
+    height: 300px;
+  }
+
+  @include below($bp-sm) {
+    height: 280px;
+  }
+
+  // 大於 1024px 使用預設高度
+  @include above($bp-lg) {
+    height: 400px;
+  }
 }
 
 /* Carousel Item Styling */
@@ -162,6 +203,11 @@ const setActiveSlide = (index) => {
 
 .hero-carousel :deep(.el-carousel__item:not(.is-active)) .slide-container {
   transform: scale(0.85);
+
+  // 在 768px ~ 1024px 區間減少縮小效果
+  @include between($bp-md, $bp-lg) {
+    transform: scale(0.9);
+  }
 }
 
 /* Active Slide - Enhanced */
@@ -174,6 +220,11 @@ const setActiveSlide = (index) => {
 .hero-carousel :deep(.el-carousel__item.is-active) .slide-container {
   transform: scale(1.1);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+
+  // 在 768px ~ 1024px 區間減少放大效果，避免變形
+  @include between($bp-md, $bp-lg) {
+    transform: scale(1.05);
+  }
 }
 
 /* Slide Container */
@@ -184,6 +235,12 @@ const setActiveSlide = (index) => {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: var(--capy-radius-lg);
   overflow: hidden;
+
+  // 在 768-1024px 區間使用 aspect-ratio，讓高度自動配合圖片
+  @include between($bp-md, $bp-lg) {
+    aspect-ratio: 16 / 9;
+    height: auto;
+  }
 }
 
 .slide-image {
@@ -192,6 +249,12 @@ const setActiveSlide = (index) => {
   object-fit: cover;
   border-radius: var(--capy-radius-lg);
   position: relative;
+
+  // 在 768-1024px 區間使用 contain，完整顯示圖片不裁切
+  @include between($bp-md, $bp-lg) {
+    object-fit: contain;
+    object-position: center;
+  }
 }
 
 /* Dark overlay for better text readability */
@@ -227,6 +290,39 @@ const setActiveSlide = (index) => {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: slideUp 0.6s ease-out;
   z-index: 3;
+
+  @include below($bp-lg) {
+    max-width: 380px;
+    padding: var(--capy-spacing-md);
+  }
+
+  @include between($bp-md, $bp-lg) {
+    max-width: 320px;
+    padding: var(--capy-spacing-sm);
+    bottom: 16px;
+    left: 16px;
+  }
+
+  @include below($bp-md) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: none;
+    padding: var(--capy-spacing-sm) var(--capy-spacing-md);
+    padding-bottom: 24px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0;
+    border: none;
+  }
+
+  @include below($bp-sm) {
+    padding: var(--capy-spacing-xs) var(--capy-spacing-sm);
+    padding-bottom: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+  }
 }
 
 @keyframes slideUp {
@@ -251,6 +347,21 @@ const setActiveSlide = (index) => {
   border-radius: 20px;
   margin-bottom: var(--capy-spacing-sm);
   box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3);
+
+  @include between($bp-md, $bp-lg) {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+
+  @include below($bp-md) {
+    top: var(--capy-spacing-sm);
+    right: var(--capy-spacing-sm);
+  }
+
+  @include below($bp-sm) {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
 }
 
 /* Title */
@@ -263,6 +374,23 @@ const setActiveSlide = (index) => {
   line-height: 1.3;
   position: relative;
   z-index: 2;
+
+  @include below($bp-lg) {
+    font-size: 24px;
+  }
+
+  @include between($bp-md, $bp-lg) {
+    font-size: 20px;
+  }
+
+  @include below($bp-md) {
+    font-size: 20px;
+  }
+
+  @include below($bp-sm) {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
 }
 
 /* Subtitle */
@@ -274,6 +402,19 @@ const setActiveSlide = (index) => {
   line-height: 1.6;
   position: relative;
   z-index: 2;
+
+  @include between($bp-md, $bp-lg) {
+    font-size: 14px;
+  }
+
+  @include below($bp-md) {
+    font-size: var(--capy-font-size-sm);
+  }
+
+  @include below($bp-sm) {
+    font-size: 12px;
+    margin-bottom: var(--capy-spacing-sm);
+  }
 }
 
 /* CTA Button */
@@ -288,6 +429,21 @@ const setActiveSlide = (index) => {
   cursor: pointer;
   transition: all var(--capy-transition-base);
   box-shadow: 0 4px 12px rgba(0, 191, 165, 0.3);
+
+  @include between($bp-md, $bp-lg) {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  @include below($bp-md) {
+    padding: 8px 20px;
+    font-size: var(--capy-font-size-sm);
+  }
+
+  @include below($bp-sm) {
+    padding: 6px 16px;
+    font-size: 12px;
+  }
 }
 
 .view-details-btn:hover {
@@ -307,6 +463,24 @@ const setActiveSlide = (index) => {
   align-items: center;
   gap: 12px;
   margin-top: var(--capy-spacing-xl);
+
+  // 在 768-1024px 區間縮短距離
+  @include between($bp-md, $bp-lg) {
+    margin-top: var(--capy-spacing-md);
+    margin-bottom: var(--capy-spacing-sm);
+  }
+
+  @include below($bp-lg) {
+    margin-bottom: var(--capy-spacing-md);
+  }
+
+  @include below($bp-md) {
+    margin-top: var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    margin-top: var(--capy-spacing-sm);
+  }
 }
 
 .indicator-dot {
@@ -353,102 +527,21 @@ const setActiveSlide = (index) => {
   object-fit: cover;
 }
 
-/* Responsive Design */
-@media (max-width: 1024px) {
-  .hero-carousel {
-    height: 360px;
-  }
-
-  .slide-title {
-    font-size: 24px;
-  }
-
-  .content-overlay {
-    max-width: 380px;
-    padding: var(--capy-spacing-md);
+/* 特殊處理：在 1024px 以下時允許 overflow visible */
+.hero-carousel :deep(.el-carousel__container) {
+  @include below($bp-lg) {
+    overflow: visible;
   }
 }
 
-@media (max-width: 768px) {
-  .hero-carousel-wrapper {
-    padding: var(--capy-spacing-md) 0;
+/* 手機版特殊處理：減少遮罩，讓圖片更清晰 */
+.image-overlay {
+  @include below($bp-md) {
+    opacity: 0.3 !important;
   }
 
-  .hero-carousel {
-    height: 300px;
-  }
-
-  /* Mobile: Image on Top, Text on Bottom Layout */
-  .content-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: none;
-    padding: var(--capy-spacing-md);
-    padding-bottom: 40px; /* 防止 CTA 按鈕觸碰底部邊緣 */
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 100%);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border-radius: 0;
-    border: none;
-  }
-
-  .image-overlay {
-    opacity: 0.5 !important; /* 增強深色遮罩確保白色文字可讀 */
-  }
-
-  .slide-title {
-    font-size: 20px;
-  }
-
-  .slide-subtitle {
-    font-size: var(--capy-font-size-sm);
-  }
-
-  .view-details-btn {
-    padding: 8px 20px;
-    font-size: var(--capy-font-size-sm);
-  }
-
-  .featured-badge {
-    top: var(--capy-spacing-sm);
-    right: var(--capy-spacing-sm);
-  }
-
-  /* Hide custom indicators on mobile, use default */
-  .custom-indicators {
-    margin-top: var(--capy-spacing-md);
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-carousel {
-    height: 280px;
-  }
-
-  .content-overlay {
-    padding: var(--capy-spacing-sm);
-  }
-
-  .slide-title {
-    font-size: 18px;
-    margin-bottom: 4px;
-  }
-
-  .slide-subtitle {
-    font-size: 12px;
-    margin-bottom: var(--capy-spacing-sm);
-  }
-
-  .featured-badge {
-    font-size: 10px;
-    padding: 4px 10px;
-  }
-
-  .view-details-btn {
-    padding: 6px 16px;
-    font-size: 12px;
+  @include below($bp-sm) {
+    opacity: 0.2 !important;
   }
 }
 </style>

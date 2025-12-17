@@ -1,7 +1,13 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { getHomePageData, getContinueLearningData } from '@/api/student/home.js'
+import {
+  getPopularCourses,
+  getLatestCourses,
+  getTopTags,
+  getGoldenTeachers,
+  getContinueLearningData
+} from '@/api/student/home.js'
 import { ElMessage } from 'element-plus'
 import Carousel from '@/components/student/Home/Carousel.vue'
 import TrustBar from '@/components/student/Home/TrustBar.vue'
@@ -10,11 +16,56 @@ import LatestCourses from '@/components/student/Home/LatestCourses.vue'
 import Tags from '@/components/student/Home/tags.vue'
 import TopCourses from '@/components/student/Home/TopCourses.vue'
 import ContinueLearning from '@/components/student/Home/ContinueLearning.vue'
-// import ScrollytellingBackground from '@/components/student/Home/ScrollytellingBackground.vue'
 
 // 使用 user store 來判斷登入狀態
 const userStore = useUserStore()
 const isLoggedIn = computed(() => userStore.isAuthenticated)
+
+// 響應式螢幕寬度
+const windowWidth = ref(window.innerWidth)
+
+// 根據螢幕寬度決定顯示的講師數量
+const displayedTeachers = computed(() => {
+  const teachers = homeData.value.goldenTeachers
+  if (windowWidth.value >= 1025) {
+    // 桌面版：顯示全部（最多 4 個）
+    return teachers
+  } else if (windowWidth.value >= 768) {
+    // 平板版 (768-1024)：只顯示前 3 個
+    return teachers.slice(0, 3)
+  } else {
+    // 手機版：顯示全部（由 CSS 控制為 2 欄）
+    return teachers.slice(0, 2)
+  }
+})
+
+// 根據螢幕寬度決定顯示的繼續學習課程數量
+const displayedContinueLearning = computed(() => {
+  const courses = homeData.value.continueLearning
+  if (windowWidth.value >= 1025) {
+    // 桌面版：顯示 3 個
+    return courses.slice(0, 3)
+  } else if (windowWidth.value >= 768) {
+    // 平板版 (768-1024)：只顯示 2 個
+    return courses.slice(0, 2)
+  } else {
+    // 手機版：顯示全部（由 CSS 控制為橫向滾動）
+    return courses
+  }
+})
+
+// 監聽視窗大小變化
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 
 // 首頁資料狀態
 const loading = ref(true)
@@ -28,38 +79,40 @@ const homeData = ref({
   continueLearning: []
 })
 
-// 獲取首頁資料
+// 獲取首頁資料 - 並行呼叫 4 個 API
 const fetchHomeData = async () => {
   try {
     loading.value = true
-    const response = await getHomePageData()
 
-    console.log('API 回應 (已被 http.js 處理):', response)
+    // 並行呼叫所有 API
+    const [popularResponse, latestResponse, tagsResponse, teachersResponse] = await Promise.all([
+      getPopularCourses(),
+      getLatestCourses(),
+      getTopTags(),
+      getGoldenTeachers()
+    ])
 
-    // 注意：http.js 的 response 攔截器已經提取了 response.data.data
-    // 所以這裡的 response 直接就是後端的 data 陣列
-    // 後端格式: data: [{ popularCourses, latestCourses, topTags, goldenTr }]
-    if (response && Array.isArray(response) && response.length > 0) {
-      const apiData = response[0]
-      console.log('解析的 API 資料:', apiData)
+    console.log('熱門課程 API 回應:', popularResponse)
+    console.log('最新課程 API 回應:', latestResponse)
+    console.log('熱門標籤 API 回應:', tagsResponse)
+    console.log('金牌講師 API 回應:', teachersResponse)
 
-      homeData.value = {
-        topCourses: apiData.popularCourses || [],
-        latestCourses: apiData.latestCourses || [],
-        goldenTeachers: apiData.goldenTr || [],
-        popularTags: apiData.topTags || [],
-        carousel: [],  // 暫時為空，等待後端提供
-        stats: null,   // 暫時為空，等待後端提供
-        continueLearning: []  // 初始化為空陣列，稍後單獨獲取
-      }
-
-      console.log('設定後的 homeData:', homeData.value)
-      console.log('熱門課程數量:', homeData.value.topCourses.length)
-      console.log('最新課程數量:', homeData.value.latestCourses.length)
-      console.log('標籤數量:', homeData.value.popularTags.length)
-    } else {
-      console.warn('API 回應格式不符合預期:', response)
+    // 設定資料（http.js 已經提取了 response.data.data）
+    homeData.value = {
+      topCourses: Array.isArray(popularResponse) ? popularResponse : [],
+      latestCourses: Array.isArray(latestResponse) ? latestResponse : [],
+      popularTags: Array.isArray(tagsResponse) ? tagsResponse : [],
+      goldenTeachers: Array.isArray(teachersResponse) ? teachersResponse : [],
+      carousel: [],  // 暫時為空，等待後端提供
+      stats: null,   // 暫時為空，等待後端提供
+      continueLearning: []  // 初始化為空陣列，稍後單獨獲取
     }
+
+    console.log('設定後的 homeData:', homeData.value)
+    console.log('熱門課程數量:', homeData.value.topCourses.length)
+    console.log('最新課程數量:', homeData.value.latestCourses.length)
+    console.log('熱門標籤數量:', homeData.value.popularTags.length)
+    console.log('金牌講師數量:', homeData.value.goldenTeachers.length)
   } catch (error) {
     console.error('獲取首頁資料失敗:', error)
     console.error('錯誤詳情:', error.response || error.message)
@@ -153,7 +206,7 @@ watch(isLoggedIn, async (newValue, oldValue) => {
             <h2 class="section-title-student">繼續學習</h2>
             <div class="title-underline"></div>
           </div>
-          <ContinueLearning :enrollments="homeData.continueLearning.slice(0, 3)" />
+          <ContinueLearning :enrollments="displayedContinueLearning" />
         </div>
       </section>
 
@@ -201,14 +254,17 @@ watch(isLoggedIn, async (newValue, oldValue) => {
             <h2 class="section-title-student">金牌講師</h2>
             <div class="title-underline"></div>
           </div>
-          <GoldenTeachers :teachers="homeData.goldenTeachers" />
+          <GoldenTeachers :teachers="displayedTeachers" />
         </div>
       </section>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/styles/breakpoints';
+@import '@/styles/project-mixins';
+
 .home-page {
   width: 100%;
   min-height: 100vh;
@@ -224,12 +280,29 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  @include below($bp-md) {
+    padding: var(--capy-spacing-xl) var(--capy-spacing-md);
+    min-height: 50vh;
+  }
+
+  @include below($bp-sm) {
+    padding: var(--capy-spacing-lg) var(--capy-spacing-sm);
+  }
 }
 
 /* Remove gap between last section and footer */
 .home-page > section:last-child {
-  margin-bottom: 0 !important;
+  margin-bottom: 0;
   padding-bottom: 80px;
+
+  @include below($bp-md) {
+    padding-bottom: var(--capy-spacing-xl);
+  }
+
+  @include below($bp-sm) {
+    padding-bottom: var(--capy-spacing-lg);
+  }
 }
 
 /* Hero Section */
@@ -245,6 +318,14 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   margin-bottom: var(--capy-spacing-xxl);
   position: relative;
   z-index: 2;
+
+  @include below($bp-md) {
+    margin-bottom: var(--capy-spacing-lg);
+  }
+
+  @include below($bp-sm) {
+    margin-bottom: var(--capy-spacing-md);
+  }
 }
 
 /* Section Wrapper - Alternating Backgrounds */
@@ -253,6 +334,18 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   padding: var(--capy-spacing-xxl) 0;
   position: relative;
   z-index: 2;
+
+  @include below($bp-lg) {
+    padding: var(--capy-spacing-xl) 0;
+  }
+
+  @include below($bp-md) {
+    padding: var(--capy-spacing-lg) 0;
+  }
+
+  @include below($bp-sm) {
+    padding: var(--capy-spacing-md) 0;
+  }
 }
 
 .section-white {
@@ -268,32 +361,54 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 var(--capy-spacing-lg);
+
+  @include below($bp-lg) {
+    padding: 0 var(--capy-spacing-md);
+  }
+
+  @include below($bp-md) {
+    padding: 0 var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    padding: 0 var(--capy-spacing-sm);
+  }
 }
 
 /* Section Header with Underline */
 .section-header {
   text-align: center;
   margin-bottom: var(--capy-spacing-xl);
+
+  @include below($bp-lg) {
+    margin-bottom: var(--capy-spacing-lg);
+  }
+
+  @include below($bp-md) {
+    margin-bottom: var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    margin-bottom: var(--capy-spacing-sm);
+  }
 }
 
 .section-title-student {
-  font-size: 32px;
-  font-weight: var(--capy-font-weight-bold);
-  color: var(--capy-text-primary);
+  @include section-title;
+  text-align: center;
   margin: 0 0 var(--capy-spacing-md) 0;
-  letter-spacing: -0.5px;
+
+  @include below($bp-md) {
+    margin-bottom: var(--capy-spacing-sm);
+  }
+
+  @include below($bp-sm) {
+    margin-bottom: 8px;
+  }
 }
 
 .title-underline {
-  width: 60px;
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--capy-primary) 0%,
-    var(--capy-brand) 100%
-  );
-  margin: 0 auto;
-  border-radius: 2px;
+  @include section-title-underline;
 }
 
 /* Latest Courses Section with Decorative Blobs */
@@ -316,6 +431,22 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   height: 600px;
   top: -200px;
   left: -100px;
+
+  @include below($bp-lg) {
+    width: 500px;
+    height: 500px;
+  }
+
+  @include below($bp-md) {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    left: -50px;
+  }
+
+  @include below($bp-sm) {
+    display: none;
+  }
 }
 
 .blob-2 {
@@ -324,145 +455,26 @@ watch(isLoggedIn, async (newValue, oldValue) => {
   bottom: -150px;
   right: -80px;
   background: var(--capy-brand);
+
+  @include below($bp-lg) {
+    width: 400px;
+    height: 400px;
+  }
+
+  @include below($bp-md) {
+    width: 350px;
+    height: 350px;
+    bottom: -100px;
+    right: -50px;
+  }
+
+  @include below($bp-sm) {
+    display: none;
+  }
 }
 
 .latest-courses-section .section-container {
   position: relative;
   z-index: 1;
-}
-
-/* Responsive Design */
-
-/* Tablet Breakpoint (1024px) */
-@media (max-width: 1024px) {
-  .section-wrapper {
-    padding: var(--capy-spacing-xl) 0;
-  }
-
-  .section-container {
-    padding: 0 var(--capy-spacing-md);
-  }
-
-  .section-header {
-    margin-bottom: var(--capy-spacing-lg);
-  }
-
-  .section-title-student {
-    font-size: 28px;
-  }
-
-  .title-underline {
-    width: 50px;
-    height: 3px;
-  }
-
-  .blob-1 {
-    width: 500px;
-    height: 500px;
-  }
-
-  .blob-2 {
-    width: 400px;
-    height: 400px;
-  }
-}
-
-/* Mobile Breakpoint (768px) */
-@media (max-width: 768px) {
-  .loading-container {
-    padding: var(--capy-spacing-xl) var(--capy-spacing-md) !important;
-    min-height: 50vh !important;
-  }
-
-  .trust-bar-section {
-    margin-bottom: var(--capy-spacing-lg) !important;
-  }
-
-  .section-wrapper {
-    padding: var(--capy-spacing-lg) 0 !important;
-  }
-
-  .section-container {
-    padding: 0 var(--capy-spacing-md) !important;
-  }
-
-  .section-header {
-    margin-bottom: var(--capy-spacing-md) !important;
-  }
-
-  /* FORCE Section title size on mobile - MAX 22px */
-  .section-title-student {
-    font-size: 22px !important;
-    margin-bottom: var(--capy-spacing-sm) !important;
-    font-weight: 700 !important;
-  }
-
-  .title-underline {
-    width: 45px !important;
-    height: 3px !important;
-  }
-
-  .blob-1 {
-    width: 400px !important;
-    height: 400px !important;
-    top: -100px !important;
-    left: -50px !important;
-  }
-
-  .blob-2 {
-    width: 350px !important;
-    height: 350px !important;
-    bottom: -100px !important;
-    right: -50px !important;
-  }
-
-  /* Remove gap between last section and footer on mobile */
-  .home-page > section:last-child {
-    padding-bottom: var(--capy-spacing-xl) !important;
-  }
-}
-
-/* Small Mobile Breakpoint (480px) */
-@media (max-width: 480px) {
-  .loading-container {
-    padding: var(--capy-spacing-lg) var(--capy-spacing-sm) !important;
-  }
-
-  .trust-bar-section {
-    margin-bottom: var(--capy-spacing-md) !important;
-  }
-
-  .section-wrapper {
-    padding: var(--capy-spacing-md) 0 !important;
-  }
-
-  .section-container {
-    padding: 0 var(--capy-spacing-sm) !important;
-  }
-
-  .section-header {
-    margin-bottom: var(--capy-spacing-sm) !important;
-  }
-
-  /* FORCE Section title size on small mobile - 20px */
-  .section-title-student {
-    font-size: 20px !important;
-    margin-bottom: 8px !important;
-    font-weight: 700 !important;
-  }
-
-  .title-underline {
-    width: 40px !important;
-    height: 3px !important;
-  }
-
-  .blob-1,
-  .blob-2 {
-    display: none !important;
-  }
-
-  .home-page > section:last-child {
-    padding-bottom: var(--capy-spacing-lg) !important;
-  }
 }
 </style>

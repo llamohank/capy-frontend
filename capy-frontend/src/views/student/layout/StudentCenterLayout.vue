@@ -172,11 +172,15 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .student-center-layout {
   min-height: 100vh;
   background: #FCF9F4;
   padding: 40px 20px;
+
+  @include mobile {
+    padding: 24px 16px;
+  }
 }
 
 .container {
@@ -187,6 +191,10 @@ onMounted(async () => {
 /* Header */
 .page-header {
   margin-bottom: 24px;
+
+  @include small-mobile {
+    margin-bottom: 20px;
+  }
 }
 
 .page-title {
@@ -194,12 +202,24 @@ onMounted(async () => {
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 8px 0;
+
+  @include mobile {
+    font-size: 24px;
+  }
+
+  @include small-mobile {
+    font-size: 20px;
+  }
 }
 
 .welcome-text {
   font-size: 16px;
   color: #666;
   margin: 0;
+
+  @include small-mobile {
+    font-size: 14px;
+  }
 }
 
 /* Tab Navigation */
@@ -208,6 +228,12 @@ onMounted(async () => {
   gap: 0;
   margin-bottom: 32px;
   border-bottom: 2px solid #e0e0e0;
+
+  @include mobile {
+    margin-bottom: 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 .tab-item {
@@ -223,16 +249,27 @@ onMounted(async () => {
   position: relative;
   bottom: -2px;
   text-decoration: none;
-}
 
-.tab-item:hover {
-  color: #333;
-}
+  &:hover {
+    color: #333;
+  }
 
-.tab-item.active {
-  color: #1a1a1a;
-  border-bottom-color: #1a1a1a;
-  font-weight: 600;
+  &.active {
+    color: #1a1a1a;
+    border-bottom-color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  @include mobile {
+    padding: 10px 20px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  @include small-mobile {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
 }
 
 /* Profile Section */
@@ -248,22 +285,37 @@ onMounted(async () => {
   align-items: center;
   gap: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  @include mobile {
+    flex-direction: column;
+    text-align: center;
+    padding: 24px;
+  }
 }
 
 .profile-avatar {
   flex-shrink: 0;
-}
 
-.profile-avatar img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #f0f0f0;
+  img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #f0f0f0;
+
+    @include small-mobile {
+      width: 60px;
+      height: 60px;
+    }
+  }
 }
 
 .profile-info {
   flex: 1;
+
+  @include mobile {
+    text-align: center;
+  }
 }
 
 .profile-name {
@@ -271,6 +323,10 @@ onMounted(async () => {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 4px 0;
+
+  @include small-mobile {
+    font-size: 18px;
+  }
 }
 
 .profile-email {
@@ -289,11 +345,15 @@ onMounted(async () => {
   color: #333;
   background: white;
   transition: all 0.3s ease;
-}
 
-.edit-profile-btn:hover {
-  background: #f5f5f5;
-  border-color: #d0d0d0;
+  &:hover {
+    background: #f5f5f5;
+    border-color: #d0d0d0;
+  }
+
+  @include mobile {
+    width: 100%;
+  }
 }
 
 /* Statistics Section */
@@ -302,6 +362,11 @@ onMounted(async () => {
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   margin-bottom: 40px;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 .stat-card {
@@ -323,84 +388,14 @@ onMounted(async () => {
   font-size: 32px;
   font-weight: 700;
   color: #0B7FC1;
+
+  @include small-mobile {
+    font-size: 28px;
+  }
 }
 
 /* Tab Content */
 .tab-content {
   min-height: 400px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .student-center-layout {
-    padding: 24px 16px;
-  }
-
-  .page-title {
-    font-size: 24px;
-  }
-
-  .tab-navigation {
-    margin-bottom: 24px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tab-item {
-    padding: 10px 20px;
-    font-size: 14px;
-    white-space: nowrap;
-  }
-
-  .profile-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 24px;
-  }
-
-  .profile-info {
-    text-align: center;
-  }
-
-  .edit-profile-btn {
-    width: 100%;
-  }
-
-  .stats-section {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 480px) {
-  .page-header {
-    margin-bottom: 20px;
-  }
-
-  .page-title {
-    font-size: 20px;
-  }
-
-  .welcome-text {
-    font-size: 14px;
-  }
-
-  .tab-item {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-
-  .profile-avatar img {
-    width: 60px;
-    height: 60px;
-  }
-
-  .profile-name {
-    font-size: 18px;
-  }
-
-  .stat-value {
-    font-size: 28px;
-  }
 }
 </style>

@@ -89,9 +89,19 @@ export const searchCourses = (params = {}) => {
     queryParams.categoryIds = params.categoryIds
   }
 
-  // 處理多值參數：categoryIds
+  // 添加評分篩選參數（如果有）
+  if (params.maxRatings) {
+    queryParams.maxRatings = params.maxRatings
+  }
+
+  // 添加標籤篩選參數（如果有）
+  if (params.tagIds) {
+    queryParams.tagIds = params.tagIds
+  }
+
+  // 處理多值參數：categoryIds, maxRatings, tagIds
   // 後端使用 @ModelAttribute 綁定，需要用重複的 key 傳遞陣列
-  // 例如：?categoryIds=1&categoryIds=2&categoryIds=3
+  // 例如：?categoryIds=1&categoryIds=2&maxRatings=4.0&maxRatings=4.5
 
   return request({
     url: '/explore/search',
@@ -113,6 +123,20 @@ export const searchCourses = (params = {}) => {
         if (Array.isArray(params.categoryIds) && params.categoryIds.length > 0) {
           params.categoryIds.forEach(id => {
             parts.push(`categoryIds=${encodeURIComponent(id)}`)
+          })
+        }
+
+        // 處理 maxRatings 陣列（評分篩選，OR 條件）
+        if (Array.isArray(params.maxRatings) && params.maxRatings.length > 0) {
+          params.maxRatings.forEach(rating => {
+            parts.push(`maxRatings=${encodeURIComponent(rating)}`)
+          })
+        }
+
+        // 處理 tagIds 陣列
+        if (Array.isArray(params.tagIds) && params.tagIds.length > 0) {
+          params.tagIds.forEach(id => {
+            parts.push(`tagIds=${encodeURIComponent(id)}`)
           })
         }
 

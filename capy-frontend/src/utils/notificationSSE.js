@@ -80,10 +80,20 @@ class NotificationSSEService {
       return
     }
 
-    // 防止重複連線
+    // 改進的重複連線檢查 - 頁面 reload 時強制重新建立連線
     if (this.eventSource) {
-      console.warn('SSE 連線已存在，無需重複建立')
-      return
+      const state = this.eventSource.readyState
+      console.log('🔍 檢測到現有連線，readyState:', state, '(0=CONNECTING, 1=OPEN, 2=CLOSED)')
+
+      // 🔥 關鍵修改：無論狀態如何，都強制關閉舊連線並重新建立
+      // 這樣可以解決頁面 reload 時的連線殘留問題
+      console.log('🧹 強制關閉舊連線並重新建立')
+      try {
+        this.eventSource.close()
+      } catch (e) {
+        console.warn('⚠️ 關閉舊連線時發生錯誤:', e)
+      }
+      this.eventSource = null
     }
 
     // 儲存回調函數供重連使用

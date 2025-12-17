@@ -1,6 +1,11 @@
 <template>
   <el-header class="header" :class="{ 'header-minimal': isApplicationPage }">
     <div class="header-content">
+      <!-- 手機版漢堡選單按鈕 -->
+      <div class="mobile-menu-btn" @click="handleMobileMenuToggle">
+        <el-icon :size="24" color="#fff"><Menu /></el-icon>
+      </div>
+
       <router-link to="/" class="logo">
         <el-icon :size="24" color="#fff"><Reading /></el-icon>
         <span class="logo-text">CapyCourse</span>
@@ -8,41 +13,15 @@
 
       <!-- 只在非申請頁面顯示 Explore 按鈕 -->
       <div v-if="!isApplicationPage" class="explore">
-        <router-link to="/explore">
-          <el-button class="btn-glass" >explore</el-button>
+        <router-link to="/explore" class="header-nav-link">
+          <el-icon><Compass /></el-icon>
+          <span>探索</span>
         </router-link>
       </div>
 
       <!-- 只在非申請頁面顯示搜尋框 -->
       <div v-if="!isApplicationPage" class="header-center">
-        <el-autocomplete
-          v-model="searchText"
-          :fetch-suggestions="fetchSuggestions"
-          placeholder="搜尋課程、標籤或講師..."
-          :prefix-icon="Search"
-          class="search-input"
-          size="large"
-          clearable
-          :trigger-on-focus="false"
-          :debounce="300"
-          popper-class="search-autocomplete-popper"
-          @select="handleSuggestionSelect"
-          @keyup.enter="handleSearch"
-        >
-          <template #append>
-            <el-button :icon="Search" @click="handleSearch" />
-          </template>
-          <template #default="{ item }">
-            <div v-if="item.value === '__no_results__'" class="no-results-item">
-              <el-icon class="no-results-icon"><InfoFilled /></el-icon>
-              <span class="no-results-text">找不到相關建議，按 Enter 直接搜尋</span>
-            </div>
-            <div v-else class="autocomplete-item">
-              <el-icon class="item-icon"><Search /></el-icon>
-              <span class="item-label">{{ item.value }}</span>
-            </div>
-          </template>
-        </el-autocomplete>
+        <SearchInput />
       </div>
 
       <!-- 在申請頁面時顯示佔位元素，保持 Logo 和使用者選單的間距 -->
@@ -52,8 +31,9 @@
         <!-- 未登入時顯示按鈕 -->
         <template v-if="!userStore.isAuthenticated">
           <!-- 只在非申請頁面顯示 Become a Teacher 按鈕 -->
-          <router-link v-if="!isApplicationPage" to="/instructor/landing">
-            <el-button class="btn-glass" plain>Become a Teacher</el-button>
+          <router-link v-if="!isApplicationPage" to="/instructor/landing" class="header-nav-link">
+            <el-icon><School /></el-icon>
+            <span>成為老師</span>
           </router-link>
           <router-link to="/login">
             <el-button class="btn-white-pop">Log In</el-button>
@@ -66,8 +46,10 @@
           <router-link
             v-if="!isApplicationPage && !isInstructor"
             to="/instructor/landing"
+            class="header-nav-link"
           >
-            <el-button class="btn-ghost-teacher">Become a Teacher</el-button>
+            <el-icon><School /></el-icon>
+            <span>成為老師</span>
           </router-link>
 
           <!-- 只在非申請頁面顯示購物車、收藏、通知按鈕 -->
@@ -117,7 +99,7 @@
     </div>
 
     <!-- 購物車抽屜 -->
-    <TheCartDrawer v-model="showCartDrawer" />
+    <TheCartDrawer v-model="cartStore.isCartOpen" />
   </el-header>
 </template>
 
@@ -125,110 +107,32 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Reading, ShoppingCart, Star, Bell, InfoFilled } from '@element-plus/icons-vue'
+import { Search, Reading, ShoppingCart, Star, Bell, InfoFilled, Menu, Compass, School } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useCartStore } from '@/stores/cart'
 import { useWishlistStore } from '@/stores/wishlist'
 import { useNotificationStore } from '@/stores/notification'
-import { getSuggestions } from '@/api/student/explore'
 import TheCartDrawer from '@/components/student/cart/TheCartDrawer.vue'
 import TheWishlistPopover from '@/components/student/wishlist/TheWishlistPopover.vue'
 import TheNotificationPopover from '@/components/student/notifications/TheNotificationPopover.vue'
 import ConnectionStatusIndicator from '@/components/student/notifications/ConnectionStatusIndicator.vue'
 import TheUserDropdown from '@/components/student/main/TheUserDropdown.vue'
+import SearchInput from './SearchInput.vue'
 
-const router = useRouter()
+const emit = defineEmits(['toggle-mobile-menu'])
+
+/**
+ * 處理手機版選單切換
+ */
+const handleMobileMenuToggle = () => {
+  emit('toggle-mobile-menu')
+}
+
 const route = useRoute()
 const userStore = useUserStore()
 const cartStore = useCartStore()
 const wishlistStore = useWishlistStore()
 const notificationStore = useNotificationStore()
-const searchText = ref('')
-const showCartDrawer = ref(false)
-
-/**
- * 獲取搜尋建議
- * @param {string} queryString - 使用者輸入的關鍵字
- * @param {Function} cb - 回調函數，用於返回建議列表
- */
-const fetchSuggestions = async (queryString, cb) => {
-  // 如果輸入為空，不顯示建議
-  if (!queryString || queryString.trim().length === 0) {
-    cb([])
-    return
-  }
-
-  try {
-    // 呼叫 API 獲取建議
-    const suggestions = await getSuggestions({
-      keyword: queryString.trim(),
-      size: 10 // 最多顯示 10 個建議
-    })
-
-    // 如果沒有建議結果，顯示提示訊息
-    if (!suggestions || suggestions.length === 0) {
-      cb([{
-        value: '__no_results__', // 特殊標記，用於識別無結果狀態
-        disabled: true // 禁用選擇
-      }])
-      return
-    }
-
-    // 將字串陣列轉換為 el-autocomplete 需要的格式
-    const formattedSuggestions = suggestions.map(item => ({
-      value: item // el-autocomplete 需要 value 屬性
-    }))
-
-    cb(formattedSuggestions)
-  } catch (error) {
-    console.error('獲取搜尋建議失敗:', error)
-    // API 失敗時也顯示提示訊息
-    cb([{
-      value: '__no_results__',
-      disabled: true
-    }])
-  }
-}
-
-/**
- * 處理選擇建議項目
- * @param {Object} item - 選中的建議項目
- */
-const handleSuggestionSelect = (item) => {
-  if (item && item.value) {
-    searchText.value = item.value
-    handleSearch() // 自動執行搜尋
-  }
-}
-
-/**
- * 處理搜尋
- * 導航到探索頁面並帶上搜尋關鍵字
- */
-const handleSearch = () => {
-  if (!searchText.value || searchText.value.trim() === '') {
-    ElMessage.warning('請輸入搜尋關鍵字')
-    return
-  }
-
-  const keyword = searchText.value.trim()
-
-  // 如果已經在探索頁面，直接更新 query
-  if (route.path === '/explore') {
-    router.push({
-      path: '/explore',
-      query: { search: keyword }
-    })
-  } else {
-    // 如果不在探索頁面，導航過去
-    router.push({
-      path: '/explore',
-      query: { search: keyword }
-    })
-  }
-
-  ElMessage.success(`搜尋：${keyword}`)
-}
 
 // ==================== 初始化資料 ====================
 
@@ -303,7 +207,7 @@ const isInstructor = computed(() => {
  * 處理購物車點擊
  */
 const handleCart = () => {
-  showCartDrawer.value = true
+  cartStore.toggleCart()
 }
 
 /**
@@ -314,7 +218,22 @@ const handleNotifications = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import "@/styles/breakpoints";
+
+.mobile-menu-btn {
+  display: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 8px;
+
+  @include mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 .header {
   background: var(--capy-primary);
   padding: 0;
@@ -362,63 +281,6 @@ const handleNotifications = () => {
   justify-content: space-between;
 }
 
-.search-input {
-  width: 100%;
-}
-
-.search-input :deep(.el-input__wrapper) {
-  background-color: rgba(255, 255, 255, 0.95);
-  transition: all var(--capy-transition-base);
-}
-
-.search-input :deep(.el-input__wrapper:hover) {
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* 自動完成下拉樣式 */
-.autocomplete-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-}
-
-.item-icon {
-  color: var(--capy-primary);
-  font-size: 16px;
-}
-
-.item-label {
-  flex: 1;
-  font-size: 14px;
-  color: var(--capy-text-primary);
-}
-
-.item-type {
-  font-size: 12px;
-}
-
-/* 無結果提示樣式 */
-.no-results-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 8px;
-  color: var(--el-text-color-secondary);
-  cursor: default;
-}
-
-.no-results-icon {
-  font-size: 18px;
-  color: var(--el-color-info);
-}
-
-.no-results-text {
-  font-size: 14px;
-  font-style: italic;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -426,47 +288,41 @@ const handleNotifications = () => {
   white-space: nowrap;
 }
 
-/* --- 1. 玻璃擬態按鈕 (Explore - 未登入狀態) --- */
-.btn-glass {
-  /* 預設狀態：半透明白底 + 白字 */
-  --el-button-bg-color: rgba(255, 255, 255, 0.15);
-  --el-button-border-color: rgba(255, 255, 255, 0.4);
-  --el-button-text-color: #ffffff;
-
-  /* Hover 狀態：變實心白底 + 藍字 */
-  --el-button-hover-bg-color: #ffffff;
-  --el-button-hover-border-color: #ffffff;
-  --el-button-hover-text-color: var(--capy-primary); /* 天藍色 #54CDF2 */
-
-  /* Active (點擊) 狀態 */
-  --el-button-active-bg-color: rgba(255, 255, 255, 0.9);
-  --el-button-active-border-color: #ffffff;
-
-  /* 額外特效 */
-  backdrop-filter: blur(4px); /* 磨砂玻璃效果 */
+/* --- New Header Nav Link Style (Button-like) --- */
+.header-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px; /* Slightly reduced height for better proportions */
+  padding: 0 16px;
+  border-radius: 20px; /* Pill shape */
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
   font-weight: 500;
-  transition: all 0.3s ease;
+
+  /* Glassmorphism Base */
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
 }
 
-/* --- 2. 半透明玻璃按鈕 (Become a Teacher - 已登入學生) --- */
-.btn-ghost-teacher {
-  /* 預設狀態：半透明白底 + 白色邊框 + 白字 */
-  --el-button-bg-color: rgba(255, 255, 255, 0.25); /* 半透明白色背景 */
-  --el-button-border-color: rgba(255, 255, 255, 0.6); /* 較明顯的白色邊框 */
-  --el-button-text-color: #ffffff;
+.header-nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
-  /* Hover 狀態：實心白底 + 主色文字 */
-  --el-button-hover-bg-color: #ffffff; /* 實心白色 */
-  --el-button-hover-border-color: #ffffff;
-  --el-button-hover-text-color: var(--capy-primary); /* 主色天空藍 */
+.header-nav-link:active {
+  transform: translateY(0);
+  background-color: rgba(255, 255, 255, 0.15);
+}
 
-  /* Active 狀態 */
-  --el-button-active-bg-color: #f5f5f5;
-  --el-button-active-border-color: #ffffff;
-  --el-button-active-text-color: var(--capy-primary);
-
-  font-weight: 600; /* 半粗體，提升可讀性 */
-  transition: all 0.3s ease;
+.header-nav-link .el-icon {
+  font-size: 16px; /* Slightly adjusted icon size */
 }
 
 /* --- 3. 純白跳色按鈕 (Log In) --- */
@@ -544,13 +400,9 @@ const handleNotifications = () => {
     display: none !important;
   }
 
-  /* FORCE Hide "Become a Teacher" button on mobile */
-  .btn-ghost-teacher,
-  .btn-glass,
-  a:has(.btn-ghost-teacher),
-  a:has(.btn-glass) {
+  /* FORCE Hide "Become a Teacher" and other nav links on mobile */
+  .header-nav-link {
     display: none !important;
-    visibility: hidden !important;
   }
 
   /* FORCE Hide transaction group (cart, wishlist) on mobile */

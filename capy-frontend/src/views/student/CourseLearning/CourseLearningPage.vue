@@ -363,6 +363,7 @@ import {
   getMyReview
 } from '@/api/student/courseLearning'
 import { rateCourse } from '@/api/student/studentCenter'
+import { fetchCourseDetail } from '@/api/student/courseDetail'
 
 const route = useRoute()
 const router = useRouter()
@@ -384,6 +385,7 @@ const courseData = ref({
   publishedDate: '',
   totalSections: 0,
   totalLessons: 0,
+  coverImageUrl: '', // 課程封面圖
   sections: [] // 章節列表（原 chapters）
 })
 
@@ -467,7 +469,7 @@ const courseInfoForRating = computed(() => {
     courseId: courseData.value.courseId,
     courseTitle: courseData.value.courseTitle,
     instructorName: lessonSummary.value.instructorInfo?.instructorName || '講師',
-    coverImageUrl: currentLesson.value?.poster || 'https://via.placeholder.com/400x225'
+    coverImageUrl: courseData.value.coverImageUrl || '/capybaraProfile.png'
   }
 })
 
@@ -513,6 +515,21 @@ const loadLessonSummary = async () => {
   } catch (error) {
     console.error('載入單元摘要失敗:', error)
     ElMessage.error('載入單元資訊失敗')
+  }
+}
+
+/**
+ * 載入課程封面圖
+ */
+const loadCourseCoverImage = async () => {
+  try {
+    const courseDetail = await fetchCourseDetail(route.params.courseId)
+    if (courseDetail?.courseInfo?.course?.coverImageUrl) {
+      courseData.value.coverImageUrl = courseDetail.courseInfo.course.coverImageUrl
+    }
+  } catch (error) {
+    console.error('載入課程封面圖失敗:', error)
+    // 封面圖載入失敗不影響主要功能，使用預設圖片
   }
 }
 
@@ -579,7 +596,8 @@ const loadCourseData = async () => {
       loadLessonSummary(),
       loadCourseSections(),
       loadAttachments(),
-      loadMyReview()
+      loadMyReview(),
+      loadCourseCoverImage()
     ])
 
     // 更新路由 meta

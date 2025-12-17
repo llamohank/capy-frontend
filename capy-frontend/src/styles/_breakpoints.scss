@@ -1,0 +1,270 @@
+// ============================================
+// BREAKPOINT VARIABLES (斷點變數)
+// ============================================
+// 標準斷點定義：
+// - sm:  480px  (小手機)
+// - md:  768px  (平板)
+// - lg:  1024px (筆電)
+// - xl:  1280px (桌面)
+// - 2xl: 1536px (大螢幕)
+// ============================================
+
+$bp-sm: 480px;    // 小手機
+$bp-md: 768px;    // 平板
+$bp-lg: 1024px;   // 筆電
+$bp-xl: 1280px;   // 桌面
+$bp-2xl: 1536px;  // 大螢幕
+
+// 向下相容的別名（保留舊的變數名稱）
+$bp-mobile: $bp-md;
+$bp-tablet: $bp-lg;
+
+// ============================================
+// RWD MIXINS (響應式工具函式)
+// ============================================
+
+// 小手機版 ( < 480px )
+@mixin small-mobile {
+  @media (max-width: #{$bp-sm - 1px}) {
+    @content;
+  }
+}
+
+// 手機版 ( < 768px )
+@mixin mobile {
+  @media (max-width: #{$bp-md - 1px}) {
+    @content;
+  }
+}
+
+// 平板版 ( 768px ~ 1023px )
+@mixin tablet {
+  @media (min-width: #{$bp-md}) and (max-width: #{$bp-lg - 1px}) {
+    @content;
+  }
+}
+
+// 筆電版 ( 1024px ~ 1279px )
+@mixin laptop {
+  @media (min-width: #{$bp-lg}) and (max-width: #{$bp-xl - 1px}) {
+    @content;
+  }
+}
+
+// 桌面版 ( >= 1280px )
+@mixin desktop {
+  @media (min-width: #{$bp-xl}) {
+    @content;
+  }
+}
+
+// 大螢幕 ( >= 1536px )
+@mixin large-desktop {
+  @media (min-width: #{$bp-2xl}) {
+    @content;
+  }
+}
+
+// ============================================
+// UTILITY MIXINS (實用工具)
+// ============================================
+
+// 小於指定斷點
+@mixin below($breakpoint) {
+  @media (max-width: #{$breakpoint - 1px}) {
+    @content;
+  }
+}
+
+// 大於等於指定斷點
+@mixin above($breakpoint) {
+  @media (min-width: #{$breakpoint}) {
+    @content;
+  }
+}
+
+// 在兩個斷點之間
+@mixin between($min, $max) {
+  @media (min-width: #{$min}) and (max-width: #{$max - 1px}) {
+    @content;
+  }
+}
+
+// ============================================
+// COMBINED MIXINS (組合工具)
+// ============================================
+
+// 手機 + 平板 ( < 1024px )
+@mixin touch-device {
+  @media (max-width: #{$bp-lg - 1px}) {
+    @content;
+  }
+}
+
+// 非手機版 ( >= 768px )
+@mixin not-mobile {
+  @media (min-width: #{$bp-md}) {
+    @content;
+  }
+}
+
+// 平板 + 筆電 ( 768px ~ 1279px )
+@mixin tablet-and-laptop {
+  @media (min-width: #{$bp-md}) and (max-width: #{$bp-xl - 1px}) {
+    @content;
+  }
+}
+
+// ============================================
+// RESPONSIVE UTILITY CLASSES (響應式工具類別)
+// ============================================
+
+.hidden-on-mobile {
+  @include mobile {
+    display: none !important;
+  }
+}
+
+.hidden-on-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+.hidden-on-desktop {
+  @include desktop {
+    display: none !important;
+  }
+}
+
+.visible-on-mobile-only {
+  display: none !important;
+  @include mobile {
+    display: block !important;
+  }
+}
+
+.visible-on-tablet-only {
+  display: none !important;
+  @include tablet {
+    display: block !important;
+  }
+}
+
+.visible-on-desktop-only {
+  display: none !important;
+  @include desktop {
+    display: block !important;
+  }
+}
+
+// ============================================
+// RESPONSIVE LAYOUT MIXINS (響應式布局)
+// ============================================
+
+// 響應式容器
+@mixin responsive-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--capy-spacing-lg);
+
+  @include below($bp-lg) {
+    padding: 0 var(--capy-spacing-md);
+  }
+
+  @include below($bp-md) {
+    padding: 0 var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    padding: 0 var(--capy-spacing-sm);
+  }
+}
+
+// 響應式區塊內距
+@mixin responsive-section {
+  padding: var(--capy-spacing-xxl) 0;
+
+  @include below($bp-lg) {
+    padding: var(--capy-spacing-xl) 0;
+  }
+
+  @include below($bp-md) {
+    padding: var(--capy-spacing-lg) 0;
+  }
+
+  @include below($bp-sm) {
+    padding: var(--capy-spacing-md) 0;
+  }
+}
+
+// 響應式標題
+@mixin responsive-title {
+  font-size: 32px;
+  font-weight: var(--capy-font-weight-bold);
+
+  @include below($bp-lg) {
+    font-size: 28px;
+  }
+
+  @include below($bp-md) {
+    font-size: 22px;
+  }
+
+  @include below($bp-sm) {
+    font-size: 20px;
+  }
+}
+
+// 響應式網格 (4 欄)
+@mixin responsive-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--capy-spacing-xl);
+
+  @include below($bp-lg) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--capy-spacing-lg);
+  }
+
+  @include below($bp-md) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    gap: var(--capy-spacing-sm);
+  }
+}
+
+// 響應式網格 (3 欄)
+@mixin responsive-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--capy-spacing-lg);
+
+  @include below($bp-lg) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    gap: var(--capy-spacing-sm);
+  }
+}
+
+// 響應式網格 (2 欄)
+@mixin responsive-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--capy-spacing-lg);
+
+  @include below($bp-md) {
+    grid-template-columns: 1fr;
+    gap: var(--capy-spacing-md);
+  }
+
+  @include below($bp-sm) {
+    gap: var(--capy-spacing-sm);
+  }
+}

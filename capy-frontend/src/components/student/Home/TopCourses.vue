@@ -155,7 +155,12 @@ const handleTeacherClick = (event, instructorId) => {
       <div class="course-card" @click="goToCourse(course.id)">
         <!-- Image Area -->
         <div class="image-area">
-          <img :src="course.coverImageUrl" :alt="course.title" class="course-img" />
+          <img
+            :src="course.coverImageUrl"
+            :alt="course.title"
+            class="course-img"
+            loading="lazy"
+          />
 
           <!-- Bestseller Badge -->
           <div class="bestseller-badge">
@@ -170,8 +175,6 @@ const handleTeacherClick = (event, instructorId) => {
             :class="{ 'is-wishlisted': isInWishlist(course.id) }"
           >
             <svg
-              width="20"
-              height="20"
               viewBox="0 0 24 24"
               :fill="isInWishlist(course.id) ? '#ff4757' : 'none'"
               :stroke="isInWishlist(course.id) ? '#ff4757' : '#fff'"
@@ -247,64 +250,64 @@ const handleTeacherClick = (event, instructorId) => {
   </swiper>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+/* 由於 vite.config.js 已配置自動引入，這裡可以直接使用 mixins 和 variables */
+
 .course-swiper {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
   padding: 0 40px var(--capy-spacing-lg);
+
+  @include tablet {
+    padding: 0 32px var(--capy-spacing-lg);
+  }
+
+  @include mobile {
+    padding: 0 var(--capy-spacing-md) var(--capy-spacing-md) !important;
+  }
 }
 
-/* --- 1. 基礎樣式：玻璃擬態圓角方形按鈕 --- */
+/* --- Swiper Navigation Buttons --- */
 .course-swiper :deep(.swiper-button-next),
 .course-swiper :deep(.swiper-button-prev) {
-  /* 尺寸與形狀 - 圓角方形與卡片和諧 */
   width: 40px !important;
   height: 40px !important;
-  border-radius: 12px !important; /* 圓角方形 */
-
-  /* 玻璃擬態效果 - 避免生硬遮擋 */
-  background-color: rgba(255, 255, 255, 0.85) !important; /* 半透明白底 */
-  backdrop-filter: blur(4px) !important; /* 玻璃模糊效果 */
+  border-radius: 12px !important;
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(4px) !important;
   -webkit-backdrop-filter: blur(4px) !important;
-  color: var(--capy-text-primary) !important; /* 深灰箭頭 */
-
-  /* 裝飾 */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important; /* 柔和陰影 */
-  border: 1px solid rgba(255, 255, 255, 0.5) !important; /* 半透明邊框 */
-
-  /* 定位 */
+  color: var(--capy-text-primary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   z-index: 10 !important;
-
-  /* 互動 */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   cursor: pointer !important;
+
+  &:after {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 1) !important;
+    color: var(--capy-primary) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+  }
+
+  &:active {
+    transform: scale(0.95) !important;
+  }
+
+  /* 手機版隱藏導航按鈕 */
+  @include mobile {
+    display: none !important;
+    visibility: hidden !important;
+  }
 }
 
-/* --- 2. 調整箭頭圖示大小 - 更多呼吸空間 --- */
-.course-swiper :deep(.swiper-button-next):after,
-.course-swiper :deep(.swiper-button-prev):after {
-  font-size: 16px !important; /* 縮小圖示，避免擁擠 */
-  font-weight: 700 !important;
-}
-
-/* --- 3. Hover 效果：實心白底 + 品牌色箭頭 --- */
-.course-swiper :deep(.swiper-button-next):hover,
-.course-swiper :deep(.swiper-button-prev):hover {
-  background-color: rgba(255, 255, 255, 1) !important; /* 實心白底 */
-  color: var(--capy-primary) !important; /* 品牌色箭頭 */
-  transform: scale(1.05) !important; /* 微微放大 */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important; /* 加深陰影 */
-  border-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-/* --- 4. 點擊效果 (Active) --- */
-.course-swiper :deep(.swiper-button-next):active,
-.course-swiper :deep(.swiper-button-prev):active {
-  transform: scale(0.95) !important; /* 微縮回饋 */
-}
-
-/* --- 5. 定位調整 --- */
 .course-swiper :deep(.swiper-button-prev) {
   left: 0 !important;
 }
@@ -313,23 +316,40 @@ const handleTeacherClick = (event, instructorId) => {
   right: 0 !important;
 }
 
+/* --- Course Card --- */
 .course-card {
   background: var(--capy-bg-surface);
   border-radius: var(--capy-radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease, border-color 0.3s ease;
   box-shadow: var(--capy-shadow-sm);
   border: 1px solid var(--capy-border-lighter);
   height: 100%;
   display: flex;
   flex-direction: column;
-}
 
-.course-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-  border-color: var(--capy-primary);
+  &:hover {
+    transform: scale(1.01);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    border-color: var(--capy-primary);
+
+    .course-img {
+      transform: scale(1.05);
+    }
+
+    .wishlist-btn {
+      opacity: 1;
+    }
+  }
+
+  @include tablet {
+    max-width: 100%;
+  }
+
+  @include mobile {
+    max-width: 100%;
+  }
 }
 
 .image-area {
@@ -350,10 +370,6 @@ const handleTeacherClick = (event, instructorId) => {
   transition: transform var(--capy-transition-base);
 }
 
-.course-card:hover .course-img {
-  transform: scale(1.05);
-}
-
 /* Bestseller Badge */
 .bestseller-badge {
   position: absolute;
@@ -361,12 +377,11 @@ const handleTeacherClick = (event, instructorId) => {
   right: var(--capy-spacing-sm);
   background: rgba(230, 162, 60, 0.95);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   color: white;
   padding: 6px 12px;
   border-radius: var(--capy-radius-base);
-  font-size: var(--capy-font-size-xs);
-  font-weight: var(--capy-font-weight-bold);
+  font-size: $font-xs;
+  font-weight: $font-weight-bold;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -379,33 +394,35 @@ const handleTeacherClick = (event, instructorId) => {
   position: absolute;
   top: var(--capy-spacing-sm);
   left: var(--capy-spacing-sm);
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
   z-index: 3;
   opacity: 0;
-}
+  will-change: transform;
+  transform-origin: center center;
 
-.course-card:hover .wishlist-btn {
-  opacity: 1;
-}
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 
-.wishlist-btn:hover {
-  background: rgba(0, 0, 0, 0.7);
-  transform: scale(1.1);
-}
+  &:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+  }
 
-.wishlist-btn.is-wishlisted {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.95);
+  &.is-wishlisted {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.95);
+  }
 }
 
 .course-content {
@@ -413,21 +430,30 @@ const handleTeacherClick = (event, instructorId) => {
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  @include mobile {
+    padding: var(--capy-spacing-sm);
+  }
 }
 
 .course-title {
-  font-size: var(--capy-font-size-md);
-  font-weight: var(--capy-font-weight-semibold);
+  font-size: $font-md;
+  font-weight: $font-weight-semibold;
   color: var(--capy-text-primary);
   margin: 0 0 var(--capy-spacing-sm) 0;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  @include text-line-clamp(2);
   min-height: 40px;
+
+  @include tablet {
+    font-size: $font-base;
+    min-height: 42px;
+  }
+
+  @include mobile {
+    font-size: $font-sm;
+    min-height: 38px;
+  }
 }
 
 /* Tags Container */
@@ -436,6 +462,12 @@ const handleTeacherClick = (event, instructorId) => {
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: var(--capy-spacing-sm);
+
+  /* 手機版隱藏標籤 */
+  @include mobile {
+    display: none !important;
+    visibility: hidden !important;
+  }
 }
 
 .tag-item {
@@ -443,18 +475,18 @@ const handleTeacherClick = (event, instructorId) => {
   padding: 3px 10px;
   background: rgba(0, 191, 165, 0.1);
   color: var(--capy-primary);
-  font-size: var(--capy-font-size-xs);
-  font-weight: var(--capy-font-weight-semibold);
+  font-size: $font-xs;
+  font-weight: $font-weight-semibold;
   border-radius: 12px;
   border: 1px solid rgba(0, 191, 165, 0.2);
   transition: all var(--capy-transition-fast);
   cursor: pointer;
-}
 
-.tag-item:hover {
-  background: rgba(0, 191, 165, 0.15);
-  border-color: var(--capy-primary);
-  transform: translateY(-1px);
+  &:hover {
+    background: rgba(0, 191, 165, 0.15);
+    border-color: var(--capy-primary);
+    transform: translateY(-1px);
+  }
 }
 
 .tag-more {
@@ -462,15 +494,15 @@ const handleTeacherClick = (event, instructorId) => {
   padding: 3px 10px;
   background: rgba(144, 147, 153, 0.1);
   color: var(--capy-text-secondary);
-  font-size: var(--capy-font-size-xs);
-  font-weight: var(--capy-font-weight-semibold);
+  font-size: $font-xs;
+  font-weight: $font-weight-semibold;
   border-radius: 12px;
   border: 1px solid rgba(144, 147, 153, 0.2);
   cursor: default;
 }
 
 .course-instructor {
-  font-size: 13px;
+  font-size: 13px; /* 這裡維持 13px 作為特規，或者使用 $font-sm (14px) */
   color: var(--capy-text-primary);
   font-weight: 500;
   margin: 0 0 12px 0;
@@ -479,11 +511,11 @@ const handleTeacherClick = (event, instructorId) => {
 .teacher-link {
   cursor: pointer;
   transition: color var(--capy-transition-fast);
-}
 
-.teacher-link:hover {
-  color: var(--capy-primary);
-  text-decoration: underline;
+  &:hover {
+    color: var(--capy-primary);
+    text-decoration: underline;
+  }
 }
 
 .course-meta {
@@ -493,35 +525,33 @@ const handleTeacherClick = (event, instructorId) => {
   margin-bottom: var(--capy-spacing-sm);
 }
 
-.rating :deep(.el-rate) {
-  height: auto;
-}
-
-.rating :deep(.el-rate__icon) {
-  font-size: 14px;
-}
-
-/* 只對已填滿的星星設定橘色 */
-.rating :deep(.el-rate__icon.is-active) {
-  color: var(--capy-warning);
-}
-
-/* 空星星使用灰色 */
-.rating :deep(.el-rate__icon:not(.is-active)) {
-  color: #d0d0d0;
-}
-
-.rating-score {
-  font-size: var(--capy-font-size-sm);
-  font-weight: var(--capy-font-weight-semibold);
-  color: var(--capy-warning);
-  margin-left: 4px;
-}
-
 .rating {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  :deep(.el-rate) {
+    height: auto;
+  }
+
+  :deep(.el-rate__icon) {
+    font-size: 14px;
+
+    &.is-active {
+      color: var(--capy-warning);
+    }
+
+    &:not(.is-active) {
+      color: #d0d0d0;
+    }
+  }
+}
+
+.rating-score {
+  font-size: $font-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--capy-warning);
+  margin-left: 4px;
 }
 
 .rating-count {
@@ -535,13 +565,26 @@ const handleTeacherClick = (event, instructorId) => {
   justify-content: flex-start;
   margin-top: auto;
   padding-top: 8px;
+
+  @include mobile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 .price {
-  font-size: var(--capy-font-size-xl);
+  font-size: $font-xl;
   font-weight: 700;
-  color: var(--capy-danger);  /* 桌面版保持紅色 */
+  color: var(--capy-danger);
   letter-spacing: 0.5px;
+
+  @include mobile {
+    font-size: $font-lg;
+    font-weight: 600;
+    color: var(--capy-text-primary); /* 手機版改回深色 */
+  }
 }
 
 .purchase-info {
@@ -551,7 +594,7 @@ const handleTeacherClick = (event, instructorId) => {
   padding-top: var(--capy-spacing-sm);
   margin-top: auto;
   border-top: 1px solid var(--capy-border-lighter);
-  font-size: var(--capy-font-size-sm);
+  font-size: $font-sm;
   color: var(--capy-text-secondary);
 }
 
@@ -561,10 +604,10 @@ const handleTeacherClick = (event, instructorId) => {
 }
 
 .purchase-count {
-  font-weight: var(--capy-font-weight-medium);
+  font-weight: $font-weight-medium;
 }
 
-/* Enrolled Badge - 右下角 */
+/* Enrolled Badge */
 .enrolled-badge-corner {
   position: absolute;
   bottom: 16px;
@@ -572,95 +615,11 @@ const handleTeacherClick = (event, instructorId) => {
   padding: 6px 14px;
   background: linear-gradient(135deg, #54CDF2 0%, #0EA5E9 100%);
   color: #fff;
-  font-size: 12px;
+  font-size: $font-xs;
   font-weight: 600;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(84, 205, 242, 0.3);
   letter-spacing: 0.5px;
   z-index: 5;
-}
-
-/* Tablet Breakpoint */
-@media (max-width: 1024px) {
-  .course-swiper {
-    padding: 0 32px var(--capy-spacing-lg);
-  }
-
-  .course-card {
-    max-width: 100%;
-  }
-
-  .course-title {
-    font-size: var(--capy-font-size-base);
-    min-height: 42px;
-  }
-}
-
-/* Mobile Breakpoint - Hide Navigation Arrows */
-@media (max-width: 768px) {
-  .course-swiper {
-    padding: 0 var(--capy-spacing-md) var(--capy-spacing-md) !important;
-  }
-
-  /* FORCE Hide navigation arrows on mobile - rely on touch swipe */
-  .course-swiper :deep(.swiper-button-next),
-  .course-swiper :deep(.swiper-button-prev) {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  /* FORCE Hide ALL tags on mobile to save vertical space */
-  .tags-container,
-  .tag-item {
-    display: none !important;
-    visibility: hidden !important;
-  }
-
-  .course-title {
-    font-size: var(--capy-font-size-sm) !important;
-  }
-
-  .course-content {
-    padding: var(--capy-spacing-sm) !important;
-  }
-
-  /* FORCE Adjust price styling on mobile */
-  .price {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: var(--capy-text-primary) !important;
-  }
-
-  /* Ensure price section layout */
-  .price-section {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .course-swiper {
-    padding: 0 var(--capy-spacing-sm) var(--capy-spacing-sm) !important;
-  }
-
-  .course-card {
-    max-width: 100% !important;
-  }
-
-  .course-title {
-    font-size: var(--capy-font-size-sm) !important;
-    min-height: 38px !important;
-  }
-
-  .course-content {
-    padding: 12px !important;
-  }
-
-  .price {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-  }
 }
 </style>

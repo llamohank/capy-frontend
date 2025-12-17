@@ -14,21 +14,62 @@ const router = createRouter({
     // 如果有保存的位置（例如使用瀏覽器的前進/後退按鈕）
     if (savedPosition) {
       return savedPosition;
-    } else {
-      // 新的導航，滾動到頂部
-      return { top: 0, behavior: "smooth" };
     }
+
+    // 如果有錨點（hash），滾動到該元素
+    if (to.hash) {
+      return {
+        el: to.hash,
+        behavior: 'auto',
+      };
+    }
+
+    // 新的導航，直接跳到最上方（不使用平滑捲動）
+    return {
+      top: 0,
+      left: 0,
+      behavior: 'auto'
+    };
   },
 });
 
 /**
- * 路由守衛 - 全域前置守衛
- * 用於保護需要認證的路由
+ * 路由守衛 - 全域前置守衛（合併版本）
+ * 用於保護需要認證的路由和檢查權限
  */
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore();
 
-  // 公開路由列表（不需要認證即可訪問）
+  // 1. 先檢查管理員和教師權限
+  if (to.path.startsWith("/admin/") || to.path === "/admin") {
+    try {
+      await CheckIsAdmin();
+    } catch (e) {
+      ElMessage.error("無權訪問此頁面");
+      if (!from.name) {
+        next("/");
+      } else {
+        next(from.fullPath);
+      }
+      return;
+    }
+  }
+
+  if (to.path.startsWith("/teacher/") || to.path === "/teacher") {
+    try {
+      await CheckIsTeacher();
+    } catch (e) {
+      ElMessage.error("無權訪問此頁面");
+      if (!from.name) {
+        next("/");
+      } else {
+        next(from.fullPath);
+      }
+      return;
+    }
+  }
+
+  // 2. 處理一般認證邏輯
   const publicRoutes = [
     "login",
     "register",
@@ -46,9 +87,6 @@ router.beforeEach(async (to, from, next) => {
     "privacy",
     "notFound",
   ];
-
-  // 檢查是否為公開路由
-  const isPublicRoute = publicRoutes.includes(to.name);
 
   // 如果用戶未初始化，先初始化用戶資訊
   if (!userStore.userInfo.userId) {
@@ -69,7 +107,7 @@ router.beforeEach(async (to, from, next) => {
       console.log("未登入，重導向到登入頁面");
       next({
         name: "login",
-        query: { redirect: to.fullPath }, // 保存原始目標路徑
+        query: { redirect: to.fullPath },
       });
     } else {
       // 已登入，檢查角色權限（如果有設定）
@@ -122,38 +160,5 @@ router.beforeEach(async (to, from, next) => {
 router.afterEach((to, from) => {
   // 設置頁面標題
   document.title = to.meta.title || "Capy 線上學習平台";
-});
-
-router.beforeEach(async (to, from, next) => {
-  if (to.path.startsWith("/admin/") || to.path === "/admin") {
-    try {
-      await CheckIsAdmin();
-    } catch (e) {
-      ElMessage.error("無權訪問此頁面");
-
-      if (!from.name) {
-        next("/"); // 導去指定頁
-      } else {
-        next(from.fullPath);
-      }
-
-      return;
-    }
-  }
-  if (to.path.startsWith("/teacher/") || to.path === "/teacher") {
-    try {
-      await CheckIsTeacher();
-    } catch (e) {
-      ElMessage.error("無權訪問此頁面");
-      if (!from.name) {
-        next("/"); // 導去指定頁
-      } else {
-        next(from.fullPath);
-      }
-      return;
-    }
-  }
-
-  next();
 });
 export default router;

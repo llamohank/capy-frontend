@@ -1,0 +1,109 @@
+// src/styles/_responsive-typography.scss
+// ============================================
+// 響應式字型系統（依賴 breakpoints 和 typography）
+// ============================================
+
+@import './breakpoints';
+@import './typography';
+
+// 1. 響應式標題 Mixins
+// --------------------------------------------------
+
+// H1 - 頁面大標題（完整響應式）
+@mixin text-h1-responsive {
+  @include text-heading-base;
+  font-size: $font-2xl;      // 32px (預設)
+
+  @include above($bp-xl) {
+    font-size: $font-3xl;    // 48px (桌面版 >= 1280px)
+  }
+
+  @include below($bp-md) {
+    font-size: $font-xl;     // 24px (平板 < 768px)
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-lg;     // 20px (手機 < 480px)
+  }
+}
+
+// H2 - 區塊標題（完整響應式）
+@mixin text-h2-responsive {
+  @include text-heading-base;
+  font-size: $font-xl;       // 24px (預設)
+
+  @include above($bp-xl) {
+    font-size: $font-2xl;    // 32px (桌面版 >= 1280px)
+  }
+
+  @include below($bp-md) {
+    font-size: $font-lg;     // 20px (平板 < 768px)
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-md;     // 18px (手機 < 480px)
+  }
+}
+
+// H3 - 卡片標題（完整響應式）
+@mixin text-h3-responsive {
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-base;
+  font-size: $font-md;       // 18px (預設)
+
+  @include above($bp-xl) {
+    font-size: $font-lg;     // 20px (桌面版 >= 1280px)
+  }
+
+  @include below($bp-md) {
+    font-size: $font-base;   // 16px (平板 < 768px)
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-sm;     // 14px (手機 < 480px)
+  }
+}
+
+// H4 - 小標題（完整響應式）
+@mixin text-h4-responsive {
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-base;
+  font-size: $font-base;     // 16px (預設)
+
+  @include above($bp-xl) {
+    font-size: $font-md;     // 18px (桌面版 >= 1280px)
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-sm;     // 14px (手機 < 480px)
+  }
+}
+
+// 2. 響應式正文 Mixins
+// --------------------------------------------------
+
+// 響應式正文（大螢幕稍大）
+@mixin text-body-responsive {
+  font-size: $font-base;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-base;
+
+  @include above($bp-xl) {
+    font-size: $font-md;     // 18px (桌面版)
+  }
+
+  @include below($bp-sm) {
+    font-size: $font-sm;     // 14px (手機)
+  }
+}
+
+// 響應式小文字
+@mixin text-small-responsive {
+  font-size: $font-sm;
+  font-weight: $font-weight-regular;
+  line-height: $line-height-base;
+
+  @include below($bp-sm) {
+    font-size: $font-xs;     // 12px (手機)
+  }
+}

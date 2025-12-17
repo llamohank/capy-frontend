@@ -47,7 +47,11 @@ const formatStudentCount = (count) => {
           :size="140"
           :src="teacher.avatarUrl"
           class="teacher-avatar"
-        />
+        >
+          <template #default>
+            <img :src="teacher.avatarUrl" :alt="teacher.name" loading="lazy" />
+          </template>
+        </el-avatar>
       </div>
 
       <!-- Teacher Info -->
@@ -205,7 +209,7 @@ const formatStudentCount = (count) => {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .golden-teachers-container {
     grid-template-columns: repeat(2, 1fr);
     gap: var(--capy-spacing-md);

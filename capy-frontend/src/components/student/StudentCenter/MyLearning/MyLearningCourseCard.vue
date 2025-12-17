@@ -203,7 +203,7 @@ const handleTeacherClick = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .course-card {
   display: flex;
   align-items: center;
@@ -214,11 +214,21 @@ const handleTeacherClick = () => {
   box-shadow: var(--capy-shadow-sm);
   transition: all 0.3s ease;
   cursor: pointer;
-}
 
-.course-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+
+  @include mobile {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  @include small-mobile {
+    padding: 16px;
+  }
 }
 
 /* Thumbnail */
@@ -229,12 +239,17 @@ const handleTeacherClick = () => {
   border-radius: var(--capy-radius-md);
   overflow: hidden;
   background: var(--el-fill-color-light);
-}
 
-.course-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @include mobile {
+    width: 100%;
+    height: 180px;
+  }
 }
 
 /* Course Info */
@@ -257,6 +272,14 @@ const handleTeacherClick = () => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+
+  @include mobile {
+    font-size: 16px;
+  }
+
+  @include small-mobile {
+    font-size: 15px;
+  }
 }
 
 .course-instructor {
@@ -268,11 +291,11 @@ const handleTeacherClick = () => {
 .teacher-link {
   cursor: pointer;
   transition: color var(--capy-transition-fast);
-}
 
-.teacher-link:hover {
-  color: var(--capy-primary);
-  text-decoration: underline;
+  &:hover {
+    color: var(--capy-primary);
+    text-decoration: underline;
+  }
 }
 
 /* Card Actions Section */
@@ -283,6 +306,18 @@ const handleTeacherClick = () => {
   gap: 12px;
   align-items: flex-end;
   min-width: 180px;
+
+  /* 968px 不是標準斷點，這裡使用自定義 media query */
+  @media (max-width: 968px) {
+    min-width: 150px;
+  }
+
+  @include mobile {
+    min-width: auto;
+    width: 100%;
+    align-items: stretch;
+    gap: 10px;
+  }
 }
 
 /* Progress Section */
@@ -291,14 +326,14 @@ const handleTeacherClick = () => {
   align-items: center;
   gap: 12px;
   width: 100%;
-}
 
-.progress-section :deep(.el-progress) {
-  flex: 1;
-}
+  :deep(.el-progress) {
+    flex: 1;
+  }
 
-.progress-section :deep(.el-progress__text) {
-  display: none;
+  :deep(.el-progress__text) {
+    display: none;
+  }
 }
 
 .progress-text {
@@ -322,100 +357,52 @@ const handleTeacherClick = () => {
   align-items: center;
   gap: 12px;
   margin-top: 4px;
+
+  @include small-mobile {
+    flex-wrap: wrap;
+  }
 }
 
 .rating-stars {
   cursor: pointer;
-}
 
-.rating-stars :deep(.el-rate__icon) {
-  font-size: 18px;
-  margin-right: 4px;
-}
+  :deep(.el-rate__icon) {
+    font-size: 18px;
+    margin-right: 4px;
+  }
 
-/* Unrated stars - gray void icons */
-.rating-stars :deep(.el-rate__icon.el-icon) {
-  color: #C0C4CC;
-}
+  /* Unrated stars - gray void icons */
+  :deep(.el-rate__icon.el-icon) {
+    color: #C0C4CC;
+  }
 
-/* Rated stars - yellow filled */
-.rating-stars :deep(.el-rate__icon.is-active) {
-  color: #FFD700;
-}
+  /* Rated stars - yellow filled */
+  :deep(.el-rate__icon.is-active) {
+    color: #FFD700;
+  }
 
-/* Hover effect for unrated stars */
-.rating-stars:not(.is-disabled):hover :deep(.el-rate__icon) {
-  transform: scale(1.1);
-  transition: transform 0.2s ease;
+  /* Hover effect for unrated stars */
+  &:not(.is-disabled):hover :deep(.el-rate__icon) {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+  }
 }
 
 .rating-text {
   font-size: 14px;
   color: var(--el-text-color-secondary);
   white-space: nowrap;
-}
 
-.rating-text.clickable {
-  color: var(--capy-primary);
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
+  &.clickable {
+    color: var(--capy-primary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
 
-.rating-text.clickable:hover {
-  color: var(--capy-primary-dark);
-  text-decoration: underline;
-}
-
-/* Responsive Design */
-@media (max-width: 968px) {
-  .card-actions {
-    min-width: 150px;
-  }
-}
-
-@media (max-width: 768px) {
-  .course-card {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .course-thumbnail {
-    width: 100%;
-    height: 180px;
-  }
-
-  .course-title {
-    font-size: 16px;
-  }
-
-  .card-actions {
-    min-width: auto;
-    width: 100%;
-    align-items: stretch;
-  }
-
-  .cta-button {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .course-card {
-    padding: 16px;
-  }
-
-  .course-title {
-    font-size: 15px;
-  }
-
-  .rating-section {
-    flex-wrap: wrap;
-  }
-
-  .card-actions {
-    gap: 10px;
+    &:hover {
+      color: var(--capy-primary-dark);
+      text-decoration: underline;
+    }
   }
 }
 </style>

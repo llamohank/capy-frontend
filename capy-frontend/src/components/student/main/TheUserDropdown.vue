@@ -3,6 +3,7 @@
     trigger="click"
     :popper-options="{ placement: 'bottom-end' }"
     popper-class="user-dropdown-popper"
+    @visible-change="handleDropdownVisibleChange"
   >
     <!-- Trigger: Avatar -->
     <el-avatar
@@ -117,6 +118,23 @@ import { useUserStore } from '@/stores/user'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+/**
+ * 處理 Dropdown 顯示狀態變化
+ * 當 dropdown 打開時，重新獲取使用者資訊以更新角色狀態
+ */
+const handleDropdownVisibleChange = async (visible) => {
+  if (visible) {
+    try {
+      // 呼叫 userStore 的方法來更新使用者資訊
+      await userStore.fetchUserInfo()
+      console.log('✅ 使用者資訊已更新:', userStore.userInfo)
+    } catch (error) {
+      console.error('❌ 更新使用者資訊失敗:', error)
+      // 不顯示錯誤訊息給使用者，靜默失敗
+    }
+  }
+}
 
 // 預設頭像
 const defaultAvatar = '/capybaraProfile.png'

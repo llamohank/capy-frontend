@@ -30,6 +30,11 @@ export const useCartStore = defineStore('cart', () => {
    */
   const items = ref<CartItem[]>([])
 
+  /**
+   * 控制購物車抽屜顯示狀態
+   */
+  const isCartOpen = ref(false)
+
   // ==================== Getters ====================
 
   /**
@@ -366,12 +371,27 @@ export const useCartStore = defineStore('cart', () => {
     }
   }
 
+  // ==================== UI Controls ====================
+
+  const openCart = () => {
+    isCartOpen.value = true
+  }
+
+  const closeCart = () => {
+    isCartOpen.value = false
+  }
+
+  const toggleCart = () => {
+    isCartOpen.value = !isCartOpen.value
+  }
+
   // 監聽購物車變化並自動儲存
   // 注意：在實際使用時，可以在元件中使用 watch 來觸發儲存
 
   return {
     // State
     items,
+    isCartOpen,
 
     // Getters
     itemCount,
@@ -388,6 +408,9 @@ export const useCartStore = defineStore('cart', () => {
     moveToWishlist,
     formatPrice,
     loadFromStorage,
-    saveToStorage
+    saveToStorage,
+    openCart,
+    closeCart,
+    toggleCart
   }
 })

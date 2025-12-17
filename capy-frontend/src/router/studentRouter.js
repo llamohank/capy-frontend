@@ -128,6 +128,12 @@ const studentRoutes = [
         component: () => import("@/views/student/Checkout/Success.vue"),
         meta: { requiresAuth: true },
       },
+      {
+        path: 'checkout/fail',
+        name: 'checkoutFail',
+        component: () => import('@/views/student/Checkout/Success.vue'),
+        meta: { requiresAuth: true }
+      },
 
       // ====================================
       // 學生中心佈局路由 (StudentCenterLayout)

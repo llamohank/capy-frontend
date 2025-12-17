@@ -117,15 +117,15 @@
             加入購物車
           </el-button>
 
-          <!-- 加入願望清單按鈕：僅訪客用戶顯示 -->
+          <!-- 願望清單按鈕：僅訪客用戶顯示，根據狀態切換 -->
           <el-button
             v-if="!course.isEnrolled"
             size="large"
-            class="wishlist-btn"
-            @click="handleAddToWishlist"
+            :class="isInWishlist ? 'wishlist-btn-active' : 'wishlist-btn'"
+            @click="handleToggleWishlist"
           >
-            <el-icon><Star /></el-icon>
-            加入願望清單
+            <el-icon><Star :filled="isInWishlist" /></el-icon>
+            {{ isInWishlist ? '移除願望清單' : '加入願望清單' }}
           </el-button>
 
           <div class="course-includes">
@@ -316,6 +316,13 @@ const course = computed(() => {
     lastWatchedLessonTitle: courseBasic?.lastWatchedLessonTitle || null,
     lastWatchedSectionTitle: courseBasic?.lastWatchedSectionTitle || null
   }
+})
+
+/**
+ * 檢查課程是否在願望清單中
+ */
+const isInWishlist = computed(() => {
+  return course.value.id ? wishlistStore.hasItem(course.value.id) : false
 })
 
 /**
@@ -580,9 +587,9 @@ const handleAddToCart = async () => {
 }
 
 /**
- * 處理加入願望清單
+ * 處理願望清單切換（加入/移除）
  */
-const handleAddToWishlist = async () => {
+const handleToggleWishlist = async () => {
   // 檢查登入狀態
   if (!userStore.isAuthenticated) {
     ElMessage.warning('請先登入以使用願望清單功能')
@@ -599,19 +606,19 @@ const handleAddToWishlist = async () => {
   }
 
   // 檢查課程是否已在願望清單中
-  if (wishlistStore.hasItem(course.value.id)) {
-    ElMessage.warning('課程已在願望清單中')
-    return
+  if (isInWishlist.value) {
+    // 從願望清單移除
+    await wishlistStore.removeItem(course.value.id)
+  } else {
+    // 加入願望清單
+    await wishlistStore.addItem({
+      id: course.value.id,
+      title: course.value.title,
+      instructor: course.value.instructor.name,
+      price: course.value.price,
+      cover_image_url: course.value.cover
+    })
   }
-
-  // 使用 wishlistStore 的 addItem 方法
-  await wishlistStore.addItem({
-    id: course.value.id,
-    title: course.value.title,
-    instructor: course.value.instructor.name,
-    price: course.value.price,
-    cover_image_url: course.value.cover
-  })
 }
 
 /**
@@ -1003,7 +1010,7 @@ onBeforeUnmount(async () => {
   background: #f0f9f4;
 }
 
-/* 願望清單按鈕樣式 */
+/* 願望清單按鈕樣式 - 未加入狀態 */
 .wishlist-btn {
   width: calc(100% - 48px);
   margin: 12px 24px;
@@ -1012,6 +1019,7 @@ onBeforeUnmount(async () => {
   background: #fff;
   border: 2px solid #FB8C00;
   color: #FB8C00;
+  transition: all 0.3s ease;
 }
 
 .wishlist-btn:hover {
@@ -1019,6 +1027,27 @@ onBeforeUnmount(async () => {
 }
 
 .wishlist-btn .el-icon {
+  margin-right: 4px;
+}
+
+/* 願望清單按鈕樣式 - 已加入狀態 */
+.wishlist-btn-active {
+  width: calc(100% - 48px);
+  margin: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  background: #FB8C00;
+  border: 2px solid #FB8C00;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.wishlist-btn-active:hover {
+  background: #E67E00;
+  border-color: #E67E00;
+}
+
+.wishlist-btn-active .el-icon {
   margin-right: 4px;
 }
 

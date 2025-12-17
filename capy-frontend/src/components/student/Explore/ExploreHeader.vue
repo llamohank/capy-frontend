@@ -30,12 +30,16 @@ const handleSearch = (value) => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .explore-header {
   background: linear-gradient(135deg, #a8d5ba 0%, #7ec8a3 100%);
   padding: 0;
   height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  @include small-mobile {
+    height: 70px;
+  }
 }
 
 .header-content {
@@ -47,6 +51,11 @@ const handleSearch = (value) => {
   justify-content: space-between;
   padding: 0 24px;
   gap: 24px;
+
+  @include mobile {
+    padding: 0 16px;
+    gap: 12px;
+  }
 }
 
 .teacher-btn {
@@ -54,7 +63,24 @@ const handleSearch = (value) => {
   border-radius: 24px;
   padding: 12px 28px;
   font-weight: 600;
+
+  @include mobile {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  @include small-mobile {
+    span {
+      display: none;
+    }
+
+    &::after {
+      content: '👨‍🏫';
+      font-size: 20px;
+    }
+  }
 }
+
 .explore-btn {
   border: none;
   color: #3B2E2E;
@@ -63,41 +89,13 @@ const handleSearch = (value) => {
   padding: 12px 28px;
   font-weight: 600;
   background-color: #8C6E52;
-}
-.explore-btn:hover{
-   background-color: #A38567 ;
-}
-.explore-btn:active{
-   background-color: #73563E ;
-}
 
-
-
-/* RWD */
-@media (max-width: 768px) {
-  .header-content {
-    padding: 0 16px;
-    gap: 12px;
+  &:hover {
+    background-color: #A38567;
   }
 
-  .teacher-btn {
-    padding: 12px 16px;
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 480px) {
-  .explore-header {
-    height: 70px;
-  }
-
-  .teacher-btn span {
-    display: none;
-  }
-
-  .teacher-btn::after {
-    content: '👨‍🏫';
-    font-size: 20px;
+  &:active {
+    background-color: #73563E;
   }
 }
 </style>

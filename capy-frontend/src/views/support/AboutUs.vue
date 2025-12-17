@@ -214,7 +214,7 @@
             <el-icon><Search /></el-icon>
             <span>探索課程</span>
           </router-link>
-          <router-link to="/become-instructor" class="cta-button secondary">
+          <router-link to="/instructor/landing" class="cta-button secondary">
             <el-icon><User /></el-icon>
             <span>成為講師</span>
           </router-link>

@@ -121,24 +121,35 @@
     </el-container>
 
     <!-- Mobile Filter Drawer -->
-    <el-drawer v-model="drawerVisible" title="Filters" direction="ltr" size="80%">
+    <el-drawer
+      v-model="drawerVisible"
+      title="篩選條件"
+      direction="ltr"
+      size="85%"
+      class="filter-drawer"
+    >
       <div class="drawer-content">
         <!-- Category Section -->
         <div class="filter-section">
-          <h4 class="section-title-student">Category</h4>
-          <CategoryRadioGroup v-model="selectedCategory" />
+          <h4 class="section-title-student">課程分類 (可多選)</h4>
+          <CategoryTreeMulti
+            v-model="selectedCategories"
+            :categories="categories"
+            @filter-change="() => {}"
+          />
+          <!-- Mobile: Don't trigger filter-change immediately, wait for Apply button -->
         </div>
 
         <!-- Ratings Section -->
         <div class="filter-section">
-          <h4 class="section-title-student">Ratings</h4>
+          <h4 class="section-title-student">課程評價</h4>
           <RatingOptions v-model="selectedRating" />
         </div>
 
         <!-- Apply Button -->
         <div class="drawer-footer">
-          <el-button type="primary" size="large" @click="drawerVisible = false" class="apply-btn">
-            Apply Filters
+          <el-button type="primary" size="large" @click="handleMobileApplyFilter" class="apply-btn">
+            套用篩選
           </el-button>
         </div>
       </div>
@@ -147,6 +158,7 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
@@ -159,6 +171,19 @@ import ActiveFiltersBar from "@/components/student/Explore/ActiveFiltersBar.vue"
 import { useWishlistStore } from "@/stores/wishlist";
 import { useUserStore } from "@/stores/user";
 import { useExploreStore } from "@/stores/explore";
+=======
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Filter } from '@element-plus/icons-vue'
+import ExploreCourseCard from '@/components/student/Explore/ExploreCard/ExploreCourseCard.vue'
+import CategoryTreeMulti from '@/components/student/Explore/FilterDrawer/CategoryTreeMulti.vue'
+import RatingOptions from '@/components/student/Explore/FilterDrawer/RatingOptions.vue'
+import ActiveFiltersBar from '@/components/student/Explore/ActiveFiltersBar.vue'
+import { useWishlistStore } from '@/stores/wishlist'
+import { useUserStore } from '@/stores/user'
+import { useExploreStore } from '@/stores/explore'
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 
 // Router
 const route = useRoute();
@@ -282,8 +307,18 @@ const loadCourses = async () => {
       params.categoryIds = selectedCategories.value;
     }
 
-    // 注意：後端 CourseSearchDto 只支援 keyword 和 categoryIds
-    // tagIds 和 maxRatings 不在後端 API 規格中，已移除
+    // 評分篩選（支援，傳遞 maxRatings 陣列，OR 條件）
+    if (selectedRating.value > 0) {
+      // 將單一 rating 值轉換為陣列（後端期望 BigDecimal[]）
+      // 例如：選擇 4 星表示 >= 4.0 的課程
+      params.maxRatings = [selectedRating.value.toFixed(1)]
+    }
+
+    // 標籤篩選（支援多選，傳遞 tagIds 陣列）
+    // 注意：目前 selectedTags 儲存的是 tag 名稱，未來如需使用 tagIds 需要轉換
+    // if (selectedTags.value.length > 0) {
+    //   params.tagIds = selectedTags.value
+    // }
 
     // 使用 Store 的快取載入方法
     const result = await exploreStore.loadCourses(params);
@@ -414,6 +449,13 @@ const handlePageChange = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+const handleMobileApplyFilter = () => {
+  drawerVisible.value = false
+  // 篩選已經透過 watch 自動觸發，這裡只需要關閉 drawer
+  // 如果需要更嚴格的 "點擊才套用"，需要重構 watch 邏輯
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 // Responsive handling
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768;
@@ -501,11 +543,21 @@ onMounted(async () => {
     if (selectedCategories.value.length > 0) {
       courseParams.categoryIds = selectedCategories.value;
     }
-    // 注意：後端不支援 maxRatings 參數
+    // 添加評分篩選參數
+    if (selectedRating.value > 0) {
+      courseParams.maxRatings = [selectedRating.value.toFixed(1)]
+    }
 
     // 使用 Store 的並行載入方法
+<<<<<<< HEAD
     const { courses } = await exploreStore.loadAllData(courseParams);
     coursesData.value = courses;
+=======
+    const { courses } = await exploreStore.loadAllData(courseParams)
+    console.log(courses);
+
+    coursesData.value = courses
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
   } catch (error) {
     console.error("並行載入失敗:", error);
     ElMessage.error("載入資料失敗，請稍後再試");
@@ -524,10 +576,16 @@ onUnmounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+/* 由於 vite.config.js 已配置自動引入，這裡可以直接使用 mixins 和 variables */
+
 .explore-page {
   min-height: 100vh;
+<<<<<<< HEAD
   background: #fcf9f4;
+=======
+  background: var(--capy-bg-base); /* 使用變數 #FCF9F4 */
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 }
 
 .loading-wrapper {
@@ -546,64 +604,78 @@ onUnmounted(() => {
 .filter-sidebar {
   background: transparent;
   padding: 24px 16px;
+
+  /* 手機版隱藏，由 Drawer 取代 */
+  @include mobile {
+    display: none;
+  }
 }
 
 .filter-card {
-  border-radius: 12px;
-  border: 1px solid #e8e8e8;
-}
+  border-radius: var(--capy-radius-lg);
+  border: 1px solid var(--capy-border-light);
 
-.filter-card :deep(.el-card__header) {
-  padding: 20px;
-  border-bottom: 2px solid #f0f0f0;
+  :deep(.el-card__header) {
+    padding: 20px;
+    border-bottom: 1px solid var(--capy-border-lighter);
+  }
 }
 
 .filter-header h3 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: #2c3e50;
+  font-size: $font-lg;
+  font-weight: $font-weight-bold;
+  color: var(--capy-text-primary);
 }
 
 .filter-section {
   margin-bottom: 32px;
-}
 
-.filter-section:last-child {
-  margin-bottom: 0;
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .section-title-student {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2c3e50;
+  font-size: $font-base;
+  font-weight: $font-weight-semibold;
+  color: var(--capy-text-primary);
   margin: 0 0 16px 0;
 }
 
 .main-content {
   padding: 32px 24px;
   background: transparent;
+
+  @include mobile {
+    padding: 20px 16px;
+  }
 }
 
 .mobile-filter-btn {
   margin-bottom: 20px;
-}
 
-.mobile-filter-btn .el-button {
-  width: 100%;
-  border-radius: 8px;
-  background: var(--capy-primary);
-  border-color: var(--capy-primary);
+  .el-button {
+    width: 100%;
+    border-radius: var(--capy-radius-base);
+    background: var(--capy-primary);
+    border-color: var(--capy-primary);
+    font-weight: $font-weight-semibold;
+  }
 }
 
 .breadcrumb {
   margin-bottom: 20px;
-  font-size: 15px;
-}
+  font-size: $font-sm; /* 14px */
 
-.breadcrumb :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
-  color: var(--capy-primary);
-  font-weight: 600;
+  @include mobile {
+    font-size: 13px; /* 手機版稍小 */
+  }
+
+  :deep(.el-breadcrumb__item:last-child .el-breadcrumb__inner) {
+    color: var(--capy-primary);
+    font-weight: $font-weight-semibold;
+  }
 }
 
 .sort-count-bar {
@@ -615,16 +687,26 @@ onUnmounted(() => {
   background: var(--capy-bg-surface);
   border-radius: var(--capy-radius-base);
   border: 1px solid var(--capy-border-lighter);
+
+  @include mobile {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
 }
 
 .sort-select {
   width: 160px;
+
+  @include mobile {
+    width: 100%;
+  }
 }
 
 .course-count {
-  font-size: var(--capy-font-size-sm);
+  font-size: $font-sm;
   color: var(--capy-text-secondary);
-  font-weight: var(--capy-font-weight-medium);
+  font-weight: $font-weight-medium;
 }
 
 .course-grid {
@@ -633,25 +715,31 @@ onUnmounted(() => {
 
 .course-col {
   margin-bottom: 24px;
+
+  @include mobile {
+    margin-bottom: 16px;
+  }
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: center;
   padding: 20px 0;
-}
 
-.pagination-wrapper :deep(.el-pagination) {
-  gap: 8px;
-}
+  :deep(.el-pagination) {
+    gap: 8px;
+    flex-wrap: wrap; /* 允許分頁在小螢幕換行 */
+    justify-content: center;
+  }
 
-.pagination-wrapper :deep(.el-pager li.is-active) {
-  background: var(--capy-primary);
-  color: #fff;
-}
+  :deep(.el-pager li.is-active) {
+    background: var(--capy-primary);
+    color: #fff;
+  }
 
-.pagination-wrapper :deep(.el-pager li:hover) {
-  color: var(--capy-primary);
+  :deep(.el-pager li:hover) {
+    color: var(--capy-primary);
+  }
 }
 
 .drawer-content {
@@ -664,34 +752,19 @@ onUnmounted(() => {
 .drawer-footer {
   margin-top: auto;
   padding-top: 20px;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--capy-border-lighter);
 }
 
 .apply-btn {
   width: 100%;
   background: var(--capy-primary);
   border-color: var(--capy-primary);
-  border-radius: 8px;
-  font-weight: 600;
-}
+  border-radius: var(--capy-radius-base);
+  font-weight: $font-weight-semibold;
 
-.apply-btn:hover {
-  background: var(--capy-primary-dark);
-  border-color: var(--capy-primary-dark);
-}
-
-/* RWD */
-@media (max-width: 768px) {
-  .main-content {
-    padding: 20px 16px;
-  }
-
-  .breadcrumb {
-    font-size: 14px;
-  }
-
-  .course-col {
-    margin-bottom: 16px;
+  &:hover {
+    background: var(--capy-primary-dark);
+    border-color: var(--capy-primary-dark);
   }
 }
 </style>
