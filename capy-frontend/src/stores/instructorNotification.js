@@ -10,6 +10,7 @@ export const useInstructorNotificationStore = defineStore("instructorNotificatio
       "course_restored",
       "platform_announcement",
       "new_enrollment",
+      "transcoding_failed",
     ],
     comment: ["new_question"],
     payout: ["payout_completed", "payout_failed"],
@@ -28,6 +29,7 @@ export const useInstructorNotificationStore = defineStore("instructorNotificatio
         "course_restored",
         "platform_announcement",
         "new_enrollment",
+        "transcoding_failed",
       ].includes(type)
     ) {
       return "platform";

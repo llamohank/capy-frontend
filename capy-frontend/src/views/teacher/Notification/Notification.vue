@@ -77,6 +77,7 @@ const handleCheckNotification = (item) => {
 };
 const handleReadNotification = async () => {
   await markAsRead(currentRow.value.id);
+  instructorNotificationStore.removeFromDB(item.id);
   dialogVisible.value = false;
 };
 const totalPage = ref(1);

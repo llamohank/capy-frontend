@@ -24,9 +24,9 @@ const props = defineProps({
   },
 });
 
-const { defaultLessonInfo, currentSectionInfo } = useLesson(props.sectionInfo);
+const { currentSectionInfo } = useLesson(props.sectionInfo);
 const emit = defineEmits(["update:visible"]);
-// onMounted(() => console.log(props.lessonInfo));
+
 const dialogVisible = computed({
   get() {
     return props.visible;
@@ -45,7 +45,7 @@ const videoPlayerRef = ref(null);
 
 watch(
   () => dialogVisible.value,
-  (val) => {
+  async (val) => {
     if (val) {
       formModel.value = {
         ...props.lessonInfo,
@@ -53,39 +53,21 @@ watch(
         attachments: props.lessonInfo?.attachments?.map((item) => ({ ...item })) ?? [],
       };
       console.log(props.videoUrl);
+      try {
+        await nextTick();
+        await videoPlayerRef.value.init();
+        await videoPlayerRef.value.play(props.videoUrl);
+      } catch (e) {
+        ElMessage.error("影片播放錯誤");
+        console.log(e);
+      }
     } else {
+      if (videoPlayerRef.value) {
+        videoPlayerRef.value.destroy();
+      }
     }
   }
 );
-// watch(
-//   () => formModel.value.videoUrl,
-//   async (newVal, oldVal) => {
-//     // console.log(55);
-//     if (!newVal) {
-//       return;
-//     }
-//     if (!oldVal) {
-//       await nextTick();
-//       // console.log(videoPlayerRef.value);
-//       try {
-//         await videoPlayerRef.value.init();
-//         await videoPlayerRef.value.play(newVal);
-//         videoMeta.value.rawVideoHeight = videoPlayerRef.value.videoHeight;
-//         videoMeta.value.durationSeconds = videoPlayerRef.value.videoDuration;
-//       } catch (e) {
-//         console.log(e);
-//         ElMessage.error("影片播放錯誤");
-//         videoPlayerRef.value.destroy();
-//         formModel.value.videoUrl = null;
-//       }
-
-//       // console.log(requestData.value.videoHeight);
-//       // console.log(videoPlayerRef.value.videoHeight);
-//       return;
-//     }
-//     await videoPlayerRef.value.play(newVal);
-//   }
-// );
 
 const handleDownloadAttachment = async (attachmentId) => {
   const { download } = useAttachment(attachmentId);
@@ -139,7 +121,7 @@ const handleDownloadAttachment = async (attachmentId) => {
               </div>
             </li>
           </ul>
-          <el-empty v-else description="此單元沒有附件" />
+          <p>此單元沒有附件</p>
         </div>
       </el-form-item>
     </el-form>

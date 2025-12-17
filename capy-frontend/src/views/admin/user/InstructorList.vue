@@ -130,11 +130,13 @@ onMounted(() => {
 
       <el-table-column label="申請者" min-width="280">
         <template #default="{ row }">
-          <div class="user-info-cell">
-            <el-avatar :size="50" :src="row.avatarUrl" />
-            <div class="user-details">
-              <p class="user-name">{{ row.nickname }}</p>
-              <p class="user-sub">{{ row.fullName }}</p>
+          <div style="width: 80%">
+            <div class="user-info-cell">
+              <el-avatar :size="50" :src="row.avatarUrl" />
+              <div class="user-details">
+                <p class="user-name">{{ row.nickname }}</p>
+                <p class="user-sub">{{ row.fullName }}</p>
+              </div>
             </div>
           </div>
         </template>
@@ -146,7 +148,10 @@ onMounted(() => {
       </el-table-column>
       <el-table-column label="是否為第一次申請" min-width="160" align="center">
         <template #default="{ row }">
-          <span class="first-application-badge" :class="{ 'highlight-record': !row.firstApplication }">
+          <span
+            class="first-application-badge"
+            :class="{ 'highlight-record': !row.firstApplication }"
+          >
             {{ row.firstApplication ? "是" : "否" }}
           </span>
         </template>
@@ -174,8 +179,8 @@ onMounted(() => {
 </template>
 <style scoped>
 :deep(.el-table) {
-  --el-table-header-bg-color: #F9FAFB;
-  --el-table-row-hover-bg-color: #F5F3FF;
+  --el-table-header-bg-color: #f9fafb;
+  --el-table-row-hover-bg-color: #f5f3ff;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -213,7 +218,7 @@ onMounted(() => {
 
 .user-name {
   font-weight: 500;
-  color: #1F2937;
+  color: #1f2937;
 }
 
 .user-sub {
@@ -226,14 +231,14 @@ onMounted(() => {
   font-style: italic;
   font-weight: 600;
   font-size: 20px;
-  color: #9CA3AF;
+  color: #9ca3af;
   opacity: 0.4;
   transition: all 0.2s ease;
 }
 
 .table-row:hover .index {
   opacity: 1;
-  color: #4F46E5;
+  color: #4f46e5;
 }
 
 /* 日期樣式 */
@@ -249,7 +254,7 @@ onMounted(() => {
 }
 
 .highlight-record {
-  color: #4F46E5;
+  color: #4f46e5;
   font-weight: 600;
 }
 
@@ -266,4 +271,3 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 </style>
-

@@ -52,6 +52,7 @@ const handlePublishCourse = async () => {
 };
 </script>
 <template>
+  <h2 class="section-heading">編輯課程詳情</h2>
   <div style="display: flex; flex-direction: column; gap: 48px">
     <CourseDetailForm ref="detailFormRef" />
     <CoursePlaylist ref="playlistRef" />
@@ -59,7 +60,8 @@ const handlePublishCourse = async () => {
     <div class="bottom-operation-btn-group">
       <el-button size="large" type="info" @click="$router.go(-1)">返回</el-button>
       <el-button size="large" type="danger" @click="handleDeleteCourse">刪除課程</el-button>
-      <el-button size="large" type="primary" @click="handlePublishCourse">申請上架</el-button>
+      <el-button size="large" type="primary" @click="handleDeleteCourse">保存更新</el-button>
+      <el-button size="large" type="warning" @click="handlePublishCourse">申請上架</el-button>
     </div>
   </div>
 </template>
@@ -68,6 +70,11 @@ const handlePublishCourse = async () => {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  padding: 36px 0;
   gap: 24px;
+}
+.bottom-operation-btn-group button {
+  letter-spacing: 0.08rem;
+  padding: 24px 36px;
 }
 </style>

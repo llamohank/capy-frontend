@@ -1,7 +1,9 @@
- // ====================================
+// ====================================
 // Student Router Configuration
 // 使用 LazyLoad 方式載入所有頁面組件
 // ====================================
+
+import { searchCourses } from "@/api/student/explore";
 
 const studentRoutes = [
   // ====================================
@@ -26,6 +28,10 @@ const studentRoutes = [
         path: "explore",
         name: "courseExplore",
         component: () => import("@/views/student/ExplorePage/CourseExplorePage.vue"),
+        beforeEnter: async (to, from, next) => {
+          await searchCourses();
+          next();
+        },
       },
       // 課程詳情頁面
       {
@@ -48,7 +54,7 @@ const studentRoutes = [
         path: "instructor/apply",
         name: "becomeInstructor",
         component: () => import("@/views/student/instructorApply/BecomeInstructorPage.vue"),
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true },
       },
       // 講師介紹頁面
       {
@@ -117,10 +123,10 @@ const studentRoutes = [
       // 結帳路由
       // ====================================
       {
-        path: 'checkout/success',
-        name: 'checkoutSuccess',
-        component: () => import('@/views/student/Checkout/Success.vue'),
-        meta: { requiresAuth: true }
+        path: "checkout/success",
+        name: "checkoutSuccess",
+        component: () => import("@/views/student/Checkout/Success.vue"),
+        meta: { requiresAuth: true },
       },
       {
         path: 'checkout/fail',
@@ -170,10 +176,10 @@ const studentRoutes = [
   // 購物車路由 (Checkout)
   // ====================================
   {
-    path: '/checkout',
-    name: 'checkout',
-    component: () => import('@/views/student/Checkout/Checkout.vue'),
-    meta: { requiresAuth: true }
+    path: "/checkout",
+    name: "checkout",
+    component: () => import("@/views/student/Checkout/Checkout.vue"),
+    meta: { requiresAuth: true },
   },
   // ====================================
   // 學習佈局路由 (LearningLayout)
@@ -222,23 +228,23 @@ const studentRoutes = [
     component: () => import("@/views/student/Auth&Register/VerifyEmail.vue"),
   },
   {
-    path: '/reset-password',
-    name: 'resetPassword',
-    component: () => import('@/views/student/Auth&Register/ResetPassword.vue')
+    path: "/reset-password",
+    name: "resetPassword",
+    component: () => import("@/views/student/Auth&Register/ResetPassword.vue"),
   },
 
   // ====================================
   // 錯誤頁面路由
   // ====================================
   {
-    path: '/403',
-    name: 'forbidden',
-    component: () => import('@/views/student/Errors/ForbiddenPage.vue')
+    path: "/403",
+    name: "forbidden",
+    component: () => import("@/views/student/Errors/ForbiddenPage.vue"),
   },
   {
-    path: '/500',
-    name: 'serverError',
-    component: () => import('@/views/student/Errors/ServerError.vue')
+    path: "/500",
+    name: "serverError",
+    component: () => import("@/views/student/Errors/ServerError.vue"),
   },
 
   // ====================================

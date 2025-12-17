@@ -1,6 +1,9 @@
 <template>
   <div class="main-layout">
-    <AppHeader @toggle-mobile-menu="showMobileMenu = true" />
+    <div ref="headerRef">
+      <AppHeader @toggle-mobile-menu="showMobileMenu = true" />
+    </div>
+
     <main class="main-content">
       <router-view />
     </main>
@@ -55,39 +58,62 @@
             <span>成為講師</span>
           </router-link>
 
-                    <!-- 已登入的使用者連結 -->
-                    <template v-if="userStore.isAuthenticated">
-                      <div class="divider"></div>
+          <!-- 已登入的使用者連結 -->
+          <template v-if="userStore.isAuthenticated">
+            <div class="divider"></div>
 
-                      <div class="nav-item is-clickable" @click="handleOpenCart">
-                        <el-icon><ShoppingCart /></el-icon>
-                        <span>購物車</span>
-                        <el-tag v-if="cartStore.itemCount > 0" size="small" type="danger" effect="dark" round>
-                          {{ cartStore.itemCount }}
-                        </el-tag>
-                      </div>
+            <div class="nav-item is-clickable" @click="handleOpenCart">
+              <el-icon><ShoppingCart /></el-icon>
+              <span>購物車</span>
+              <el-tag v-if="cartStore.itemCount > 0" size="small" type="danger" effect="dark" round>
+                {{ cartStore.itemCount }}
+              </el-tag>
+            </div>
 
-                      <!-- 願望清單 (可展開) -->            <div class="nav-group">
-              <div class="nav-item is-clickable" @click="toggleSection('wishlist')" :class="{ 'is-active': expandedSection === 'wishlist' }">
+            <!-- 願望清單 (可展開) -->
+            <div class="nav-group">
+              <div
+                class="nav-item is-clickable"
+                @click="toggleSection('wishlist')"
+                :class="{ 'is-active': expandedSection === 'wishlist' }"
+              >
                 <el-icon><Star /></el-icon>
                 <span>願望清單</span>
-                <el-icon class="arrow-icon" :class="{ 'is-rotated': expandedSection === 'wishlist' }"><ArrowDown /></el-icon>
+                <el-icon
+                  class="arrow-icon"
+                  :class="{ 'is-rotated': expandedSection === 'wishlist' }"
+                  ><ArrowDown
+                /></el-icon>
               </div>
               <div v-show="expandedSection === 'wishlist'" class="nav-content">
                 <WishlistContent @close="showMobileMenu = false" />
               </div>
             </div>
 
-             <!-- 通知中心 (可展開) -->
+            <!-- 通知中心 (可展開) -->
             <div class="nav-group">
-              <div class="nav-item is-clickable" @click="toggleSection('notification')" :class="{ 'is-active': expandedSection === 'notification' }">
+              <div
+                class="nav-item is-clickable"
+                @click="toggleSection('notification')"
+                :class="{ 'is-active': expandedSection === 'notification' }"
+              >
                 <el-icon><Bell /></el-icon>
                 <span>通知中心</span>
                 <div class="badge-wrapper">
-                  <el-tag v-if="notificationStore.unreadCount > 0" size="small" type="danger" effect="dark" round>
+                  <el-tag
+                    v-if="notificationStore.unreadCount > 0"
+                    size="small"
+                    type="danger"
+                    effect="dark"
+                    round
+                  >
                     {{ notificationStore.unreadCount }}
                   </el-tag>
-                  <el-icon class="arrow-icon" :class="{ 'is-rotated': expandedSection === 'notification' }"><ArrowDown /></el-icon>
+                  <el-icon
+                    class="arrow-icon"
+                    :class="{ 'is-rotated': expandedSection === 'notification' }"
+                    ><ArrowDown
+                  /></el-icon>
                 </div>
               </div>
               <div v-show="expandedSection === 'notification'" class="nav-content">
@@ -109,7 +135,7 @@
             <div class="user-info">
               <el-avatar :size="40" :src="userStore.userInfo?.avatarUrl" />
               <div class="user-details">
-                <span class="user-name">{{ userStore.userInfo?.nickname || '使用者' }}</span>
+                <span class="user-name">{{ userStore.userInfo?.nickname || "使用者" }}</span>
                 <span class="user-email">{{ userStore.userInfo?.email }}</span>
               </div>
             </div>
@@ -122,51 +148,69 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import {
-  Reading, Close, HomeFilled, Compass, School,
-  ShoppingCart, Star, Bell, ArrowDown
-} from '@element-plus/icons-vue'
-import AppHeader from '@/components/student/main/AppHeader.vue'
-import AppFooter from '@/components/student/main/AppFooter.vue'
-import { useUserStore } from '@/stores/user'
-import { useCartStore } from '@/stores/cart'
-import { useNotificationStore } from '@/stores/notification'
-import WishlistContent from '@/components/student/wishlist/WishlistContent.vue'
-import NotificationContent from '@/components/student/notifications/NotificationContent.vue'
-import SearchInput from '@/components/student/main/SearchInput.vue'
+  Reading,
+  Close,
+  HomeFilled,
+  Compass,
+  School,
+  ShoppingCart,
+  Star,
+  Bell,
+  ArrowDown,
+} from "@element-plus/icons-vue";
+import AppHeader from "@/components/student/main/AppHeader.vue";
+import AppFooter from "@/components/student/main/AppFooter.vue";
+import { useUserStore } from "@/stores/user";
+import { useCartStore } from "@/stores/cart";
+import { useNotificationStore } from "@/stores/notification";
+import WishlistContent from "@/components/student/wishlist/WishlistContent.vue";
+import NotificationContent from "@/components/student/notifications/NotificationContent.vue";
+import SearchInput from "@/components/student/main/SearchInput.vue";
 
-const router = useRouter()
-const userStore = useUserStore()
-const cartStore = useCartStore()
-const notificationStore = useNotificationStore()
+const router = useRouter();
+const userStore = useUserStore();
+const cartStore = useCartStore();
+const notificationStore = useNotificationStore();
 
-const showMobileMenu = ref(false)
+const showMobileMenu = ref(false);
 // 擴展狀態管理
-const expandedSection = ref('') // 'wishlist' | 'notification' | ''
+const expandedSection = ref(""); // 'wishlist' | 'notification' | ''
 
 const toggleSection = (section) => {
   if (expandedSection.value === section) {
-    expandedSection.value = ''
+    expandedSection.value = "";
   } else {
-    expandedSection.value = section
+    expandedSection.value = section;
   }
-}
+};
 
 // 檢查是否為講師 (需配合後端資料結構，此為預留)
-const isInstructor = computed(() => false)
+const isInstructor = computed(() => false);
 
 const handleOpenCart = () => {
-  showMobileMenu.value = false
-  cartStore.openCart()
-}
+  showMobileMenu.value = false;
+  cartStore.openCart();
+};
 
 const handleLogout = async () => {
-  await userStore.logout()
-  showMobileMenu.value = false
-  router.push('/login')
-}
+  await userStore.logout();
+  showMobileMenu.value = false;
+  router.push("/login");
+};
+const headerRef = ref(null);
+const route = useRoute();
+watch(
+  () => route.fullPath,
+  () => {
+    console.log("route change");
+    if (headerRef.value) {
+      headerRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+);
 </script>
 
 <style lang="scss" scoped>
@@ -272,7 +316,8 @@ const handleLogout = async () => {
   font-weight: 500;
   transition: all 0.2s;
 
-  &:hover, &.router-link-active {
+  &:hover,
+  &.router-link-active {
     background-color: var(--capy-bg-surface-hover);
     color: var(--capy-primary);
   }
@@ -343,7 +388,8 @@ const handleLogout = async () => {
   text-decoration: none;
 }
 
-.login-btn, .logout-btn {
+.login-btn,
+.logout-btn {
   width: 100%;
   font-weight: 600;
 }

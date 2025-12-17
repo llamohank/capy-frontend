@@ -104,6 +104,7 @@ const handleDownloadAttachment = async (id) => {
 <style scoped>
 :deep(.tbody-cell .cell) {
   display: flex;
+  padding: 12px 0;
   justify-content: center;
 }
 

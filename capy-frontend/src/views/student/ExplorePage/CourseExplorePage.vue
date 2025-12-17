@@ -33,12 +33,7 @@
       <el-main class="main-content">
         <!-- Mobile Filter Button -->
         <div v-if="isMobile" class="mobile-filter-btn">
-          <el-button
-            type="primary"
-            :icon="Filter"
-            @click="drawerVisible = true"
-            size="large"
-          >
+          <el-button type="primary" :icon="Filter" @click="drawerVisible = true" size="large">
             Filters
           </el-button>
         </div>
@@ -163,6 +158,20 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { Filter } from "@element-plus/icons-vue";
+import ExploreCourseCard from "@/components/student/Explore/ExploreCard/ExploreCourseCard.vue";
+import CategoryTreeMulti from "@/components/student/Explore/FilterDrawer/CategoryTreeMulti.vue";
+import CategoryRadioGroup from "@/components/student/Explore/FilterDrawer/CategoryRadioGroup.vue";
+import RatingOptions from "@/components/student/Explore/FilterDrawer/RatingOptions.vue";
+import ActiveFiltersBar from "@/components/student/Explore/ActiveFiltersBar.vue";
+import { useWishlistStore } from "@/stores/wishlist";
+import { useUserStore } from "@/stores/user";
+import { useExploreStore } from "@/stores/explore";
+=======
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -174,33 +183,34 @@ import ActiveFiltersBar from '@/components/student/Explore/ActiveFiltersBar.vue'
 import { useWishlistStore } from '@/stores/wishlist'
 import { useUserStore } from '@/stores/user'
 import { useExploreStore } from '@/stores/explore'
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 
 // Router
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
 // Stores
-const wishlistStore = useWishlistStore()
-const userStore = useUserStore()
-const exploreStore = useExploreStore()
+const wishlistStore = useWishlistStore();
+const userStore = useUserStore();
+const exploreStore = useExploreStore();
 
 // Responsive state
-const isMobile = ref(false)
-const drawerVisible = ref(false)
+const isMobile = ref(false);
+const drawerVisible = ref(false);
 
 // Filter states
-const selectedCategories = ref([])
-const selectedRating = ref(0)
-const selectedTags = ref([])
-const searchQuery = ref('')
-const sortBy = ref('popular') // 'popular' or 'latest'
+const selectedCategories = ref([]);
+const selectedRating = ref(0);
+const selectedTags = ref([]);
+const searchQuery = ref("");
+const sortBy = ref("popular"); // 'popular' or 'latest'
 
 // 分類資料狀態（使用 computed 從 store 取得）
-const categories = computed(() => exploreStore.cachedCategories || [])
-const categoriesLoading = computed(() => exploreStore.categoriesLoading)
+const categories = computed(() => exploreStore.cachedCategories || []);
+const categoriesLoading = computed(() => exploreStore.categoriesLoading);
 
 // API 相關狀態（使用 computed 從 store 取得載入狀態）
-const loading = computed(() => exploreStore.coursesLoading)
+const loading = computed(() => exploreStore.coursesLoading);
 const coursesData = ref({
   content: [],
   number: 0,
@@ -209,71 +219,71 @@ const coursesData = ref({
   totalPages: 0,
   first: true,
   last: true,
-  empty: true
-})
+  empty: true,
+});
 
 // 建立 category ID 到 name 的映射
 const buildCategoryIdToNameMap = () => {
-  const map = new Map()
+  const map = new Map();
   const traverse = (cats) => {
-    cats.forEach(cat => {
-      map.set(cat.id, cat.name)
+    cats.forEach((cat) => {
+      map.set(cat.id, cat.name);
       if (cat.children && cat.children.length > 0) {
-        traverse(cat.children)
+        traverse(cat.children);
       }
-    })
-  }
-  const cats = categories.value || []
-  traverse(cats)
-  return map
-}
+    });
+  };
+  const cats = categories.value || [];
+  traverse(cats);
+  return map;
+};
 
-const categoryIdToName = computed(() => buildCategoryIdToNameMap())
+const categoryIdToName = computed(() => buildCategoryIdToNameMap());
 
 // Pagination states（後端分頁，從 1 開始顯示但 API 從 0 開始）
-const currentPage = ref(1)
-const pageSize = ref(12)
+const currentPage = ref(1);
+const pageSize = ref(12);
 
 // 直接使用後端的資料格式，不做欄位名稱轉換
 // ExploreCourseCard 和 CourseInfo 元件會使用這些欄位
 const allCourses = computed(() => {
-  return coursesData.value.content.map(course => ({
+  return coursesData.value?.content?.map((course) => ({
     ...course, // 保留所有後端欄位
-    isWishlisted: wishlistStore.hasItem(course.id) // 添加願望清單狀態
-  }))
-})
+    isWishlisted: wishlistStore.hasItem(course.id), // 添加願望清單狀態
+  }));
+});
 
 // Computed: Breadcrumb text
 const breadcrumbText = computed(() => {
   if (selectedCategories.value.length === 0) {
-    return 'All Categories'
+    return "All Categories";
   }
 
   const categoryNames = selectedCategories.value
-    .map(id => categoryIdToName.value.get(id))
-    .filter(Boolean)
+    .map((id) => categoryIdToName.value.get(id))
+    .filter(Boolean);
 
   if (categoryNames.length === 0) {
-    return 'All Categories'
+    return "All Categories";
   }
 
   if (categoryNames.length === 1) {
-    return categoryNames[0]
+    return categoryNames[0];
   }
 
   // 多個分類時，顯示前兩個，其餘用數字表示
   if (categoryNames.length === 2) {
-    return categoryNames.join(', ')
+    return categoryNames.join(", ");
   }
 
-  return `${categoryNames[0]}, ${categoryNames[1]} +${categoryNames.length - 2} more`
-})
+  return `${categoryNames[0]}, ${categoryNames[1]} +${categoryNames.length - 2} more`;
+});
 
 // 後端已處理篩選，直接使用 API 回傳的資料
-const filteredCourses = computed(() => allCourses.value)
+const filteredCourses = computed(() => allCourses.value);
 
 // 後端已處理分頁，直接使用 API 回傳的資料
-const paginatedCourses = computed(() => allCourses.value)
+const paginatedCourses = computed(() => allCourses.value);
 
 // 載入課程資料（使用 Store 的快取功能）
 const loadCourses = async () => {
@@ -281,20 +291,20 @@ const loadCourses = async () => {
     const params = {
       page: currentPage.value - 1, // API 從 0 開始
       size: pageSize.value,
-      sort: sortBy.value
-    }
+      sort: sortBy.value,
+    };
 
     // 關鍵字搜尋（優先使用 searchQuery，如果沒有則使用第一個 selectedTag）
     if (searchQuery.value) {
-      params.keyword = searchQuery.value
+      params.keyword = searchQuery.value;
     } else if (selectedTags.value.length > 0) {
       // 如果沒有搜尋關鍵字但有選擇的 tags，使用第一個 tag 作為 keyword
-      params.keyword = selectedTags.value[0]
+      params.keyword = selectedTags.value[0];
     }
 
     // 分類篩選（支援多選，傳遞 categoryIds 陣列）
     if (selectedCategories.value.length > 0) {
-      params.categoryIds = selectedCategories.value
+      params.categoryIds = selectedCategories.value;
     }
 
     // 評分篩選（支援，傳遞 maxRatings 陣列，OR 條件）
@@ -311,11 +321,11 @@ const loadCourses = async () => {
     // }
 
     // 使用 Store 的快取載入方法
-    const result = await exploreStore.loadCourses(params)
-    coursesData.value = result
+    const result = await exploreStore.loadCourses(params);
+    coursesData.value = result;
   } catch (error) {
-    console.error('載入課程失敗:', error)
-    ElMessage.error('載入課程失敗，請稍後再試')
+    console.error("載入課程失敗:", error);
+    ElMessage.error("載入課程失敗，請稍後再試");
     // 設定空資料
     coursesData.value = {
       content: [],
@@ -325,103 +335,103 @@ const loadCourses = async () => {
       totalPages: 0,
       first: true,
       last: true,
-      empty: true
-    }
+      empty: true,
+    };
   }
-}
+};
 
 // Methods
 const handleCategoryFilterChange = (payload) => {
-  console.log('Category filter changed:', payload)
-  currentPage.value = 1
-  loadCourses()
-}
+  console.log("Category filter changed:", payload);
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleSearch = (query) => {
-  searchQuery.value = query
-  currentPage.value = 1
-  loadCourses()
-}
+  searchQuery.value = query;
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleTagClick = (tag) => {
   // 將 tag 加入到 selectedTags 陣列（不設定 searchQuery，避免重複顯示）
   if (!selectedTags.value.includes(tag)) {
-    selectedTags.value.push(tag)
-    currentPage.value = 1
-    loadCourses()
+    selectedTags.value.push(tag);
+    currentPage.value = 1;
+    loadCourses();
   }
-}
+};
 
 const removeTag = (tag) => {
   // Tag 篩選功能等後端 API 支援後再實作
-  const index = selectedTags.value.indexOf(tag)
+  const index = selectedTags.value.indexOf(tag);
   if (index > -1) {
-    selectedTags.value.splice(index, 1)
+    selectedTags.value.splice(index, 1);
   }
-  currentPage.value = 1
-}
+  currentPage.value = 1;
+};
 
 const handleRemoveCategory = (categoryId) => {
-  console.log('移除 category:', categoryId)
-  console.log('移除前:', selectedCategories.value)
-  const index = selectedCategories.value.indexOf(categoryId)
+  console.log("移除 category:", categoryId);
+  console.log("移除前:", selectedCategories.value);
+  const index = selectedCategories.value.indexOf(categoryId);
   if (index > -1) {
-    selectedCategories.value.splice(index, 1)
+    selectedCategories.value.splice(index, 1);
   }
-  console.log('移除後:', selectedCategories.value)
-  currentPage.value = 1
-  loadCourses()
-}
+  console.log("移除後:", selectedCategories.value);
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleRemoveTag = (tag) => {
-  removeTag(tag)
-  currentPage.value = 1
-  loadCourses()
-}
+  removeTag(tag);
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleRemoveRating = () => {
-  selectedRating.value = 0
-  currentPage.value = 1
-  loadCourses()
-}
+  selectedRating.value = 0;
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleRemoveSearchKeyword = () => {
   // 清除搜尋關鍵字
-  searchQuery.value = ''
+  searchQuery.value = "";
 
   // 同步 URL（移除 keyword 參數）
-  const newQuery = { ...route.query }
-  delete newQuery.keyword
-  delete newQuery.search // 也移除舊的 search 參數
-  delete newQuery.tag // 也移除 tag 參數
-  router.replace({ query: newQuery })
+  const newQuery = { ...route.query };
+  delete newQuery.keyword;
+  delete newQuery.search; // 也移除舊的 search 參數
+  delete newQuery.tag; // 也移除 tag 參數
+  router.replace({ query: newQuery });
 
   // 重新載入課程
-  currentPage.value = 1
-  loadCourses()
-}
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const handleClearAllFilters = () => {
-  selectedCategories.value = []
-  selectedTags.value = []
-  selectedRating.value = 0
-  searchQuery.value = ''
+  selectedCategories.value = [];
+  selectedTags.value = [];
+  selectedRating.value = 0;
+  searchQuery.value = "";
 
   // 清除所有 URL 參數
-  router.replace({ query: {} })
+  router.replace({ query: {} });
 
-  currentPage.value = 1
-  loadCourses()
-}
+  currentPage.value = 1;
+  loadCourses();
+};
 
 const toggleWishlist = async (courseId) => {
-  const course = coursesData.value.content.find(c => c.id === courseId)
-  if (!course) return
+  const course = coursesData.value.content.find((c) => c.id === courseId);
+  if (!course) return;
 
   // 檢查是否已在願望清單中
   if (wishlistStore.hasItem(courseId)) {
     // 從願望清單移除（會呼叫後端 API）
-    await wishlistStore.removeItem(courseId)
+    await wishlistStore.removeItem(courseId);
   } else {
     // 加入願望清單（會呼叫後端 API）
     await wishlistStore.addItem({
@@ -429,15 +439,15 @@ const toggleWishlist = async (courseId) => {
       title: course.title,
       instructor: course.instructorName,
       price: course.price,
-      cover_image_url: course.coverImageUrl
-    })
+      cover_image_url: course.coverImageUrl,
+    });
   }
-}
+};
 
 const handlePageChange = () => {
-  loadCourses()
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
+  loadCourses();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
 const handleMobileApplyFilter = () => {
   drawerVisible.value = false
@@ -448,65 +458,73 @@ const handleMobileApplyFilter = () => {
 
 // Responsive handling
 const checkMobile = () => {
-  isMobile.value = window.innerWidth < 768
-}
+  isMobile.value = window.innerWidth < 768;
+};
 
 // 監聽篩選條件變化
-watch([selectedCategories, selectedRating, sortBy], () => {
-  currentPage.value = 1
-  loadCourses()
-}, { deep: true })
+watch(
+  [selectedCategories, selectedRating, sortBy],
+  () => {
+    currentPage.value = 1;
+    loadCourses();
+  },
+  { deep: true }
+);
 
 // 監聽 URL query 變化（當使用者在 Header 搜尋時或從 Footer 導航時）
-watch(() => route.query, (newQuery, oldQuery) => {
-  // 處理關鍵字變化
-  const keyword = newQuery.keyword || newQuery.search || newQuery.tag
-  if (keyword && keyword !== searchQuery.value) {
-    searchQuery.value = keyword
-    currentPage.value = 1
-    loadCourses()
-  }
+watch(
+  () => route.query,
+  (newQuery, oldQuery) => {
+    // 處理關鍵字變化
+    const keyword = newQuery.keyword || newQuery.search || newQuery.tag;
+    if (keyword && keyword !== searchQuery.value) {
+      searchQuery.value = keyword;
+      currentPage.value = 1;
+      loadCourses();
+    }
 
-  // 處理分類變化
-  if (newQuery.categoryId) {
-    const categoryId = parseInt(newQuery.categoryId)
-    if (!isNaN(categoryId) && !selectedCategories.value.includes(categoryId)) {
-      selectedCategories.value = [categoryId]
-      currentPage.value = 1
-      loadCourses()
+    // 處理分類變化
+    if (newQuery.categoryId) {
+      const categoryId = parseInt(newQuery.categoryId);
+      if (!isNaN(categoryId) && !selectedCategories.value.includes(categoryId)) {
+        selectedCategories.value = [categoryId];
+        currentPage.value = 1;
+        loadCourses();
+      }
+    } else if (oldQuery?.categoryId && !newQuery.categoryId) {
+      // 當 URL 中沒有 categoryId 但之前有時，清除分類篩選
+      if (selectedCategories.value.length > 0) {
+        selectedCategories.value = [];
+        currentPage.value = 1;
+        loadCourses();
+      }
     }
-  } else if (oldQuery?.categoryId && !newQuery.categoryId) {
-    // 當 URL 中沒有 categoryId 但之前有時，清除分類篩選
-    if (selectedCategories.value.length > 0) {
-      selectedCategories.value = []
-      currentPage.value = 1
-      loadCourses()
-    }
-  }
-}, { deep: true })
+  },
+  { deep: true }
+);
 
 onMounted(async () => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
 
   // 先從 localStorage 載入願望清單資料（快速顯示）
-  wishlistStore.loadFromStorage()
+  wishlistStore.loadFromStorage();
 
   // 讀取 URL query 參數
-  const query = route.query
+  const query = route.query;
 
   // 優先使用 keyword，其次 search，最後 tag
-  const keyword = query.keyword || query.search || query.tag
+  const keyword = query.keyword || query.search || query.tag;
   if (keyword) {
-    searchQuery.value = keyword
-    console.log('從 URL 讀取搜尋關鍵字:', keyword)
+    searchQuery.value = keyword;
+    console.log("從 URL 讀取搜尋關鍵字:", keyword);
   }
 
   if (query.categoryId) {
-    const categoryId = parseInt(query.categoryId)
+    const categoryId = parseInt(query.categoryId);
     if (!isNaN(categoryId)) {
-      selectedCategories.value = [categoryId]
-      console.log('從 URL 讀取分類 ID:', categoryId)
+      selectedCategories.value = [categoryId];
+      console.log("從 URL 讀取分類 ID:", categoryId);
     }
   }
 
@@ -515,15 +533,15 @@ onMounted(async () => {
     const courseParams = {
       page: currentPage.value - 1,
       size: pageSize.value,
-      sort: sortBy.value
-    }
+      sort: sortBy.value,
+    };
 
     // 添加篩選參數
     if (searchQuery.value) {
-      courseParams.keyword = searchQuery.value
+      courseParams.keyword = searchQuery.value;
     }
     if (selectedCategories.value.length > 0) {
-      courseParams.categoryIds = selectedCategories.value
+      courseParams.categoryIds = selectedCategories.value;
     }
     // 添加評分篩選參數
     if (selectedRating.value > 0) {
@@ -531,26 +549,31 @@ onMounted(async () => {
     }
 
     // 使用 Store 的並行載入方法
+<<<<<<< HEAD
+    const { courses } = await exploreStore.loadAllData(courseParams);
+    coursesData.value = courses;
+=======
     const { courses } = await exploreStore.loadAllData(courseParams)
     console.log(courses);
 
     coursesData.value = courses
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
   } catch (error) {
-    console.error('並行載入失敗:', error)
-    ElMessage.error('載入資料失敗，請稍後再試')
+    console.error("並行載入失敗:", error);
+    ElMessage.error("載入資料失敗，請稍後再試");
   }
 
   // 如果已登入，從後端載入最新資料（不阻塞主流程）
   if (userStore.isAuthenticated) {
-    wishlistStore.loadWishlistItems().catch(error => {
-      console.error('載入願望清單失敗:', error)
-    })
+    wishlistStore.loadWishlistItems().catch((error) => {
+      console.error("載入願望清單失敗:", error);
+    });
   }
-})
+});
 
 onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
-})
+  window.removeEventListener("resize", checkMobile);
+});
 </script>
 
 <style lang="scss" scoped>
@@ -558,7 +581,11 @@ onUnmounted(() => {
 
 .explore-page {
   min-height: 100vh;
+<<<<<<< HEAD
+  background: #fcf9f4;
+=======
   background: var(--capy-bg-base); /* 使用變數 #FCF9F4 */
+>>>>>>> fb273da87ed68d396e9e9bec9fc5f55084b43ac1
 }
 
 .loading-wrapper {

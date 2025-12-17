@@ -276,8 +276,8 @@ onMounted(() => {
 }
 
 :deep(.el-table) {
-  --el-table-header-bg-color: #F9FAFB;
-  --el-table-row-hover-bg-color: #F5F3FF;
+  --el-table-header-bg-color: #f9fafb;
+  --el-table-row-hover-bg-color: #f5f3ff;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -301,6 +301,8 @@ onMounted(() => {
 
 /* 用戶資訊欄位 */
 .user-info-cell {
+  width: 100%;
+  /* padding-left: 20%; */
   display: flex;
   gap: 16px;
   align-items: center;
@@ -315,7 +317,7 @@ onMounted(() => {
 
 .user-name {
   font-weight: 500;
-  color: #1F2937;
+  color: #1f2937;
 }
 
 .user-sub {
@@ -328,14 +330,14 @@ onMounted(() => {
   font-style: italic;
   font-weight: 600;
   font-size: 20px;
-  color: #9CA3AF;
+  color: #9ca3af;
   opacity: 0.4;
   transition: all 0.2s ease;
 }
 
 .table-row:hover .index {
   opacity: 1;
-  color: #4F46E5;
+  color: #4f46e5;
 }
 
 /* 狀態欄位 */
@@ -348,7 +350,7 @@ onMounted(() => {
 
 .status-text {
   font-size: 12px;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 /* 日期樣式 */
@@ -358,7 +360,6 @@ onMounted(() => {
 }
 
 .el-tag {
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
 }
 </style>
-

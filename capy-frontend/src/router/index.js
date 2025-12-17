@@ -14,22 +14,9 @@ const router = createRouter({
     // 如果有保存的位置（例如使用瀏覽器的前進/後退按鈕）
     if (savedPosition) {
       return savedPosition;
+    } else {
+      return { top: 0, behavior: "smooth" };
     }
-
-    // 如果有錨點（hash），滾動到該元素
-    if (to.hash) {
-      return {
-        el: to.hash,
-        behavior: 'auto',
-      };
-    }
-
-    // 新的導航，直接跳到最上方（不使用平滑捲動）
-    return {
-      top: 0,
-      left: 0,
-      behavior: 'auto'
-    };
   },
 });
 
