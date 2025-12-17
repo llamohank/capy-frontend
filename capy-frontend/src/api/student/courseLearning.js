@@ -311,6 +311,15 @@ export const getMyReview = (courseId) => {
   })
 }
 
+/**
+ * 儲存單元觀看進度
+ * @param {{ lessonId: number|string, lastWatchSeconds: number }} payload
+ * @returns {Promise<void>}
+ */
+export const saveLessonProgress = (payload) => {
+  return http.post('/lesson/create', payload)
+}
+
 export default {
   getLessonSummary,
   getCourseSections,
@@ -323,5 +332,6 @@ export default {
   getHlsResource,
   buildHlsUrl,
   triggerAttachmentDownload,
-  getMyReview
+  getMyReview,
+  saveLessonProgress
 }
