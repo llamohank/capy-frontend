@@ -8,9 +8,10 @@ const STATUS_MAP = {
   transcoding: "review",
   force_unpublish: "banned",
 };
-export default function useCourseSwitch() {
-  const switchCourseStatus = (status) => STATUS_MAP[status] ?? "unknown";
-  return { switchCourseStatus };
+export const switchCourseStatus = (status) => {
+  // const switchCourseStatus = (status) => STATUS_MAP[status] ?? "unknown";
+  // return { switchCourseStatus };
+  return STATUS_MAP[status] ?? "unknown";
   // switch (status) {
   //   //草稿(包含草稿、申請上架失敗、課程轉碼失敗)
   //   case "draft":
@@ -31,4 +32,4 @@ export default function useCourseSwitch() {
   //   default:
   //     return "unknown";
   // }
-}
+};

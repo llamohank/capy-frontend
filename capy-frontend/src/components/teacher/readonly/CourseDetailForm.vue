@@ -1,43 +1,9 @@
 <script setup>
-import { useCourse } from "@/composable/useCourse";
 import { useCourseStore } from "@/stores/course";
 const courseStore = useCourseStore();
-const { categoryOptions, setCourseInfo, tagList, courseInfo, currentCourseId } = useCourse();
 
-// onMounted(() => {
-//   if (!currentCourseId.value) {
-//     setDefaultCourseInfo();
-//     formModel.value = { ...courseInfo.value };
-//     console.log("init form");
-//   }
-// });
-const formModel = ref({ ...courseInfo.value });
-console.log(courseStore.categoryList);
-// console.log(courseStore.tagList);
-console.log(courseStore.currentCourseCategory);
-// const next = async () => {
-//   // formModel.value.coverImageUrl = previewUrl.value;
-//   try {
-//     await validate();
-//   } catch (e) {
-//     throw new Error("表單驗證失敗，請填寫必要欄位");
-//   }
-//   try {
-//     if (currentCourseId) {
-//       formModel.value.courseId = currentCourseId;
-//     }
-//     const fd = new FormData();
+const formModel = ref(courseStore.courseInfo);
 
-//     fd.append(
-//       "course",
-//       new Blob([JSON.stringify(requestCourseData.value)], { type: "application/json" })
-//     );
-//     fd.append("cover", uploadFile.value);
-//     await setCourseInfo(fd);
-//   } catch (err) {
-//     throw err;
-//   }
-// };
 const formatPrice = (value) => {
   return `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
@@ -54,7 +20,7 @@ const formatPrice = (value) => {
       :model="formModel"
     >
       <el-form-item label="課程名稱 :">
-        <p>{{ formModel.title }}</p>
+        <p tyle="overflow-wrap: break-word; line-height: 1.5">{{ formModel.title }}</p>
       </el-form-item>
       <el-form-item label="課程封面 :">
         <img
@@ -92,7 +58,9 @@ const formatPrice = (value) => {
         <p v-else>尚無課程標籤</p>
       </el-form-item>
       <el-form-item prop="description" label="課程簡介 :">
-        <p>{{ formModel.description }}</p>
+        <p style="overflow-wrap: break-word; word-break: break-all; line-height: 1.5">
+          {{ formModel.description }}
+        </p>
       </el-form-item>
     </el-form>
   </div>

@@ -40,19 +40,19 @@ export const useLesson = (sectionInfo) => {
     }
   };
   const reorderCourseLesson = async (ids) => {
-    try {
-      await reorderLesson(currentSectionInfo.sectionId, { ids });
-      ElMessage.success("單元影片順序更新!");
-    } catch (e) {
-      console.log(e);
-      ElMessage.error("影片順序更新失敗!");
-    } finally {
-      try {
-        await courseStore.fetchCourseOverview();
-      } catch (e) {
-        console.log(e);
-      }
-    }
+    // try {
+    await reorderLesson(currentSectionInfo.sectionId, { ids });
+    //   ElMessage.success("單元影片順序更新!");
+    // } catch (e) {
+    //   console.log(e);
+    //   ElMessage.error("影片順序更新失敗!");
+    // } finally {
+    // try {
+    //   await courseStore.fetchCourseOverview();
+    // } catch (e) {
+    //   console.log(e);
+    // }
+    // }
   };
   return {
     currentSectionInfo,

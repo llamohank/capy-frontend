@@ -20,6 +20,12 @@
         </span>
       </p>
 
+      <!-- Last Watched Info -->
+      <p v-if="lastWatchedInfo" class="last-watched-info">
+        <el-icon><VideoPlay /></el-icon>
+        <span>{{ lastWatchedInfo }}</span>
+      </p>
+
       <!-- Rating Section -->
       <div class="rating-section" @click.stop>
         <el-rate
@@ -68,7 +74,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Star } from '@element-plus/icons-vue'
+import { Star, VideoPlay } from '@element-plus/icons-vue'
 
 const router = useRouter()
 
@@ -89,6 +95,24 @@ const StarIcon = Star
  */
 const completionPercentage = computed(() => {
   return Math.round(props.course.completionPercentage || 0)
+})
+
+/**
+ * 上次觀看資訊
+ */
+const lastWatchedInfo = computed(() => {
+  const sectionTitle = props.course.lastWatchedSectionTitle
+  const lessonTitle = props.course.lastWatchedLessonTitle
+
+  if (!sectionTitle && !lessonTitle) {
+    return null
+  }
+
+  if (sectionTitle && lessonTitle) {
+    return `${sectionTitle} / ${lessonTitle}`
+  }
+
+  return lessonTitle || sectionTitle
 })
 
 /**
@@ -286,6 +310,25 @@ const handleTeacherClick = () => {
   font-size: 14px;
   color: var(--el-text-color-secondary);
   margin: 0;
+}
+
+.last-watched-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--capy-primary);
+  margin: 4px 0 0 0;
+
+  .el-icon {
+    font-size: 14px;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .teacher-link {

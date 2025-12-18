@@ -174,6 +174,16 @@ const attachmentUploadRef = ref(null);
 const attachmentOps = computed(() => [...newAttachmentList.value, ...deleteAttachmentList.value]);
 //新增的檔案
 const attachmentFileList = computed(() => attachmentList.value?.map((file) => file.raw));
+// let isDefferent = true;
+// watch(
+//   () => requestData,
+//   (newVal, oldVal) => {
+//     console.log(newVal);
+//     console.log(oldVal);
+//     console.log(newVal === oldVal);
+//   },
+//   { immediate: true }
+// );
 const save = () => {
   if (!formModel.value.videoUrl || formModel.value.videoUrl === props.videoUrl) {
     requestData.value.videoMeta = null;

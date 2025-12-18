@@ -41,6 +41,7 @@ import VideoPlayer from '@llamohank/custom-shaka-player'
  * @property {string} videoUrl - 影片串流 URL (DASH/HLS)
  * @property {string} poster - 封面圖 URL
  * @property {boolean} autoplay - 是否自動播放
+ * @property {boolean} muted - 是否靜音（預設 false）
  * @property {number} startTime - 起始播放秒數
  */
 const props = defineProps({
@@ -53,6 +54,10 @@ const props = defineProps({
     default: ''
   },
   autoplay: {
+    type: Boolean,
+    default: false
+  },
+  muted: {
     type: Boolean,
     default: false
   },
@@ -123,6 +128,11 @@ const initPlayer = async () => {
       if (savedProgress > 0) {
         videoElement.value.currentTime = savedProgress
       }
+    }
+
+    // 設定靜音
+    if (props.muted) {
+      videoElement.value.muted = true
     }
 
     // 自動播放

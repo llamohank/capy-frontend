@@ -298,10 +298,10 @@ export const useNotificationStore = defineStore("notification", () => {
     const actualState = notificationSSEService.getConnectionState();
     const isActuallyConnected = notificationSSEService.isConnected();
 
-    console.log('🔍 startSSE 檢查:', {
+    console.log("🔍 startSSE 檢查:", {
       storeConnected: isSSEConnected.value,
       actualState: actualState,
-      isActuallyConnected: isActuallyConnected
+      isActuallyConnected: isActuallyConnected,
     });
 
     // 如果實際連線是活躍的，就不需要重新連線
@@ -310,6 +310,7 @@ export const useNotificationStore = defineStore("notification", () => {
       // 同步 store 狀態
       isSSEConnected.value = true;
       connectionState.value = actualState;
+
       return;
     }
 

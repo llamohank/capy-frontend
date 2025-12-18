@@ -79,7 +79,9 @@ export const fetchStudentProfile = () => {
  *     lastWatchedLessonOrder: number,
  *     lastWatchedLessonTitle: string,
  *     lastWatch: string,
- *     progressId: number
+ *     progressId: number,
+ *     lastWatchedProgressId: number,
+ *     lastWatchPositionSecond: number
  *   }>,
  *   number: number,
  *   first: boolean,

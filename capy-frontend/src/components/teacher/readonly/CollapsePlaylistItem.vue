@@ -1,13 +1,13 @@
 <script setup>
-import { VueDraggable as Draggable } from "vue-draggable-plus";
-import TextInputDialog from "../../common/TextInputDialog.vue";
-import { useLesson } from "@/composable/useLesson";
-import { useCourseStore } from "@/stores/course";
-import { useVideo } from "@/composable/useVideo";
+// import { VueDraggable as Draggable } from "vue-draggable-plus";
+// import TextInputDialog from "../../common/TextInputDialog.vue";
+// import { useLesson } from "@/composable/useLesson";
+// import { useCourseStore } from "@/stores/course";
+// import { useVideo } from "@/composable/useVideo";
 import LessonFormDialog from "./LessonFormDialog.vue";
 import { getVideoUrl } from "@/api/teacher/video";
-import { createLesson, updateLesson } from "@/api/teacher/course";
-import { useVideoStore } from "@/stores/video";
+// import { createLesson, updateLesson } from "@/api/teacher/course";
+// import { useVideoStore } from "@/stores/video";
 import transformSeconds from "@/utils/timetransform";
 const props = defineProps({
   sectionInfo: {
@@ -15,10 +15,10 @@ const props = defineProps({
     required: true,
   },
 });
-const courseStore = useCourseStore();
-const { deleteSection, updateSection, deleteCourseLesson, reorderCourseLesson } = useLesson(
-  props.sectionInfo
-);
+// const courseStore = useCourseStore();
+// const { deleteSection, updateSection, deleteCourseLesson, reorderCourseLesson } = useLesson(
+//   props.sectionInfo
+// );
 
 //lesson
 const isEditLesson = ref(false);
@@ -34,63 +34,6 @@ const handleEditLesson = async (lessonInfo) => {
     lessonVideoUrl.value = res.signedUrl;
   }
   showLessonDialog.value = true;
-};
-const handleSaveLesson = async (data) => {
-  data.request.courseId = courseStore.currentCourseId;
-  data.request.sectionId = props.sectionInfo.sectionId;
-  if (!isEditLesson.value) {
-    data.request.displayOrder = props.sectionInfo.lessons.length;
-  }
-  console.log(data);
-  const fd = new FormData();
-  fd.append(
-    "uploadRequest",
-    new Blob([JSON.stringify(data.request)], { type: "application/json" })
-  );
-  for (let i = 0; i < data.fileList.length; i++) {
-    fd.append("attachments", data.fileList[i]);
-  }
-
-  try {
-    if (!isEditLesson.value) {
-      const res = await createLesson(fd);
-      await courseStore.fetchCourseOverview();
-      console.log(res);
-      if (data.request.videoMeta) {
-        ElMessage.warning("影片上傳中，請勿離開當前頁面或重新刷新");
-        //加入上傳列表 開始上傳
-        const videoStore = useVideoStore();
-        videoStore.append({ lessonId: res.lessonId, videoAssetId: res.videoInfo.videoAssetId });
-        const { uploadVideoToGCP } = useVideo(res.videoInfo.videoAssetId);
-        console.log(1);
-        await uploadVideoToGCP(res.videoInfo.initiateUrl, data.videoFile);
-      } else {
-        // const message = isEditLesson.value ? "更新成功" : "創建成功";
-        ElMessage.success("創建成功");
-      }
-    } else {
-      const res = await updateLesson(fd);
-      console.log(res);
-      await courseStore.fetchCourseOverview();
-      if (data.request.videoMeta) {
-        ElMessage.warning("影片上傳中，請勿離開當前頁面或重新刷新");
-        //加入上傳列表 開始上傳
-        const videoStore = useVideoStore();
-        videoStore.append({ lessonId: res.lessonId, videoAssetId: res.videoInfo.videoAssetId });
-        // uploadToGCP()
-        const { uploadVideoToGCP } = useVideo(res.videoInfo.videoAssetId);
-        console.log(1);
-        await uploadVideoToGCP(res.videoInfo.initiateUrl, data.videoFile);
-      } else {
-        // const message = isEditLesson.value ? "更新成功" : "創建成功";
-        ElMessage.success("更新成功");
-      }
-    }
-  } catch (e) {
-    console.log(e);
-    const message = isEditLesson.value ? "更新失敗" : "創建失敗";
-    ElMessage.error(message);
-  }
 };
 </script>
 <template>

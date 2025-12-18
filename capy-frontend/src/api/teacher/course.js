@@ -24,6 +24,9 @@ export const deleteCourse = (courseId) => {
 export const submitCourse = (courseId) => {
   return axios.post(`/teacher/courses/${courseId}/submit-review`);
 };
+export const editCoursePrice = (id, data) => {
+  axios.put(`teacher/courses/${id}/price`, data);
+};
 //section
 export const createSection = (data) => {
   return axios.post("/teacher/courses/add-section", data);

@@ -43,7 +43,6 @@ const formatDuration = (seconds) => {
 // 打開課程詳情對話框
 const openLessonDetail = async (lesson) => {
   currentLesson.value = lesson;
-  dialogFormVisible.value = true;
 
   // 取得影片簽名 URL
   try {
@@ -56,6 +55,7 @@ const openLessonDetail = async (lesson) => {
     console.error("Failed to get video URL:", error);
   } finally {
     loadingVideo.value = false;
+    dialogFormVisible.value = true;
   }
 };
 
@@ -104,8 +104,10 @@ watch(
   async (value) => {
     await nextTick();
     if (value && videoPlayerRef.value && videoUrl.value) {
+      console.log(videoUrl.value);
+
       await videoPlayerRef.value.init();
-      await videoPlayerRef.value.play();
+      await videoPlayerRef.value.play(videoUrl.value);
     } else if (!value && videoPlayerRef.value) {
       await videoPlayerRef.value.destroy();
       videoUrl.value = "";
@@ -185,7 +187,9 @@ watch(
           <span>
             <span class="index">{{ (index + 1).toString().padStart(2, "0") }}</span>
             {{ lesson.lessonTitle }}
-            <el-tag v-if="lesson.freePreview" style="margin-left: 8px" size="large">試看單元</el-tag>
+            <el-tag v-if="lesson.freePreview" style="margin-left: 8px" size="large"
+              >試看單元</el-tag
+            >
           </span>
           <div>
             {{ formatDuration(lesson.lessonDurationSeconds) }}

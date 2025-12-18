@@ -58,14 +58,14 @@
                 class="lesson-item"
                 :class="{
                   'is-active': lesson.id === currentLessonId,
-                  'is-completed': lesson.isCompleted,
+                  'is-completed': lesson.completed || lesson.isCompleted,
                   'is-locked': lesson.isLocked
                 }"
                 @click="handleLessonClick(lesson)"
               >
                 <!-- 左側狀態圖示 -->
                 <div class="lesson-status">
-                  <el-icon v-if="lesson.isCompleted" class="status-icon completed">
+                  <el-icon v-if="lesson.completed || lesson.isCompleted" class="status-icon completed">
                     <CircleCheck />
                   </el-icon>
                   <el-icon v-else-if="lesson.isLocked" class="status-icon locked">
@@ -161,7 +161,7 @@ const totalCount = computed(() => {
  */
 const completedCount = computed(() => {
   return props.chapters.reduce((total, chapter) => {
-    return total + chapter.lessons.filter(lesson => lesson.isCompleted).length
+    return total + chapter.lessons.filter(lesson => lesson.completed || lesson.isCompleted).length
   }, 0)
 })
 

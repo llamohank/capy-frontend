@@ -11,8 +11,8 @@
               v-if="currentLesson"
               :video-url="currentLesson.videoUrl"
               :poster="currentLesson.poster"
-              :autoplay="false"
-              :start-time="0"
+              :autoplay="shouldAutoPlay"
+              :start-time="resumeStartTime"
               @timeupdate="handleTimeUpdate"
               @ended="handleVideoEnded"
               @error="handleVideoError"
@@ -327,7 +327,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -360,7 +360,8 @@ import {
   postQuestion,
   buildHlsUrl,
   triggerAttachmentDownload,
-  getMyReview
+  getMyReview,
+  saveLessonProgress
 } from '@/api/student/courseLearning'
 import { rateCourse } from '@/api/student/studentCenter'
 import { fetchCourseDetail } from '@/api/student/courseDetail'
@@ -398,6 +399,16 @@ const lessonSummary = ref({
 
 // 附件列表
 const attachments = ref([])
+
+// 播放進度／續播相關
+const resumeStartTime = ref(0)
+const lastProgressSyncedAt = ref(0)
+const lastSyncedSeconds = ref(0)
+const lastDuration = ref(0)
+const isSyncingProgress = ref(false)
+const shouldAutoPlay = ref(false)
+const muted = ref(true) // 預設靜音
+const PROGRESS_SYNC_INTERVAL_MS = 8000
 
 // Q&A 資料
 const qaFilter = ref('current')
@@ -644,7 +655,8 @@ const loadQAData = async (loadMore = false) => {
     // 轉換後端資料格式為前端格式
     const formattedItems = (data.items || []).map(item => ({
       id: item.questionId,
-      lessonId: params.lessonId || null,
+      // 保留後端原始 lessonId，避免「全部課程」篩選時遺失對應
+      lessonId: item.lessonId,
       sectionId: item.sectionId,
       sectionTitle: item.sectionTitle,
       lessonName: item.lessonName,
@@ -789,28 +801,88 @@ const handleLessonClick = (lesson) => {
 }
 
 /**
- * 處理影片時間更新
+ * 同步學習進度到後端
  */
+const syncLessonProgress = async ({ seconds, force = false }) => {
+  if (!currentLessonId.value) return
+
+  // 避免重複打 API，除非強制
+  if (isSyncingProgress.value && !force) return
+
+  isSyncingProgress.value = true
+  try {
+    // 呼叫 API 並取得回應
+    const response = await saveLessonProgress({
+      lessonId: currentLessonId.value,
+      lastWatchSeconds: Math.max(0, Math.floor(seconds || 0))
+    })
+    lastSyncedSeconds.value = Math.max(0, Math.floor(seconds || 0))
+    lastProgressSyncedAt.value = Date.now()
+
+    // 根據後端回傳的 completed 欄位決定是否標記完成
+    if (response?.completed) {
+      markLessonCompleted(currentLessonId.value)
+    }
+  } catch (error) {
+    console.error('同步學習進度失敗:', error)
+  } finally {
+    isSyncingProgress.value = false
+  }
+}
+
 const handleTimeUpdate = (data) => {
-  // 可以在這裡記錄學習進度
+  const seconds = Math.max(0, Math.floor(data?.currentTime || 0))
+  const duration = Math.max(0, Math.floor(data?.duration || 0))
+
+  resumeStartTime.value = seconds
+  lastDuration.value = duration
+
+  const now = Date.now()
+
+  // 節流：8 秒內只同步一次
+  if (now - lastProgressSyncedAt.value < PROGRESS_SYNC_INTERVAL_MS) {
+    return
+  }
+
+  syncLessonProgress({ seconds })
+}
+
+/**
+ * 標記單元為已完成（更新原始資料，使側邊欄反應性更新）
+ */
+const markLessonCompleted = (lessonId) => {
+  for (const section of courseData.value.sections) {
+    const lesson = section.lessons?.find(l => l.id == lessonId)
+    if (lesson) {
+      // 設定後端欄位和前端欄位，確保相容性
+      lesson.completed = true
+      lesson.isCompleted = true
+      break
+    }
+  }
 }
 
 /**
  * 處理影片播放結束
  */
-const handleVideoEnded = () => {
-  if (currentLesson.value) {
-    currentLesson.value.isCompleted = true
-  }
+const handleVideoEnded = async () => {
+  // 結束時強制同步最終進度（後端會判斷是否完成）
+  const finalSeconds = lastDuration.value || resumeStartTime.value || 0
+  await syncLessonProgress({ seconds: finalSeconds, force: true })
+
+  // 確保標記為已完成（以防後端尚未回傳 completed）
+  markLessonCompleted(currentLessonId.value)
 
   const nextLesson = getNextLesson()
   if (nextLesson) {
-    ElMessage.success('已完成本單元，即將播放下一單元')
-    setTimeout(() => {
-      handleLessonClick(nextLesson)
-    }, 2000)
+    // 設定自動播放，然後立即跳轉下一單元
+    shouldAutoPlay.value = true
+    resumeStartTime.value = 0
+    ElMessage.success('已完成本單元，自動播放下一單元')
+    handleLessonClick(nextLesson)
   } else {
-    ElMessage.success('恭喜！您已完成本課程所有單元')
+    shouldAutoPlay.value = false
+    ElMessage.success('🎉 恭喜！您已完成本單元')
   }
 }
 
@@ -832,7 +904,8 @@ const getNextLesson = () => {
       if (foundCurrent && !lesson.isLocked) {
         return lesson
       }
-      if (lesson.id === currentLessonId.value) {
+      // 使用寬鬆比較，因為 route params 是字串，lesson.id 可能是數字
+      if (lesson.id == currentLessonId.value) {
         foundCurrent = true
       }
     }
@@ -905,16 +978,10 @@ const handleRatingTextClick = () => {
  */
 const handleReviewSubmitted = async (reviewData) => {
   try {
-    // 判斷是新增還是更新評分
+    // 判斷是新增還是更新評分（僅用於顯示提示文字）
     const isUpdate = userRating.value !== null && userRating.value !== undefined && userRating.value > 0
 
-    if (isUpdate) {
-      // 如果已經評過分，顯示提示（因為新 API 不支援更新）
-      ElMessage.warning('您已經評過此課程，無法重複評分')
-      return
-    }
-
-    // 使用新的 rateCourse API 提交評分
+    // 使用新的 rateCourse API 提交評分（支援重送以更新評價）
     await rateCourse({
       courseId: courseData.value.courseId,
       rating: reviewData.rating,
@@ -925,7 +992,7 @@ const handleReviewSubmitted = async (reviewData) => {
     userRating.value = reviewData.rating
     userComment.value = reviewData.comment
 
-    ElMessage.success('評價提交成功！感謝您的反饋')
+    ElMessage.success(isUpdate ? '已更新您的課程評價' : '評價提交成功！感謝您的反饋')
 
     // 關閉對話框
     ratingDialogVisible.value = false
@@ -936,7 +1003,7 @@ const handleReviewSubmitted = async (reviewData) => {
     if (error.response?.status === 400) {
       ElMessage.error('已購買後才能評價')
     } else if (error.response?.status === 409) {
-      ElMessage.error('已經評過此課程')
+      ElMessage.warning('您已經評過此課程，已為您載入最新評價')
       // 如果是重複評分錯誤，重新載入評論狀態
       await loadMyReview()
     } else if (error.response?.status === 401 || error.response?.status === 403) {
@@ -1031,6 +1098,13 @@ watch(qaFilter, () => {
 watch(activeTab, (newTab) => {
   if (newTab === 'my-questions' && myQuestionsData.value.length === 0) {
     loadMyQuestions()
+  }
+})
+
+// 頁面離開前補送最後進度
+onBeforeUnmount(() => {
+  if (resumeStartTime.value > lastSyncedSeconds.value) {
+    syncLessonProgress({ seconds: resumeStartTime.value, force: true })
   }
 })
 

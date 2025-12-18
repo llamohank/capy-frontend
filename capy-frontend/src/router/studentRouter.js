@@ -28,10 +28,6 @@ const studentRoutes = [
         path: "explore",
         name: "courseExplore",
         component: () => import("@/views/student/ExplorePage/CourseExplorePage.vue"),
-        beforeEnter: async (to, from, next) => {
-          await searchCourses();
-          next();
-        },
       },
       // 課程詳情頁面
       {
@@ -61,24 +57,6 @@ const studentRoutes = [
         path: "instructor/landing",
         name: "instructorLanding",
         component: () => import("@/views/student/instructorApply/InstructorLanding.vue"),
-      },
-      // ====================================
-      // 其他頁面路由
-      // ====================================
-      {
-        path: "about",
-        name: "about",
-        component: () => import("@/views/student/Others/About.vue"),
-      },
-      {
-        path: "contact",
-        name: "contact",
-        component: () => import("@/views/student/Others/contact.vue"),
-      },
-      {
-        path: "privacy",
-        name: "privacy",
-        component: () => import("@/views/student/Others/Privacy.vue"),
       },
 
       // ====================================
@@ -129,10 +107,10 @@ const studentRoutes = [
         meta: { requiresAuth: true },
       },
       {
-        path: 'checkout/fail',
-        name: 'checkoutFail',
-        component: () => import('@/views/student/Checkout/Success.vue'),
-        meta: { requiresAuth: true }
+        path: "checkout/fail",
+        name: "checkoutFail",
+        component: () => import("@/views/student/Checkout/Success.vue"),
+        meta: { requiresAuth: true },
       },
 
       // ====================================

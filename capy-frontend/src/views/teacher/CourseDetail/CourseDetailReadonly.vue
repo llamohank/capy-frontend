@@ -2,11 +2,16 @@
 import CourseDetailForm from "@/components/teacher/readonly/CourseDetailForm.vue";
 import CourseAttachment from "@/components/teacher/readonly/CourseAttachment.vue";
 import CoursePlaylist from "@/components/teacher/readonly/CoursePlaylist.vue";
+import { useCourseStore } from "@/stores/course";
+import { editCoursePrice } from "@/api/teacher/course";
+const courseStore = useCourseStore();
 const props = defineProps({
   status: {
     type: String,
   },
 });
+const newPriceValue = ref("");
+const dialogVisible = ref(false);
 const switchAlertType = (status) => {
   switch (status) {
     case "published":
@@ -50,6 +55,29 @@ const alertDescription = computed(() => {
       return "";
   }
 });
+const detailformRef = ref(null);
+const handleEditPrice = async (val) => {
+  const priceRegex = new RegExp(/^(?:0|[1-9]\d*)$/);
+  console.log(val);
+  console.log(priceRegex.test(val));
+  if (!priceRegex.test(val)) {
+    ElMessage.error("請輸入正確的課程價格");
+    return;
+  }
+  try {
+    await editCoursePrice(courseStore.currentCourseId, { price: val });
+    ElMessage.success("更新成功");
+    if (courseStore.courseInfo) {
+      courseStore.courseInfo.price = val;
+      console.log(111);
+    }
+    if (detailformRef.value) {
+      detailformRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  } catch (e) {
+    ElMessage.error("更新課程價格失敗");
+  }
+};
 </script>
 <template>
   <div class="section-heading">課程詳情</div>
@@ -64,12 +92,30 @@ const alertDescription = computed(() => {
     />
   </div>
   <div style="display: flex; flex-direction: column; gap: 48px">
-    <CourseDetailForm />
+    <TextInputDialog
+      @confirm="handleEditPrice"
+      title="編輯課程價格"
+      v-model:inputValue="newPriceValue"
+      v-model:visible="dialogVisible"
+      placeholder="請輸入新價格"
+    />
+    <div ref="detailformRef">
+      <CourseDetailForm />
+    </div>
     <CoursePlaylist />
     <CourseAttachment />
     <div class="operation-btn-group">
-      <el-button size="large" type="info">返回</el-button>
-      <el-button size="large" type="primary">編輯價格</el-button>
+      <el-button @click="$router.push({ name: 'mycourse' })" round size="large" type="info"
+        ><el-icon size="large" style="margin-right: 12px"><Back /></el-icon>返回我的課程</el-button
+      >
+      <el-button
+        @click="dialogVisible = true"
+        round
+        size="large"
+        v-if="alertType === 'success'"
+        type="primary"
+        >編輯價格</el-button
+      >
     </div>
   </div>
 </template>
@@ -87,10 +133,21 @@ const alertDescription = computed(() => {
   font-weight: 500;
 }
 .operation-btn-group {
-  padding: 0 30%;
+  padding: 0 20%;
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
+  /* flex-wrap: wrap; */
+  /* gap: 18px; */
+  /* justify-content: center; */
+  margin-bottom: 24px;
   /* justify-content: space-between; */
+  /* justify-content: space-evenly; */
+}
+.operation-btn-group .el-button {
+  padding: 24px 36px;
+  /* flex: 1;
+  al */
+}
+.operation-btn-group .el-button + .el-button {
+  margin-left: auto;
 }
 </style>

@@ -16,18 +16,26 @@ const stepComponentList = [CourseDetailForm, CoursePlaylist, CourseAttachment];
 const activeStep = ref(0);
 const activeStepCom = computed(() => stepComponentList[activeStep.value]);
 const activeComRef = ref(null);
+let isRequesting = false;
 const goNextStep = async () => {
+  if (isRequesting) {
+    ElMessage.warning("處理中，請稍後");
+  }
   if (activeStep.value === 2) {
     return;
   }
   try {
+    isRequesting = true;
     if (activeComRef.value.next) {
       await activeComRef.value.next();
       activeStep.value++;
+      stepProgressRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   } catch (e) {
     // console.log(e.message);
     ElMessage.error(e.message);
+  } finally {
+    isRequesting = false;
   }
 
   // currentStep.value = stepComponentList[activeStep.value];
@@ -37,6 +45,7 @@ const goPreviousStep = () => {
     return;
   }
   activeStep.value--;
+  stepProgressRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
   // currentStep.value = stepComponentList[activeStep.value];
 };
 const saveToDraft = () => {
@@ -74,10 +83,11 @@ const deleteCourse = async () => {
     console.log(e);
   }
 };
+const stepProgressRef = ref(null);
 </script>
 <template>
   <div>
-    <div class="step-bar">
+    <div ref="stepProgressRef" class="step-bar">
       <el-steps
         style="width: 90%"
         :active="activeStep"

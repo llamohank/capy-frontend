@@ -51,7 +51,8 @@ export const getLessonSummary = (lessonId) => {
  *           id: number,
  *           title: string,  // 單元標題
  *           displayOrder: number,
- *           duration: string  // MM:SS 格式
+ *           duration: string,  // MM:SS 格式
+ *           completed: boolean // 是否已完成
  *         }
  *       ]
  *     }
@@ -311,6 +312,31 @@ export const getMyReview = (courseId) => {
   })
 }
 
+/**
+ * 儲存單元觀看進度
+ * @param {{ lessonId: number|string, lastWatchSeconds: number }} payload
+ * @returns {Promise<LessonProgressSaveVo>}
+ * @example
+ * Request Body:
+ * {
+ *   lessonId: number,
+ *   lastWatchSeconds: number
+ * }
+ *
+ * Response: Result<LessonProgressSaveVo>
+ * {
+ *   progressId: number,
+ *   lessonId: number,
+ *   courseId: number,
+ *   lastWatchSeconds: number,
+ *   completed: boolean,      // 後端判斷是否已完成
+ *   completedAt: string|null // ISO-8601 格式，完成時間
+ * }
+ */
+export const saveLessonProgress = (payload) => {
+  return http.post('/lesson/progress/update', payload)
+}
+
 export default {
   getLessonSummary,
   getCourseSections,
@@ -323,5 +349,6 @@ export default {
   getHlsResource,
   buildHlsUrl,
   triggerAttachmentDownload,
-  getMyReview
+  getMyReview,
+  saveLessonProgress
 }

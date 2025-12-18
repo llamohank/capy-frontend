@@ -22,7 +22,11 @@
     <div class="course-info">
       <!-- Title -->
       <h3 class="course-title">{{ course.title }}</h3>
-      <p><el-tag>555</el-tag></p>
+      <p>
+        <el-tag size="large" round effect="plain" :type="formatTagType(course.status)">{{
+          formatCourseStatusTag(course.status)
+        }}</el-tag>
+      </p>
       <!-- Rating -->
       <div class="course-rating">
         <el-rate
@@ -43,6 +47,8 @@
 </template>
 
 <script setup>
+import { switchCourseStatus } from "@/hooks/useCourseSwitch";
+
 const props = defineProps({
   course: {
     type: Object,
@@ -71,6 +77,32 @@ const formatPrice = (price) => {
     return "0";
   }
   return price.toLocaleString("zh-TW");
+};
+const formatCourseStatusTag = (status) => {
+  const tag = switchCourseStatus(status);
+  switch (tag) {
+    case "draft":
+      return "草稿";
+    case "published":
+      return "已上架";
+    case "review":
+      return "審核中";
+    case "banned":
+      return "強制下架";
+  }
+};
+const formatTagType = (status) => {
+  const tag = switchCourseStatus(status);
+  switch (tag) {
+    case "draft":
+      return "info";
+    case "published":
+      return "success";
+    case "review":
+      return "warning";
+    case "banned":
+      return "danger";
+  }
 };
 </script>
 
@@ -133,7 +165,7 @@ const formatPrice = (price) => {
 
 .course-title {
   font-size: 16px;
-  flex: 1;
+  /* flex: 2; */
   font-weight: 600;
   color: #2c3e50;
   /* margin: 0 0 12px 0; */
@@ -143,8 +175,9 @@ const formatPrice = (price) => {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  /* height: 30px; */
   text-overflow: ellipsis;
-  /* min-height: 44px; */
+  min-height: 44px;
 }
 
 .course-rating {

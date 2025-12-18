@@ -6,17 +6,17 @@ export const useSection = () => {
   const courseStore = useCourseStore();
   const { currentCourseId, courseSections } = storeToRefs(courseStore);
   //排序後的
-  const sectionList = { ...courseSections.value };
-  // console.log(sectionList);
-  if (sectionList.length > 0) {
-    sectionList?.sort((a, b) => a.displayOrder - b.displayOrder);
-  }
+  // const sectionList = { ...courseSections.value };
+  // // console.log(sectionList);
+  // if (sectionList.length > 0) {
+  //   sectionList?.sort((a, b) => a.displayOrder - b.displayOrder);
+  // }
 
-  const sortedSectionList = ref(sectionList);
+  // const sortedSectionList = ref(sectionList);
   //id是section entity sectionId是overview的
-  const sortedSectionIds = computed(() =>
-    sortedSectionList.value?.map((section) => section.sectionId ?? section.id)
-  );
+  // const sortedSectionIds = computed(() =>
+  //   sortedSectionList.value?.map((section) => section.sectionId ?? section.id)
+  // );
   const addCourseSection = async (title) => {
     const data = {
       courseId: currentCourseId.value,
@@ -24,6 +24,7 @@ export const useSection = () => {
     };
     // const res = await createSection(data);
     await createSection(data);
+    ElMessage.success("新增章節成功");
     courseStore.fetchCourseOverview();
     // console.log("取得新增課程章節結果", res);
     // if (res) {
@@ -54,21 +55,13 @@ export const useSection = () => {
       ElMessage.success("刪除成功");
     }
   };
-  const reorderCourseSection = async () => {
-    await reorderSection(currentCourseId, sortedSectionIds.value);
-    for (let i = 0; i < courseIds.length; i++) {
-      //id是section entity sectionId是overview的
-      courseSections.value.find(
-        (section) => section.id ?? section.sectionId === courseIds[i]
-      ).displayOrder = i;
-    }
+  const reorderCourseSection = async (ids) => {
+    await reorderSection(currentCourseId.value, { ids });
   };
   return {
     addCourseSection,
     updateCourseSection,
     deleteCourseSection,
-    sortedSectionList,
-    sortedSectionIds,
     reorderCourseSection,
   };
 };

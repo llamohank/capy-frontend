@@ -1,9 +1,9 @@
 import { useVideo } from "@/composable/useVideo";
-import useCourseSwitch from "@/hooks/useCourseSwitch";
+import { switchCourseStatus } from "@/hooks/useCourseSwitch";
 import { useCourseStore } from "@/stores/course";
 import { useInstructorNotificationStore } from "@/stores/instructorNotification";
 
-const { switchCourseStatus } = useCourseSwitch();
+// const { switchCourseStatus } = useCourseSwitch();
 
 export default [
   {
@@ -33,7 +33,8 @@ export default [
           courseStore.fetchTagListData();
           //取代查詢參數獲得課程狀態
           // const status =courseStore.courseInfo
-          if (to.query.status !== "draft") {
+          const status = switchCourseStatus(to.query.status);
+          if (status !== "draft") {
             await courseStore.fetchCourseOverview();
             next({
               name: "coursedetail",
@@ -41,7 +42,7 @@ export default [
                 courseId: to.params.courseId,
               },
               query: {
-                status: switchCourseStatus(to.query.status),
+                status,
               },
             });
           } else {
@@ -58,6 +59,18 @@ export default [
         name: "coursedetail",
         component: () => import("@/views/teacher/CourseDetail/CourseDetailReadonly.vue"),
         props: (route) => ({ status: route.query?.status }),
+        beforeEnter: async (to, from, next) => {
+          const courseStore = useCourseStore();
+          if (from.name !== "mycourse") {
+            courseStore.setCurrentCourseId(to.params.courseId);
+            await courseStore.fetchCategoryData();
+            await courseStore.fetchTagListData();
+            await courseStore.fetchCourseOverview();
+          }
+          // console.log(from);
+          // console.log(5555555555);
+          next();
+        },
       },
       {
         path: "createcourse",
