@@ -39,3 +39,5 @@ instruction/
 CLAUDE.md
 
 /instructions
+.home/
+.wrangler/
