@@ -1,6 +1,8 @@
 import "./styles/style.css";
 import "./styles/common.css";
 import "./styles/theme-variables.css";
+// import "./styles/element-plus-override.css";
+import "./styles/admin-dashboard.css";
 // import "./styles/learning.scss";
 
 import { createApp } from "vue";

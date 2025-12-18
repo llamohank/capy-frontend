@@ -84,9 +84,9 @@ const handleAnswerQuestion = async (val) => {
       >
         <el-option
           v-for="item in courseOptions"
-          :key="item.courseId"
+          :key="item.id"
           :label="item.title"
-          :value="item.courseId"
+          :value="item.id"
         />
       </el-select>
       <el-select

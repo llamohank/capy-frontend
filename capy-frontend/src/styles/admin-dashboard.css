@@ -259,12 +259,12 @@
     font-size: 13px;
 }
 
-.el-radio-group .el-radio-button__inner:hover {
 /* 限定在 admin 路由下才套用,避免影響學生端 */
 .admin-layout .el-radio-group .el-radio-button__inner:hover,
 [class*="admin"] .el-radio-group .el-radio-button__inner:hover {
     color: var(--admin-primary);
 }
+
 
 .admin-layout .el-radio-group .el-radio-button__original-radio:checked+.el-radio-button__inner,
 [class*="admin"] .el-radio-group .el-radio-button__original-radio:checked+.el-radio-button__inner {
@@ -324,12 +324,25 @@
     overflow: hidden;
 }
 
-.admin-table-container :deep(.tbody-cell .cell) {
-    display: flex;
-    justify-content: center;
-    padding: 12px 10px;
+/* Ensure table body fills full width */
+.admin-table-container :deep(.el-table__body),
+.admin-table-container :deep(.el-table__header) {
+    width: 100% !important;
 }
 
+.admin-table-container :deep(.tbody-cell .cell) {
+    display: flex;
+    align-items: center; /* Vertical center */
+    padding: 12px 10px;
+    /* Default justify-content is flex-start (left), which is what we want for User Info */
+}
+
+/* Only center horizontally if the column has align="center" (which adds .is-center to the td) */
+.admin-table-container :deep(.tbody-cell.is-center .cell) {
+    justify-content: center;
+}
+
+/* Header cells are always centered in this design */
 .admin-table-container :deep(.table-head .cell) {
     font-size: 13px;
     font-weight: 600;
@@ -338,6 +351,9 @@
     letter-spacing: 0.025em;
     color: #374151;
     padding: 12px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .admin-table-container :deep(.table-row .cell) {
@@ -367,15 +383,15 @@
 .admin-filter-row {
     display: flex;
     align-items: center;
-    gap: 16px;
     flex-wrap: wrap;
+    gap: 16px;
 }
 
 .admin-filter-form {
     display: flex;
     align-items: center;
-    gap: 16px;
     flex-wrap: wrap;
+    gap: 16px;
 }
 
 .admin-filter-form .el-form-item {
@@ -385,15 +401,23 @@
 /* ==================== Admin User Info Cell ==================== */
 .admin-user-info-cell {
     display: flex;
+    flex-direction: row;
     gap: 12px;
     align-items: center;
     padding: 6px 0;
+    width: 100%;
+}
+
+.admin-user-info-cell .el-avatar {
+    flex-shrink: 0;
 }
 
 .admin-user-details {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    flex: 1;
+    min-width: 0;
 }
 
 .admin-user-name {
@@ -544,5 +568,4 @@
 
 .admin-dialog-gradient :deep(.el-dialog__body) {
     padding: 24px;
-}
 }
