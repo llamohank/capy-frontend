@@ -257,7 +257,7 @@ export const getHlsResource = (lessonId, filePath) => {
  * @returns {string} HLS master.m3u8 的完整 URL
  */
 export const buildHlsUrl = (lessonId) => {
-  const baseURL = http.defaults.baseURL || 'http://localhost:8080/api'
+  const baseURL = http.defaults.baseURL || `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api`
   return `${baseURL}/videos/hls/${lessonId}/master`
 }
 
