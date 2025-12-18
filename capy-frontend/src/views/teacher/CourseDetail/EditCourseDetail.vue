@@ -50,6 +50,16 @@ const handlePublishCourse = async () => {
     ElMessage.error("申請上架失敗");
   }
 };
+const handleSaveUpdate = async () => {
+  try {
+    //ref 的next方法
+    await detailFormRef.value.next();
+    ElMessage.success("更新成功");
+  } catch (e) {
+    ElMessage.error(e.message);
+    return;
+  }
+};
 </script>
 <template>
   <h2 class="section-heading">編輯課程詳情</h2>

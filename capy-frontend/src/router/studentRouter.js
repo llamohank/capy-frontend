@@ -28,14 +28,6 @@ const studentRoutes = [
         path: "explore",
         name: "courseExplore",
         component: () => import("@/views/student/ExplorePage/CourseExplorePage.vue"),
-        beforeEnter: async (to, from, next) => {
-          try {
-            await searchCourses();
-          } catch (error) {
-            console.error("預先載入探索課程失敗，將繼續導向頁面：", error);
-          }
-          next();
-        },
       },
       // 課程詳情頁面
       {
@@ -115,10 +107,10 @@ const studentRoutes = [
         meta: { requiresAuth: true },
       },
       {
-        path: 'checkout/fail',
-        name: 'checkoutFail',
-        component: () => import('@/views/student/Checkout/Success.vue'),
-        meta: { requiresAuth: true }
+        path: "checkout/fail",
+        name: "checkoutFail",
+        component: () => import("@/views/student/Checkout/Success.vue"),
+        meta: { requiresAuth: true },
       },
 
       // ====================================

@@ -9,7 +9,11 @@ const chapteroptions = computed(() => {
   });
 });
 const currentchapter = ref(null);
-const attachmentList = ref([...courseStore.courseAttachments]);
+// const attachmentList = courseStore.courseAttachments;
+const attachmentList = ref([]);
+onMounted(() => {
+  attachmentList.value = [...courseStore.courseAttachments];
+});
 watch(currentchapter, (val) => {
   if (val) {
     attachmentList.value = courseStore.courseAttachments.filter((item) => item.sectionId === val);
@@ -17,7 +21,7 @@ watch(currentchapter, (val) => {
     attachmentList.value = [...courseStore.courseAttachments];
   }
 });
-const handleDeleteAttachment = async (id) => {
+const handleDeleteAttachment = async (item) => {
   try {
     await ElMessageBox.confirm("是否刪除此文件?", "提示", {
       confirmButtonText: "確認",
@@ -32,8 +36,11 @@ const handleDeleteAttachment = async (id) => {
     });
     return;
   }
-  const { deleteFile } = useAttachment(id);
+  const { deleteFile } = useAttachment(item.attachmentId);
   await deleteFile();
+  attachmentList.value = attachmentList.value.filter(
+    (attachment) => attachment.attachmentId !== item.attachmentId
+  );
 };
 const handleDownloadAttachment = async (id) => {
   const { download } = useAttachment(id);
@@ -43,7 +50,7 @@ const handleDownloadAttachment = async (id) => {
 <template>
   <div class="wrapper">
     <h2 class="section-title">課程附件一覽</h2>
-    <div v-if="courseStore.courseAttachments?.length > 0">
+    <div v-if="attachmentList?.length > 0">
       <el-select
         size="large"
         v-model="currentchapter"
@@ -87,10 +94,7 @@ const handleDownloadAttachment = async (id) => {
               <el-button type="primary" @click="handleDownloadAttachment(row.attachmentId)"
                 >下載</el-button
               >
-              <el-button
-                type="info"
-                style="margin: 0"
-                @click="handleDeleteAttachment(row.attachmentId)"
+              <el-button type="info" style="margin: 0" @click="handleDeleteAttachment(row)"
                 >刪除</el-button
               >
             </div>

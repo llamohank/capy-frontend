@@ -2,19 +2,27 @@
 import * as echarts from "echarts";
 const linecharts = ref(null);
 let ro;
+const props = defineProps({
+  data: {
+    required: true,
+    type: Array,
+  },
+});
+const xAxisLabel = computed(() => props.data.map((item) => item.monthLabel));
+const xAxisAmount = computed(() => props.data.map((item) => item.amount));
 onMounted(() => {
   const chart = echarts.init(linecharts.value);
   const options = {
     xAxis: {
       type: "category",
-      data: ["第一週", "第二週", "第三週", "第四週"],
+      data: xAxisLabel.value,
     },
     yAxis: {
       type: "value",
     },
     series: [
       {
-        data: [820, 932, 901, 934, 1290, 1330, 1320],
+        data: xAxisAmount.value,
         type: "line",
         smooth: true,
       },

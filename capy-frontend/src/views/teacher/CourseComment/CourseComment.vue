@@ -109,9 +109,14 @@ const handleAnswerQuestion = async (val) => {
           :class="{ 'no-answer': !item.isAnswered }"
           @click="handleCheckQuestion(item)"
         >
-          <el-tag color="#fff" round size="large">{{
-            item.isAnswered ? "已回覆" : "未回覆"
-          }}</el-tag>
+          <el-tag
+            class="tag"
+            color="#fff"
+            :type="item.isAnswered ? 'info' : 'primary'"
+            round
+            size="large"
+            >{{ item.isAnswered ? "已回覆" : "未回覆" }}</el-tag
+          >
           <div><el-avatar :size="60" :src="item.avatarUrl" /></div>
           <div class="comment-text">
             <p style="font-weight: 500; font-size: 18px">{{ item.userName }}</p>
@@ -160,6 +165,10 @@ const handleAnswerQuestion = async (val) => {
   border-left: 5px solid rgb(216, 230, 237);
   /* transition:; */
 }
+.tag {
+  padding: 18px 24px;
+  font-size: 14px;
+}
 .end-text {
   margin-top: 12px;
   text-align: center;
@@ -167,6 +176,9 @@ const handleAnswerQuestion = async (val) => {
 }
 .no-answer {
   border-left-color: #409eff;
+}
+.no-answer .tag {
+  font-weight: 600;
 }
 .el-tag {
   position: absolute;

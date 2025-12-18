@@ -56,12 +56,7 @@ watch(sectionIds, async (newVal, oldVal) => {
     return;
   }
   const verify = () => {
-    for (let i = 0; i < newVal.length; i++) {
-      if (newVal[i] !== oldVal[i]) {
-        return false;
-      }
-      return true;
-    }
+    return newVal.every((val, index) => val === oldVal[index]);
   };
   if (newVal.length < 1) {
     return;
