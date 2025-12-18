@@ -1,31 +1,42 @@
 <script setup>
+import { ref, computed, watch, onMounted } from "vue";
 import { VueDraggable as Draggable } from "vue-draggable-plus";
 import CollapsePlaylistItem from "./CollapsePlaylistItem.vue";
+import TextInputDialog from "../common/TextInputDialog.vue";
 import { useCourse } from "@/composable/useCourse";
 import { useSection } from "@/composable/useSection";
-import timetransform from "@/utils/timetransform";
+import { useCourseStore } from "@/stores/course";
+
 const { courseSections } = useCourse();
 const { addCourseSection, reorderCourseSection } = useSection();
-import { useCourseStore } from "@/stores/course";
-import TextInputDialog from "../common/TextInputDialog.vue";
 const courseStore = useCourseStore();
+
 const dialogRef = ref(null);
 const showDialog = ref(false);
 const collapse = ref(false);
 const ActiveCollapse = ref([]);
-const totalLessonNum = computed(() => {
-  return courseSections.value.reduce((sum, item) => {
-    return sum + item.lessons.length;
-  }, 0);
-});
 const sectionTitle = ref("");
+
+// 計算總章節與單元數
+const totalStats = computed(() => {
+  const sections = courseSections.value || [];
+  const totalLessons = sections.reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
+  const totalMinutes = Math.floor((courseStore.totalCourseDuration || 0) / 60);
+  return {
+    sections: sections.length,
+    lessons: totalLessons,
+    minutes: totalMinutes,
+  };
+});
+
 watch(collapse, () => {
   if (isAllCollapse.value) {
     ActiveCollapse.value = [];
   } else {
-    ActiveCollapse.value = courseSections.value.map((item) => item.sectionId ?? section.id);
+    ActiveCollapse.value = courseSections.value.map((item) => item.sectionId ?? item.id);
   }
 });
+
 const isAllCollapse = computed(() => {
   return courseSections.value.every((item) => ActiveCollapse.value.includes(item.sectionId));
 });
@@ -35,20 +46,20 @@ const handleAddSection = async (value) => {
 };
 
 const next = () => {
-  if (courseStore.courseSections.length < 1 || totalLessonNum.value === 0) {
+  if (courseStore.courseSections.length < 1 || totalStats.value.lessons === 0) {
     throw new Error("至少須包含一單元和單元影片");
   }
   return true;
 };
+
 const sectionIds = computed(() => {
-  // const sectionList = [...courseStore.courseSections];
-  // console.log(sectionList);
   return courseStore.courseSections.map((section) => section.sectionId);
 });
-// const courseSectionList = ref(...)
+
 onMounted(() => {
   console.log(courseStore.courseSections);
 });
+
 let reverseFlag = false;
 watch(sectionIds, async (newVal, oldVal) => {
   if (reverseFlag) {
@@ -72,15 +83,17 @@ watch(sectionIds, async (newVal, oldVal) => {
   } catch (e) {
     ElMessage.error("更新章節排序失敗");
     reverseFlag = true;
-    courseStore.courseSections = oldVal.map((id) => map.get(id)).filter((item) => item); // 防呆
+    courseStore.courseSections = oldVal.map((id) => map.get(id)).filter((item) => item);
   }
 });
 
 const handleStartDrag = () => {
-  ElMessage.primary("托拽以調整章節順序");
+  ElMessage.primary("拖拽以調整章節順序");
 };
+
 defineExpose({ next });
 </script>
+
 <template>
   <div class="wrapper">
     <TextInputDialog
@@ -91,73 +104,127 @@ defineExpose({ next });
       title="建立新章節"
       @confirm="handleAddSection"
     />
-    <h2 class="section-title">課程大綱與內容</h2>
-    <div v-if="courseSections?.length > 0" class="create-chapter-btn">
-      <div class="playlist-info">
-        <span>包含{{ courseSections?.length }} 章 {{ totalLessonNum }} 單元</span>
-        <span>總時長 {{ timetransform(courseStore.totalCourseDuration, true) }}</span>
-        <span
-          ><el-button @click="collapse = !collapse" type="primary" link style="padding: 0"
-            >全部{{ isAllCollapse ? "收合" : "展開" }}</el-button
-          ></span
-        >
+
+    <div class="section-header">
+      <h2 class="section-title">課程大綱與內容</h2>
+      <div class="header-actions" v-if="courseSections?.length > 0">
+        <div class="stats-badges">
+          <span class="stat-badge">
+            <el-icon><Folder /></el-icon>
+            {{ totalStats.sections }} 章節
+          </span>
+          <span class="stat-badge">
+            <el-icon><VideoPlay /></el-icon>
+            {{ totalStats.lessons }} 單元
+          </span>
+          <span class="stat-badge">
+            <el-icon><Clock /></el-icon>
+            {{ totalStats.minutes }} 分鐘
+          </span>
+          <el-button @click="collapse = !collapse" type="primary" link size="small">
+            全部{{ isAllCollapse ? "收合" : "展開" }}
+          </el-button>
+        </div>
+        <el-button type="primary" @click="dialogRef.open()">
+          <el-icon style="margin-right: 4px"><CirclePlus /></el-icon>
+          建立新章節
+        </el-button>
       </div>
-      <el-button type="primary" @click="dialogRef.open()"
-        ><el-icon size="large" style="margin-right: 4px"><CirclePlus /></el-icon
-        >建立新章節</el-button
-      >
     </div>
 
-    <el-collapse v-model="ActiveCollapse" style="border: none" v-if="courseSections?.length > 0">
+    <el-collapse v-if="courseSections?.length > 0" v-model="ActiveCollapse" class="playlist-collapse">
       <Draggable @start="handleStartDrag" class="section-playlist" v-model="courseSections">
-        <collapse-playlist-item
-          v-for="section in courseSections"
-          :sectionInfo="section"
+        <CollapsePlaylistItem
+          v-for="(section, index) in courseSections"
           :key="section.sectionId ?? section.id"
-        ></collapse-playlist-item>
+          :sectionInfo="section"
+          :sectionIndex="index + 1"
+        />
       </Draggable>
     </el-collapse>
-    <el-empty v-else description="目前還沒有章節喔..."
-      ><el-button
-        style="margin-top: 24px; padding: 20px 24px"
-        type="primary"
-        @click="dialogRef.open()"
-        ><el-icon size="large" style="margin-right: 4px"><CirclePlus /></el-icon
-        >立即建立新章節</el-button
-      ></el-empty
-    >
+
+    <el-empty v-else description="目前還沒有章節">
+      <el-button type="primary" @click="dialogRef.open()">
+        <el-icon style="margin-right: 4px"><CirclePlus /></el-icon>
+        立即建立新章節
+      </el-button>
+    </el-empty>
   </div>
 </template>
+
 <style scoped>
-.create-chapter-btn {
+.section-header {
   display: flex;
-  align-items: end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
-.create-chapter-btn button {
-  padding: 20px 24px;
+
+.section-header .section-title {
+  margin-bottom: 0;
 }
-.el-collapse {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.playlist-info {
-  display: flex;
-}
-.playlist-info span {
+
+.header-actions {
   display: flex;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.playlist-info span + span::before {
-  content: "|";
-  font-weight: 600;
-  margin: 0 8px;
+
+.stats-badges {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 4px 10px;
+  background-color: #F3F4F6;
+  border-radius: 6px;
+}
+
+.stat-badge .el-icon {
+  font-size: 14px;
+  color: #4F46E5;
+}
+
+.playlist-collapse {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: none;
+}
+
 .section-playlist {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+}
+
+:deep(.el-collapse) {
+  border: none;
+}
+
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .stats-badges {
+    flex-wrap: wrap;
+  }
 }
 </style>

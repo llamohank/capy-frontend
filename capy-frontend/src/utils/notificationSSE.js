@@ -167,18 +167,9 @@ class NotificationSSEService {
    * 實際執行連線
    */
   doConnect() {
-    let url = 'http://localhost:8080/api/notifications/stream'
 
-    // try {
-    //   const envBaseUrl = import.meta.env.VITE_API_BASE_URL
-    //   const baseUrl = typeof envBaseUrl === 'string' && envBaseUrl.trim() ? envBaseUrl.trim() : 'http://localhost:8080'
-    //   const normalizedBaseUrl = baseUrl.replace(/\/+$/, '')
-    //   const baseForUrl = `${normalizedBaseUrl}/`
-    //   const relativePath = /\/api$/.test(normalizedBaseUrl) ? 'notifications/stream' : 'api/notifications/stream'
-    //   url = new URL(relativePath, baseForUrl).toString()
-    // } catch (error) {
-    //   console.warn('⚠️ 無法解析 SSE URL，改用預設 localhost:', error)
-    // }
+    const url = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/notifications/stream`
+
 
     try {
       this.eventSource = new EventSource(url, {

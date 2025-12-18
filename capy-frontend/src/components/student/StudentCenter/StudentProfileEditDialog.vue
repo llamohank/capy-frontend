@@ -794,7 +794,7 @@ const handleBindGoogle = () => {
 
   // 重導向到後端的 Google OAuth 綁定端點
   // 加上 bind=true 參數讓後端識別這是綁定流程
-  window.location.href = 'http://localhost:8080/api/oauth2/authorization/google?bind=true'
+  window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/oauth2/authorization/google?bind=true`
 }
 
 // Handle Bind Google Account - 第二階段：密碼確認

@@ -92,7 +92,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { useStudentCenterStore } from '@/stores/studentCenter'
 import StudentProfileEditDialog from '@/components/student/StudentCenter/StudentProfileEditDialog.vue'
-import { fetchStudentProfile } from '@/api/student/Studentcenter'
+import { fetchStudentProfile } from '@/api/student/studentCenter'
 
 const userStore = useUserStore()
 const studentCenterStore = useStudentCenterStore()

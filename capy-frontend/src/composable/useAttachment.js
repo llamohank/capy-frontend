@@ -33,7 +33,7 @@ export const useAttachment = (attachmentId) => {
     // return
     try {
       const res = await axios.get(
-        `http://localhost:8080/api/teacher/videos/attachments/${targetId}/download`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/teacher/videos/attachments/${targetId}/download`,
         {
           responseType: "blob",
           withCredentials: true,

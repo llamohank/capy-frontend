@@ -1,82 +1,130 @@
 <script setup>
+import { computed, ref, watch } from "vue";
 import CollapsePlaylistItem from "./CollapsePlaylistItem.vue";
 import { useCourse } from "@/composable/useCourse";
-import { useSection } from "@/composable/useSection";
-import timetransform from "@/utils/timetransform";
-const { courseSections } = useCourse();
 import { useCourseStore } from "@/stores/course";
 
+const { courseSections } = useCourse();
 const courseStore = useCourseStore();
 
 const collapse = ref(false);
 const ActiveCollapse = ref([]);
-const totalLessonNum = computed(() => {
-  return courseSections.value.reduce((sum, item) => {
-    return sum + item.lessons.length;
-  }, 0);
+
+// 計算總章節與單元數
+const totalStats = computed(() => {
+  const sections = courseSections.value || [];
+  const totalLessons = sections.reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
+  const totalMinutes = Math.floor((courseStore.totalCourseDuration || 0) / 60);
+  return {
+    sections: sections.length,
+    lessons: totalLessons,
+    minutes: totalMinutes,
+  };
 });
 
 watch(collapse, () => {
   if (isAllCollapse.value) {
     ActiveCollapse.value = [];
   } else {
-    ActiveCollapse.value = courseSections.value.map((item) => item.sectionId ?? section.id);
+    ActiveCollapse.value = courseSections.value.map((item) => item.sectionId ?? item.id);
   }
 });
+
 const isAllCollapse = computed(() => {
   return courseSections.value.every((item) => ActiveCollapse.value.includes(item.sectionId));
 });
 </script>
+
 <template>
   <div class="wrapper">
-    <h2 class="section-title">課程大綱與內容</h2>
-    <div class="create-chapter-btn">
-      <div v-if="courseSections?.length > 0" class="playlist-info">
-        <span>包含{{ courseSections?.length }} 章 {{ totalLessonNum }} 單元</span>
-        <span>總時長 {{ timetransform(courseStore.totalCourseDuration, true) }}</span>
-        <span
-          ><el-button @click="collapse = !collapse" type="primary" link style="padding: 0"
-            >全部{{ isAllCollapse ? "收合" : "展開" }}</el-button
-          ></span
-        >
+    <div class="section-header">
+      <h2 class="section-title">課程大綱與內容</h2>
+      <div class="stats-badges" v-if="courseSections?.length > 0">
+        <span class="stat-badge">
+          <el-icon><Folder /></el-icon>
+          {{ totalStats.sections }} 章節
+        </span>
+        <span class="stat-badge">
+          <el-icon><VideoPlay /></el-icon>
+          {{ totalStats.lessons }} 單元
+        </span>
+        <span class="stat-badge">
+          <el-icon><Clock /></el-icon>
+          {{ totalStats.minutes }} 分鐘
+        </span>
+        <el-button @click="collapse = !collapse" type="primary" link size="small">
+          全部{{ isAllCollapse ? "收合" : "展開" }}
+        </el-button>
       </div>
     </div>
 
-    <el-collapse v-model="ActiveCollapse" style="border: none" v-if="courseSections?.length > 0">
-      <collapse-playlist-item
-        v-for="section in courseSections"
-        :sectionInfo="section"
+    <el-collapse v-if="courseSections?.length > 0" v-model="ActiveCollapse" class="playlist-collapse">
+      <CollapsePlaylistItem
+        v-for="(section, index) in courseSections"
         :key="section.sectionId ?? section.id"
-      ></collapse-playlist-item>
+        :sectionInfo="section"
+        :sectionIndex="index + 1"
+      />
     </el-collapse>
-    <el-empty v-else description="目前還沒有章節喔..." />
+
+    <el-empty v-else description="暫無課程大綱" :image-size="100" />
   </div>
 </template>
+
 <style scoped>
-.create-chapter-btn {
+.section-header {
   display: flex;
-  align-items: end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 16px;
 }
-.create-chapter-btn button {
-  padding: 20px 24px;
+
+.section-header .section-title {
+  margin-bottom: 0;
 }
-.el-collapse {
+
+.stats-badges {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.playlist-info {
-  display: flex;
-}
-.playlist-info span {
-  display: flex;
+  gap: 12px;
   align-items: center;
 }
-.playlist-info span + span::before {
-  content: "|";
-  font-weight: 600;
-  margin: 0 8px;
+
+.stat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 4px 10px;
+  background-color: #F3F4F6;
+  border-radius: 6px;
+}
+
+.stat-badge .el-icon {
+  font-size: 14px;
+  color: #4F46E5;
+}
+
+.playlist-collapse {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: none;
+}
+
+:deep(.el-collapse) {
+  border: none;
+}
+
+@media (max-width: 640px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .stats-badges {
+    flex-wrap: wrap;
+  }
 }
 </style>

@@ -61,9 +61,13 @@ const fetchAnnouncements = async () => {
     loading.value = false;
   }
 };
-
+let isRequesting = false
 // 發布公告
 const handleCreateAnnouncement = async () => {
+  if(isRequesting){
+    ElMessage.warning("處理中，請稍後")
+    return
+  }
   // 驗證表單
   if (!formModel.value.title.trim()) {
     ElMessage.warning("請輸入標題");
@@ -79,6 +83,7 @@ const handleCreateAnnouncement = async () => {
   }
 
   try {
+    isRequesting=true
     submitLoading.value = true;
     await createAnnouncement({
       title: formModel.value.title,
@@ -95,6 +100,7 @@ const handleCreateAnnouncement = async () => {
     ElMessage.error(error?.response?.data?.message || "發布公告失敗");
   } finally {
     submitLoading.value = false;
+    isRequesting=false
   }
 };
 
@@ -255,10 +261,10 @@ onMounted(() => {
         </li>
       </ul>
       <div style="justify-content: center" class="pagination-btn">
-        <el-pagination 
-          
-          background 
-          layout="total, prev, pager, next" 
+        <el-pagination
+
+          background
+          layout="total, prev, pager, next"
           :total="totalElements"
           :page-size="pageSize"
           :current-page="currentPage"

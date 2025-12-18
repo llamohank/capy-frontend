@@ -201,62 +201,113 @@ const save = () => {
 </script>
 <template>
   <el-dialog
-    center
     v-model="dialogVisible"
-    :title="props.isEdit ? '編輯單元影片' : '新增單元影片'"
-    width="600"
+    :show-close="false"
+    width="800"
+    :close-on-click-modal="false"
+    class="lesson-dialog"
+    align-center
   >
-    <el-form :model="formModel" label-position="top" size="large" class="dialogForm">
-      <el-form-item label="單元影片標題 :">
-        <el-input style="width: 80%" v-model="formModel.lessonTitle" autocomplete="off" />
-      </el-form-item>
-      <el-form-item label="對應章節 :">
-        <p>{{ currentSectionInfo?.title }}</p>
-      </el-form-item>
-      <el-form-item label="單元影片簡介 :">
-        <el-input v-model="formModel.description" type="textarea" :rows="5" />
-      </el-form-item>
-      <el-form-item label="是否為試看單元 :">
-        <el-switch
-          v-model="formModel.freePreview"
-          size="large"
-          active-text="是"
-          inactive-text="否"
-        />
-      </el-form-item>
+    <template #header>
+      <div class="dialog-header">
+        <span class="dialog-title">{{ props.isEdit ? '編輯單元影片' : '新增單元影片' }}</span>
+        <el-button class="dialog-close-btn" text circle @click="dialogVisible = false">
+          <el-icon :size="20"><Close /></el-icon>
+        </el-button>
+      </div>
+    </template>
 
-      <el-form-item v-if="!formModel.videoUrl" label="上傳影片檔案 :">
-        <div style="width: 100%">
-          <el-upload
-            :auto-upload="false"
-            :on-change="handleVideoChange"
-            :limit="1"
-            :on-exceed="handleVideoExceed"
-            class="upload"
-            ref="videoUploadRef"
-            style="width: 100%"
-            drag
-          >
-            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text">Drop file here or <em>click to upload</em></div>
-            <template #tip>
-              <div class="el-upload__tip">jpg/png files with a size less than 500kb</div>
-            </template>
-          </el-upload>
-        </div>
-      </el-form-item>
-      <el-form-item v-else label="預覽影片 :">
-        <div>
-          <VideoPlayer ref="videoPlayerRef" />
-          <div>
-            <el-button type="primary">重新選擇影片檔案</el-button>
-            <el-button type="info">清空</el-button>
+    <div class="lesson-detail">
+      <!-- 可滾動內容區域 -->
+      <div class="lesson-content">
+        <!-- 影片區域 -->
+        <div class="video-wrapper">
+          <div class="video-section" v-if="formModel.videoUrl">
+            <VideoPlayer ref="videoPlayerRef" />
+          </div>
+          <div v-else class="video-placeholder">
+            <el-upload
+              :auto-upload="false"
+              :on-change="handleVideoChange"
+              :limit="1"
+              :on-exceed="handleVideoExceed"
+              class="upload-area"
+              ref="videoUploadRef"
+              drag
+            >
+              <div class="placeholder-content">
+                <el-icon :size="48"><UploadFilled /></el-icon>
+                <div class="upload-text">
+                  <span>將影片檔案拖曳至此處</span>
+                  <span class="upload-hint">或點擊上傳</span>
+                </div>
+              </div>
+            </el-upload>
           </div>
         </div>
-      </el-form-item>
-      <el-form-item label="新增單元附件 :">
-        <div style="width: 100%">
-          <div>
+
+        <!-- 表單區域 -->
+        <el-form :model="formModel" label-position="top" class="lesson-form">
+          <!-- 標題 -->
+          <div class="form-section">
+            <el-form-item label="單元影片標題" class="form-item-clean">
+              <el-input
+                v-model="formModel.lessonTitle"
+                placeholder="請輸入單元影片標題"
+                class="input-clean"
+              />
+            </el-form-item>
+          </div>
+
+          <!-- 所屬章節 -->
+          <div class="info-row">
+            <div class="info-item">
+              <span class="label">所屬章節</span>
+              <span class="value">{{ currentSectionInfo?.title }}</span>
+            </div>
+          </div>
+
+          <el-divider style="margin: 20px 0;" />
+
+          <!-- 影片簡介 -->
+          <div class="form-section">
+            <el-form-item label="單元影片簡介" class="form-item-clean">
+              <el-input
+                v-model="formModel.description"
+                type="textarea"
+                :rows="4"
+                placeholder="請輸入影片簡介"
+                class="textarea-clean"
+              />
+            </el-form-item>
+          </div>
+
+          <!-- 試看開關 -->
+          <div class="form-section switch-section">
+            <span class="switch-label">是否為試看單元</span>
+            <el-switch
+              v-model="formModel.freePreview"
+              active-text="是"
+              inactive-text="否"
+            />
+          </div>
+
+          <!-- 重新選擇影片 -->
+          <div v-if="formModel.videoUrl" class="form-section">
+            <div class="video-actions">
+              <el-button type="primary" plain @click="formModel.videoUrl = null">
+                重新選擇影片
+              </el-button>
+            </div>
+          </div>
+
+          <el-divider style="margin: 20px 0;" />
+
+          <!-- 上傳附件 -->
+          <div class="attachments-block">
+            <div class="block-header">
+              <h4 class="block-title">單元附件</h4>
+            </div>
             <el-upload
               multiple
               ref="attachmentUploadRef"
@@ -265,56 +316,398 @@ const save = () => {
               :on-change="handleAttachmentChange"
               :limit="3 - formModel.attachments.length"
               :on-exceed="handleAttachmentExceed"
+              class="attachment-upload"
             >
-              <el-button type="primary">選擇上傳文件</el-button>
-              <el-button type="info" @click.stop="handleAttachmentClear">清空上傳列表</el-button>
+              <template #trigger>
+                <el-button type="primary" plain>選擇上傳文件</el-button>
+              </template>
+              <el-button type="default" plain @click.stop="handleAttachmentClear" style="margin-left: 8px;">
+                清空上傳列表
+              </el-button>
               <template #tip>
-                <div class="el-upload__tip">jpg/png files with a size less than 500KB.</div>
+                <div class="upload-tip">最多可上傳 {{ 3 - formModel.attachments.length }} 個檔案</div>
               </template>
             </el-upload>
           </div>
-        </div>
-      </el-form-item>
-      <el-form-item v-if="formModel.attachments?.length > 0" label="已有單元附件 :">
-        <div>
-          <ul class="attachment-list">
-            <li
-              class="attachment-list-item"
-              v-for="attachment in defaultAttachmentList"
-              :key="attachment.attachmentId"
-            >
-              <p style="width: 250px; display: flex">
-                <span style="margin-right: 8px"
-                  ><el-icon><Document /></el-icon></span
-                ><el-text truncated>{{ attachment.fileName }}</el-text>
-              </p>
-              <div>
-                <el-button link @click="handleDeleteAttachment(attachment.attachmentId)"
-                  >刪除</el-button
-                >
-                <el-button
-                  link
-                  @click="handleDownloadAttachment(attachment.attachmentId)"
-                  type="primary"
-                  >下載</el-button
-                >
+
+          <!-- 已有附件列表 -->
+          <div class="attachments-block" v-if="formModel.attachments?.length > 0">
+            <div class="block-header">
+              <h4 class="block-title">已有單元附件 ({{ defaultAttachmentList.length }})</h4>
+            </div>
+            <div class="attachment-list">
+              <div
+                v-for="attachment in defaultAttachmentList"
+                :key="attachment.attachmentId"
+                class="attachment-item"
+              >
+                <div class="attachment-info">
+                  <el-icon class="file-icon"><Document /></el-icon>
+                  <span class="attachment-name">{{ attachment.fileName }}</span>
+                </div>
+                <div class="attachment-actions">
+                  <el-button
+                    link
+                    size="small"
+                    @click="handleDeleteAttachment(attachment.attachmentId)"
+                  >
+                    刪除
+                  </el-button>
+                  <el-button
+                    link
+                    type="primary"
+                    size="small"
+                    @click="handleDownloadAttachment(attachment.attachmentId)"
+                  >
+                    下載
+                  </el-button>
+                </div>
               </div>
-            </li>
-          </ul>
-        </div>
-      </el-form-item>
-    </el-form>
+            </div>
+          </div>
+        </el-form>
+    </div>
+  </div>
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="save"> 保存更新 </el-button>
+        <el-button type="primary" @click="save">保存更新</el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 <style scoped>
-.attachment-list-item {
+/* ========== Dialog 樣式 ========== */
+:deep(.lesson-dialog) {
+  --el-dialog-border-radius: 12px;
+  --el-dialog-padding-primary: 0;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+:deep(.lesson-dialog .el-dialog__header) {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+:deep(.lesson-dialog .el-dialog__body) {
+  padding: 0;
+}
+
+:deep(.lesson-dialog .el-dialog__footer) {
+  padding: 16px 24px;
+  border-top: 1px solid #F3F4F6;
+}
+
+.dialog-header {
   display: flex;
-  gap: 24px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  height: 60px;
+  box-sizing: border-box;
+}
+
+.dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dialog-close-btn {
+  color: #9CA3AF !important;
+  margin-right: -8px;
+}
+
+.dialog-close-btn:hover {
+  color: #4B5563 !important;
+  background-color: #F3F4F6 !important;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ========== 內容區域 ========== */
+.lesson-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 可滾動內容區域 */
+.lesson-content {
+  padding: 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* 影片區域 */
+.video-wrapper {
+  background-color: #000;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.video-section {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.video-section :deep(.player-shell) {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.video-section :deep(.player-shell video) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+.video-section :deep(.shaka-video-container) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.video-section :deep(.shaka-controls-container) {
+  width: 100% !important;
+}
+
+.video-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #18181B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-area {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-area :deep(.el-upload) {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-area :deep(.el-upload-dragger) {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #52525B;
+}
+
+.placeholder-content .el-icon {
+  color: #71717A;
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.upload-hint {
+  color: var(--el-color-primary);
+  font-size: 13px;
+}
+
+.lesson-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-section {
+  margin-bottom: 0;
+}
+
+.form-item-clean {
+  margin-bottom: 16px;
+}
+
+.form-item-clean :deep(.el-form-item__label) {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  padding-bottom: 8px;
+}
+
+.input-clean,
+.textarea-clean {
+  width: 100%;
+}
+
+.input-clean :deep(.el-input__wrapper),
+.textarea-clean :deep(.el-textarea__inner) {
+  border-radius: 8px;
+}
+
+/* 資訊列 */
+.info-row {
+  display: flex;
+  gap: 32px;
+  color: #6B7280;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.info-item .label {
+  color: #9CA3AF;
+}
+
+.info-item .value {
+  color: #374151;
+  font-weight: 500;
+}
+
+/* 開關區域 */
+.switch-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+}
+
+.switch-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* 影片操作按鈕 */
+.video-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* 附件區塊 */
+.attachments-block {
+  margin-top: 16px;
+}
+
+.block-header {
+  margin-bottom: 12px;
+}
+
+.block-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.attachment-upload {
+  margin-bottom: 8px;
+}
+
+.upload-tip {
+  font-size: 12px;
+  color: #9CA3AF;
+  margin-top: 8px;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #F9FAFB;
+  border: 1px solid #F3F4F6;
+  border-radius: 6px;
+  transition: border-color 0.2s;
+}
+
+.attachment-item:hover {
+  border-color: #E5E7EB;
+}
+
+.attachment-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.file-icon {
+  color: #9CA3AF;
+  font-size: 16px;
+}
+
+.attachment-name {
+  font-size: 14px;
+  color: #4B5563;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Media Queries */
+@media (max-width: 640px) {
+  .dialog-header {
+    padding: 12px 16px;
+    height: auto;
+  }
+
+  .lesson-content {
+    padding: 16px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .switch-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 </style>

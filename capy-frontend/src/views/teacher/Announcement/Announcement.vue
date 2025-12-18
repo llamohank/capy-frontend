@@ -35,7 +35,7 @@ const formRef = ref(null);
 const formRule = {
   title: [
     { required: true, message: "標題為必填項", trigger: "blur" },
-    { min: 10, max: 20, message: "標題需在10到15字內", trigger: "blur" },
+    { min: 1, max: 30, message: "標題需在1到30字內", trigger: "blur" },
   ],
   content: [
     { required: true, message: "內容為必填項", trigger: "blur" },

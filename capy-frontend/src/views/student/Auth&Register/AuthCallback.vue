@@ -16,7 +16,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import { bindGoogleAccount } from '@/api/oauth/oauth'
-import { fetchStudentProfile } from '@/api/student/Studentcenter'
+import { fetchStudentProfile } from '@/api/student/studentCenter'
 
 const router = useRouter()
 const route = useRoute()
