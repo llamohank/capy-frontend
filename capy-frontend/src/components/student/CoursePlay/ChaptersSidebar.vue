@@ -18,7 +18,7 @@
       <div class="progress-section">
         <div class="progress-info">
           <span class="progress-text">學習進度</span>
-          <span class="progress-stats">{{ completedCount }}/{{ totalCount }}</span>
+          <span class="progress-stats">{{ progressPercentage }}%</span>
         </div>
         <el-progress
           :percentage="progressPercentage"
@@ -131,6 +131,10 @@ const props = defineProps({
   isCollapsed: {
     type: Boolean,
     default: false
+  },
+  completionPercentage: {
+    type: Number,
+    default: null  // null 表示未登入或未購買，使用前端計算
   }
 })
 
@@ -167,8 +171,14 @@ const completedCount = computed(() => {
 
 /**
  * 計算進度百分比
+ * 優先使用後端回傳的 completionPercentage，否則根據已完成單元數計算
  */
 const progressPercentage = computed(() => {
+  // 優先使用後端回傳的百分比
+  if (props.completionPercentage !== null && props.completionPercentage !== undefined) {
+    return Math.round(props.completionPercentage)
+  }
+  // fallback: 根據已完成單元數計算
   if (totalCount.value === 0) return 0
   return Math.round((completedCount.value / totalCount.value) * 100)
 })

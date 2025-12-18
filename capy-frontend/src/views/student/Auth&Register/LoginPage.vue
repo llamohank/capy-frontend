@@ -1117,17 +1117,43 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 60px 40px;
+  padding: 40px; /* 減少上下 padding，留更多空間給內容 */
   background: white;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+  overflow: hidden; /* 防止圓角被內容切掉 */
+  position: relative; /* 確保內容定位正確 */
 }
 
 .form-container {
   width: 100%;
   max-width: 370px;
-  min-height: 500px; /* 固定最小高度 */
+  height: 100%; /* 填滿父容器 */
+  overflow-y: auto; /* 啟用垂直捲動 */
+  padding-right: 4px; /* 預留捲軸空間，避免內容貼邊 */
+  
+  /* 隱藏捲軸但保留功能 (Chrome, Safari, Opera) */
+  &::-webkit-scrollbar {
+    width: 0px; 
+    background: transparent;
+  }
+  
+  /* 隱藏捲軸 (Firefox) */
+  scrollbar-width: none;
+  
+  /* 隱藏捲軸 (IE 10+) */
+  -ms-overflow-style: none;
+  
+  /* 確保內容有足夠空間顯示 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 內容少時置中 */
+}
+
+/* 當內容超出時，改為頂部對齊，避免無法捲動到最上方 */
+.form-container:has(.form-content) {
+  justify-content: flex-start;
+  padding-top: 20px; /* 預留頂部空間 */
 }
 
 .title {

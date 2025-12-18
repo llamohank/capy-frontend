@@ -12,6 +12,7 @@ import http from '@/utils/http'
  * Response: Result<LessonSummaryVo>
  * {
  *   lessonDescription: string,
+ *   completionPercentage: number | null,  // 課程完成百分比（登入且有購買時回傳，否則為 null）
  *   course: {
  *     courseId: string,
  *     courseTitle: string,

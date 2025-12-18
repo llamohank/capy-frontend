@@ -247,6 +247,8 @@ onMounted(() => {
 .reset-password-container > .left-section,
 .reset-password-container > .right-section {
   height: 680px;
+  display: flex;
+  flex-direction: column;
 }
 
 .reset-password-container > .left-section {
@@ -327,13 +329,13 @@ onMounted(() => {
 .subtitle {
   font-size: 14px;
   color: #666;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   text-align: center;
   line-height: 1.6;
 }
 
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .form-label {
@@ -341,28 +343,38 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 /* 密碼要求說明 */
 .password-requirements {
-  margin-top: 12px;
-  padding: 12px;
+  margin-top: 8px;
+  padding: 8px 12px;
   background: #f8f9fa;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .requirement-item {
   display: flex;
   align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.password-hint {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 12px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   font-size: 13px;
+  min-height: auto;
   animation: slideDown 0.3s ease;
   transition: all 0.3s ease;
 }
@@ -388,7 +400,7 @@ onMounted(() => {
 }
 
 .requirement-item .el-icon {
-  font-size: 16px;
+  font-size: 14px;
   color: #d1d5db;
   flex-shrink: 0;
 }
@@ -407,9 +419,9 @@ onMounted(() => {
 
 /* 提交按鈕 */
 .submit-button {
-  height: 50px;
+  height: 44px;
   width: 100%;
-  padding: 14px;
+  padding: 10px;
   border: none;
   border-radius: 10px;
   background: var(--capy-primary);
@@ -418,7 +430,7 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .submit-button:hover {

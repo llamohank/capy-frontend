@@ -277,6 +277,7 @@
             :chapters="courseData.sections"
             :current-lesson-id="currentLessonId"
             :is-collapsed="isSidebarCollapsed"
+            :completion-percentage="lessonSummary.completionPercentage"
             @lesson-click="handleLessonClick"
             @toggle-sidebar="toggleSidebar"
           />
@@ -393,6 +394,7 @@ const courseData = ref({
 // 單元摘要資料
 const lessonSummary = ref({
   lessonDescription: '',
+  completionPercentage: null, // 課程完成百分比（後端回傳）
   course: null,
   instructorInfo: null
 })
