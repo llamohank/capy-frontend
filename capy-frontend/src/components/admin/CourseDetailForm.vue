@@ -1,5 +1,6 @@
 <script setup>
 import { inject, computed } from "vue";
+import { Picture } from "@element-plus/icons-vue";
 
 const courseData = inject("courseData");
 const allCategories = inject("allCategories");
@@ -80,59 +81,217 @@ const formatPrice = (price) => {
 <template>
   <div class="wrapper">
     <h2 class="section-title">課程基本資訊</h2>
-    <el-form size="large" label-position="top">
-      <el-form-item label="課程名稱 :">
-        {{ courseData?.title || "-" }}
-      </el-form-item>
-      <el-form-item label="課程封面 :">
-        <img
-          v-if="courseData?.coverImageUrl"
-          style="max-width: 300px; border-radius: 8px"
-          :src="courseData.coverImageUrl"
-        />
-        <span v-else>-</span>
-      </el-form-item>
-      <el-form-item label="課程價格 :">
-        {{ formatPrice(courseData?.price) }}
-      </el-form-item>
-      <el-form-item label="課程分類 :">
-        {{ categoryDisplay }}
-      </el-form-item>
-      <el-form-item label="課程標籤 :">
-        <div v-if="tagsDisplay.length > 0" class="tags-container">
-          <el-tag v-for="tag in tagsDisplay" :key="tag" size="default" style="margin-right: 8px; margin-bottom: 4px;">
-            {{ tag }}
+
+    <div class="detail-layout">
+      <!-- 封面圖片區塊 -->
+      <div class="cover-section">
+        <div class="cover-container">
+          <img
+            v-if="courseData?.coverImageUrl"
+            class="cover-image"
+            :src="courseData.coverImageUrl"
+            alt="課程封面"
+          />
+          <div v-else class="cover-placeholder">
+            <el-icon :size="40"><Picture /></el-icon>
+            <span>尚未上傳封面</span>
+          </div>
+        </div>
+        <!-- 狀態標籤放在封面下方 -->
+        <div class="status-badge">
+          <el-tag
+            v-if="courseData?.status"
+            :type="statusTagType(courseData.status)"
+            size="large"
+            effect="dark"
+          >
+            {{ statusMap[courseData.status] || courseData.status }}
           </el-tag>
         </div>
-        <span v-else>-</span>
-      </el-form-item>
-      <el-form-item label="課程狀態 :">
-        <el-tag v-if="courseData?.status" :type="statusTagType(courseData.status)" size="large">
-          {{ statusMap[courseData.status] || courseData.status }}
-        </el-tag>
-        <span v-else>-</span>
-      </el-form-item>
-      <el-form-item label="課程簡介 :">
-        <p style="white-space: pre-wrap">{{ courseData?.description || "-" }}</p>
-      </el-form-item>
-    </el-form>
+      </div>
+
+      <!-- 資訊區塊 -->
+      <div class="info-section">
+        <!-- 課程標題 -->
+        <h3 class="course-title">{{ courseData?.title || "未命名課程" }}</h3>
+
+        <!-- 資訊網格 -->
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">課程價格</span>
+            <span class="info-value price">{{ formatPrice(courseData?.price) }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">課程分類</span>
+            <span class="info-value">{{ categoryDisplay }}</span>
+          </div>
+        </div>
+
+        <!-- 標籤 -->
+        <div class="tags-section" v-if="tagsDisplay.length > 0">
+          <span class="info-label">課程標籤</span>
+          <div class="tags-list">
+            <el-tag
+              v-for="tag in tagsDisplay"
+              :key="tag"
+              size="default"
+              effect="plain"
+              class="tag-item"
+            >
+              {{ tag }}
+            </el-tag>
+          </div>
+        </div>
+
+        <!-- 課程簡介 -->
+        <div class="description-section">
+          <span class="info-label">課程簡介</span>
+          <div class="description-content">
+            {{ courseData?.description || "尚未填寫課程簡介" }}
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
-:deep(.el-form-item__content) {
-  padding-left: 12px;
+.detail-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 28px;
 }
-:deep(.el-form-item__label) {
+
+.cover-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cover-container {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--el-text-color-placeholder);
+  font-size: 13px;
+}
+
+.status-badge {
+  display: flex;
+  justify-content: center;
+}
+
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.course-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 12px;
   font-weight: 500;
+  color: var(--el-text-color-secondary);
+  text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 8px;
 }
-:deep(.el-form-item) {
-  margin-bottom: 12px;
+
+.info-value {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  line-height: 1.5;
 }
-.tags-container {
+
+.info-value.price {
+  font-size: 18px;
+  font-weight: 600;
+  color: #4F46E5;
+}
+
+.tags-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tags-list {
   display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-item {
+  border-radius: 4px;
+}
+
+.description-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.description-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--el-text-color-regular);
+  white-space: pre-wrap;
+  padding: 12px 14px;
+  background-color: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #F3F4F6;
+}
+
+@media (max-width: 640px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .cover-container {
+    max-width: 280px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

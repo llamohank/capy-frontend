@@ -154,14 +154,14 @@ onMounted(() => {
   <div>
     <h2 class="section-heading">操作紀錄查詢</h2>
     <div class="wrapper" style="margin-bottom: 24px">
-      <div class="filter-bar">
-        <el-form inline size="large" label-position="left" class="filter-form">
+      <div class="admin-filter-row">
+        <el-form inline label-position="left" class="admin-filter-form">
           <el-form-item label="操作類型 :">
             <el-select
               v-model="filters.action"
               placeholder="選擇操作類型"
               clearable
-              style="width: 220px"
+              style="width: 170px"
               @change="handleFilterChange"
             >
               <el-option
@@ -180,14 +180,14 @@ onMounted(() => {
               range-separator="至"
               start-placeholder="開始日期"
               end-placeholder="結束日期"
-              style="width: 320px"
+              style="width: 280px"
               @change="handleFilterChange"
             />
           </el-form-item>
           <el-form-item label="排序 :">
             <el-select
               v-model="filters.sort"
-              style="width: 160px"
+              style="width: 150px"
               @change="handleFilterChange"
             >
               <el-option
@@ -199,14 +199,14 @@ onMounted(() => {
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="large" @click="resetFilters">
+            <el-button type="primary" @click="resetFilters">
               清除篩選
             </el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
-    <div class="wrapper">
+    <div class="wrapper admin-table-container">
       <el-table
         v-loading="loading"
         stripe
@@ -214,47 +214,44 @@ onMounted(() => {
         :cell-class-name="() => 'tbody-cell'"
         :header-cell-class-name="() => 'table-head'"
         :data="displayRecords()"
-        size="large"
-        empty-text="暫無符合的操作紀錄"
+                empty-text="暫無符合的操作紀錄"
         @row-click="openRecord"
       >
-        <el-table-column label="序號" width="80">
+        <el-table-column label="序號" width="70" align="center">
           <template #default="{ row }">
-            <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
+            <span class="admin-index">#{{ row.index }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作類型">
+        <el-table-column label="操作類型" width="150" align="center">
           <template #default="{ row }">
-            <el-tag size="large" round effect="plain" :type="actionMeta[row.action]?.tagType || 'info'">
+            <el-tag round effect="plain" :type="actionMeta[row.action]?.tagType || 'info'">
               {{ actionLabel(row.action) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作摘要">
+        <el-table-column label="操作摘要" min-width="200">
           <template #default="{ row }">
-            <div style="width: 80%; padding-left: 10%">
+            <div>
               <p class="summary-title">{{ row.displayReason || row.reason }}</p>
               <p class="summary-reason">目標: {{ row.targetType }} #{{ row.targetId }}</p>
             </div>
           </template>
         </el-table-column>
-
-        <el-table-column label="管理員">
+        <el-table-column label="管理員" width="140" align="center">
           <template #default="{ row }">
-            <span>{{ row.adminNickname }}</span>
+            {{ row.adminNickname }}
           </template>
         </el-table-column>
-        <el-table-column label="時間">
+        <el-table-column label="時間" width="180" align="center">
           <template #default="{ row }">
-            <span class="time-text">{{ formatTime(row.createdAt) }}</span>
+            <span class="admin-time-text">{{ formatTime(row.createdAt) }}</span>
           </template>
         </el-table-column>
       </el-table>
 
       <div class="pagination-btn" style="justify-content: center">
         <el-pagination
-          size="large"
-          background
+                    background
           layout="total, prev, pager, next"
           :page-size="pageSize"
           :total="totalElements"
@@ -264,75 +261,43 @@ onMounted(() => {
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="操作詳情" width="520px" align-center>
-      <div class="detail-list" v-if="selectedRecord">
-        <div class="detail-row">
-          <span class="detail-label">操作類型</span>
-          <el-tag round effect="plain" :type="actionMeta[selectedRecord.action]?.tagType || 'info'">
-            {{ actionLabel(selectedRecord.action) }}
-          </el-tag>
+    <div class="admin-dialog-gradient">
+      <el-dialog v-model="dialogVisible" title="操作詳情" width="520px" align-center>
+        <div class="admin-detail-list" v-if="selectedRecord">
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">操作類型</span>
+            <el-tag round effect="plain" :type="actionMeta[selectedRecord.action]?.tagType || 'info'">
+              {{ actionLabel(selectedRecord.action) }}
+            </el-tag>
+          </div>
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">目標類型</span>
+            <span class="admin-detail-value">{{ selectedRecord.targetType }}</span>
+          </div>
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">目標 ID</span>
+            <span class="admin-detail-value">#{{ selectedRecord.targetId }}</span>
+          </div>
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">原因 / 備註</span>
+            <span class="admin-detail-value">{{ selectedRecord.reason || '—' }}</span>
+          </div>
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">管理員</span>
+            <span class="admin-detail-value">{{ selectedRecord.adminNickname }}</span>
+          </div>
+          <div class="admin-detail-row">
+            <span class="admin-detail-label">時間</span>
+            <span class="admin-detail-value">{{ formatTime(selectedRecord.createdAt) }}</span>
+          </div>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">目標類型</span>
-          <span class="detail-value">{{ selectedRecord.targetType }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">目標 ID</span>
-          <span class="detail-value">#{{ selectedRecord.targetId }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">原因 / 備註</span>
-          <span class="detail-value">{{ selectedRecord.reason || '—' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">管理員</span>
-          <span class="detail-value">{{ selectedRecord.adminNickname }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">時間</span>
-          <span class="detail-value">{{ formatTime(selectedRecord.createdAt) }}</span>
-        </div>
-      </div>
-    </el-dialog>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.filter-form {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.el-form-item {
-  margin: 0;
-}
-
-.meta {
-  color: #6B7280;
-  min-width: 120px;
-}
-
-.meta-value {
-  margin: 0 4px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #4F46E5;
-  line-height: 1.2;
-}
-
-.meta-label {
-  font-size: 14px;
-}
-
+/* Page-specific styles */
 .summary-title {
   font-weight: 600;
   color: #374151;
@@ -343,164 +308,6 @@ onMounted(() => {
   color: #6B7280;
   font-size: 13px;
   line-height: 1.4;
-}
-
-.target-text {
-  font-weight: 500;
-}
-
-.time-text {
-  font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
-  font-size: 13px;
-  color: #6B7280;
-}
-
-:deep(.el-dialog__header) {
-  text-align: center;
-  font-weight: 600;
-  margin-right: 0;
-  margin-bottom: 12px;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-  border-radius: 12px 12px 0 0;
-}
-
-:deep(.el-dialog__title) {
-  font-size: 18px;
-  font-weight: 600;
-  color: #FFFFFF;
-  letter-spacing: 0.3px;
-}
-
-:deep(.el-dialog__headerbtn) {
-  top: 20px;
-  right: 20px;
-  width: 28px;
-  height: 28px;
-}
-
-:deep(.el-dialog__headerbtn .el-dialog__close) {
-  color: #FFFFFF;
-  font-size: 18px;
-}
-
-:deep(.el-dialog__headerbtn:hover .el-dialog__close) {
-  color: #E0E7FF;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
-}
-
-:deep(.el-dialog) {
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-:deep(.el-table) {
-  --el-table-header-bg-color: #F9FAFB;
-  --el-table-row-hover-bg-color: #F5F3FF;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-:deep(.table-row:hover) {
-  cursor: pointer;
-}
-
-:deep(.table-row .cell) {
-  padding: 16px 12px;
-}
-
-:deep(.tbody-cell .cell) {
-  display: flex;
-  justify-content: center;
-}
-
-:deep(.table-head .cell) {
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: #374151;
-  padding: 16px 12px;
-}
-
-.index {
-  font-style: italic;
-  font-weight: 600;
-  font-size: 20px;
-  color: #9CA3AF;
-  opacity: 0.4;
-  transition: all 0.2s ease;
-}
-
-.table-row:hover .index {
-  opacity: 1;
-  color: #4F46E5;
-}
-
-.detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  line-height: 1.4;
-}
-
-.detail-label {
-  color: #6B7280;
-  font-weight: 600;
-  font-size: 14px;
-  min-width: 120px;
-}
-
-.detail-value {
-  flex: 1;
-  color: #374151;
-  word-break: break-word;
-}
-
-.pagination-btn {
-  margin-top: 48px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* Pastel Tag Styles */
-:deep(.el-tag--success) {
-  background-color: #D1FAE5;
-  color: #059669;
-  border-color: #A7F3D0;
-}
-
-:deep(.el-tag--warning) {
-  background-color: #FEF3C7;
-  color: #D97706;
-  border-color: #FDE68A;
-}
-
-:deep(.el-tag--danger) {
-  background-color: #FEE2E2;
-  color: #DC2626;
-  border-color: #FECACA;
-}
-
-:deep(.el-tag--info) {
-  background-color: #F3F4F6;
-  color: #4B5563;
-  border-color: #E5E7EB;
-}
-
-:deep(.el-tag--primary) {
-  background-color: #EEF2FF;
-  color: #4F46E5;
-  border-color: #C7D2FE;
 }
 </style>
 

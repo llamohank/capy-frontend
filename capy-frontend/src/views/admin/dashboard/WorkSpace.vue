@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import GradientLineChart from "@/components/admin/GradientLineChart.vue";
 import UserGrowthChart from "@/components/admin/UserGrowthChart.vue";
 import { getDashboard, getWeeklyUserTrend } from "@/api/admin/dashboard";
 
 const progressBarColor = ["#409eff", "#67c23a", "#e6a23c", "#f56c6c", "#909399"];
+const router = useRouter();
 
 // Dashboard data
 const dashboardData = ref({
@@ -79,6 +81,23 @@ const fetchWeeklyUserTrend = async () => {
   }
 };
 
+const viewCourseDetail = (courseId) => {
+  if (!courseId) return;
+  router.push({
+    name: "viewCourseDetail",
+    params: { courseId },
+    query: { viewtype: "detail" }
+  });
+};
+
+const goToCourseApplications = () => {
+  router.push({ name: "course_application_list" });
+};
+
+const goToInstructorApplications = () => {
+  router.push({ name: "instructor_application_list" });
+};
+
 onMounted(() => {
   fetchDashboard();
   fetchWeeklyUserTrend();
@@ -86,7 +105,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <h2 class="section-heading">管理員工作台</h2>
+  <!-- <h2 class="section-heading">管理員工作台</h2> -->
   <div v-loading="loading" class="dashboard-container">
     <!-- Stats Row -->
     <div class="stats-section">
@@ -99,7 +118,7 @@ onMounted(() => {
           </div>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card">
+          <div class="stat-card stat-card--link" @click="goToCourseApplications">
             <span class="stat-card__label">待審核上架申請</span>
             <span class="stat-card__value" :class="{ 'stat-card__value--warning': dashboardData.pendingCourseReview > 0 }">
               {{ dashboardData.pendingCourseReview }}
@@ -108,7 +127,7 @@ onMounted(() => {
           </div>
         </el-col>
         <el-col :span="6">
-          <div class="stat-card">
+          <div class="stat-card stat-card--link" @click="goToInstructorApplications">
             <span class="stat-card__label">待審核教師申請</span>
             <span class="stat-card__value" :class="{ 'stat-card__value--warning': dashboardData.pendingInstructorApplications > 0 }">
               {{ dashboardData.pendingInstructorApplications }}
@@ -150,7 +169,7 @@ onMounted(() => {
                 <li v-for="item in datalist" :key="item.id" class="top-course-item">
                   <div class="top-course-header">
                     <span class="course-name">{{ item.name }}</span>
-                    <el-button link type="primary">查看</el-button>
+                    <el-button link type="primary" @click="viewCourseDetail(item.id)">查看</el-button>
                   </div>
                   <p class="course-count">{{ item.num }} 人</p>
                   <el-progress :color="item.color" :show-text="false" :percentage="item.value" />
@@ -174,41 +193,45 @@ onMounted(() => {
 
 <style scoped>
 .dashboard-container {
-  padding-top: 24px;
+  padding-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 32px;
 }
 
 /* ==================== Stat Cards ==================== */
 .stat-card {
   background: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
-  border-radius: 16px;
-  padding: 24px 28px;
+  border-radius: 12px;
+  padding: 18px 20px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   border: 1px solid #F3F4F6;
   transition: all 0.25s ease;
   height: 100%;
 }
 
+.stat-card--link {
+  cursor: pointer;
+}
+
 .stat-card:hover {
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.1);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.1);
   border-color: #E0E7FF;
   transform: translateY(-2px);
 }
 
 .stat-card__label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #6B7280;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .stat-card__value {
   position: relative;
   display: block;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
   color: #1F2937;
   line-height: 1.2;
@@ -224,10 +247,10 @@ onMounted(() => {
 
 .pending-dot {
   position: absolute;
-  top: 4px;
-  margin-left: 6px;
-  width: 10px;
-  height: 10px;
+  top: 2px;
+  margin-left: 5px;
+  width: 8px;
+  height: 8px;
   background-color: #EF4444;
   border-radius: 50%;
   animation: pulse 2s infinite;
@@ -239,7 +262,7 @@ onMounted(() => {
 }
 
 .revenue-text {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
   color: #4F46E5;
 }
@@ -253,32 +276,32 @@ onMounted(() => {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .chart-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   color: #374151;
 }
 
 .chart-value {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: #4F46E5;
 }
 
 .chart-container {
-  height: 450px;
+  height: 320px;
   width: 100%;
 }
 
 /* ==================== Top Course List ==================== */
 .top-course-list {
-  padding-top: 24px;
+  padding-top: 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .top-course-item {
@@ -289,20 +312,19 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .course-name {
   font-weight: 500;
   color: #374151;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .course-count {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #6B7280;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 </style>
-

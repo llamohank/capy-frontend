@@ -67,6 +67,6 @@ onMounted(() => {
 .chart-container {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 32px;
 }
 </style>

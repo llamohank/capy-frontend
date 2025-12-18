@@ -113,8 +113,8 @@ watch(
   <div>
     <div class="wrapper" style="margin-bottom: 24px">
       <div class="section-title">訂單紀錄</div>
-      <div class="filter-bar">
-        <el-form inline label-position="left" size="large" class="filter-form">
+      <div class="admin-filter-row">
+        <el-form inline label-position="left" class="admin-filter-form">
           <el-form-item label="時間區段">
             <el-date-picker
               v-model="filters.dateRange"
@@ -137,19 +137,18 @@ watch(
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="large" @click="resetFilters">清除篩選</el-button>
+            <el-button type="primary" @click="resetFilters">清除篩選</el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
 
-    <div class="wrapper">
+    <div class="wrapper admin-table-container">
       <el-table
         v-loading="loading"
         stripe
         :data="displayOrders"
-        size="large"
-        :row-class-name="() => 'table-row'"
+                :row-class-name="() => 'table-row'"
         :cell-class-name="() => 'tbody-cell'"
         :header-cell-class-name="() => 'table-head'"
         empty-text="暫無訂單"
@@ -157,18 +156,18 @@ watch(
       >
         <el-table-column label="序號" width="80">
           <template #default="{ row }">
-            <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
+            <span class="admin-index">#{{ row.index }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="transactionId" label="交易編號" />
         <el-table-column label="成立時間" width="200">
           <template #default="{ row }">
-            <span class="time-text">{{ formatTime(row.createdAt) }}</span>
+            <span class="admin-time-text">{{ formatTime(row.createdAt) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="訂單狀態">
           <template #default="{ row }">
-            <el-tag size="large" round effect="plain" :type="statusTag(row.status).type">
+            <el-tag round effect="plain" :type="statusTag(row.status).type">
               {{ statusTag(row.status).text }}
             </el-tag>
           </template>
@@ -181,8 +180,7 @@ watch(
       </el-table>
       <div class="pagination-btn">
         <el-pagination
-          size="large"
-          background
+                    background
           layout="prev, pager, next"
           :page-size="pageSize"
           :total="totalElements"
@@ -193,28 +191,28 @@ watch(
     </div>
 
     <el-dialog width="500" v-model="dialogVisible" title="訂單詳情" align-center>
-      <div v-if="selectedOrder" class="detail-list">
-        <div class="detail-row">
-          <span class="detail-label">訂單編號</span>
-          <span class="detail-value">{{ selectedOrder.orderId }}</span>
+      <div v-if="selectedOrder" class="admin-detail-list">
+        <div class="admin-detail-row">
+          <span class="admin-detail-label">訂單編號</span>
+          <span class="admin-detail-value">{{ selectedOrder.orderId }}</span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">交易編號</span>
-          <span class="detail-value">{{ selectedOrder.transactionId }}</span>
+        <div class="admin-detail-row">
+          <span class="admin-detail-label">交易編號</span>
+          <span class="admin-detail-value">{{ selectedOrder.transactionId }}</span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">成立時間</span>
-          <span class="detail-value">{{ formatTime(selectedOrder.createdAt) }}</span>
+        <div class="admin-detail-row">
+          <span class="admin-detail-label">成立時間</span>
+          <span class="admin-detail-value">{{ formatTime(selectedOrder.createdAt) }}</span>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">訂單狀態</span>
-          <el-tag round size="large" effect="plain" :type="statusTag(selectedOrder.status).type">
+        <div class="admin-detail-row">
+          <span class="admin-detail-label">訂單狀態</span>
+          <el-tag round effect="plain" :type="statusTag(selectedOrder.status).type">
             {{ statusTag(selectedOrder.status).text }}
           </el-tag>
         </div>
-        <div class="detail-row">
-          <span class="detail-label">總金額</span>
-          <span class="detail-value">$ {{ Number(selectedOrder.totalAmount || 0).toLocaleString() }}</span>
+        <div class="admin-detail-row">
+          <span class="admin-detail-label">總金額</span>
+          <span class="admin-detail-value">$ {{ Number(selectedOrder.totalAmount || 0).toLocaleString() }}</span>
         </div>
       </div>
     </el-dialog>
@@ -222,55 +220,9 @@ watch(
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-form {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.time-text {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-}
-
+/* Page-specific styles */
 .amount {
   font-weight: 600;
-}
-
-:deep(.tbody-cell .cell) {
-  display: flex;
-  justify-content: center;
-  padding: 12px 0;
-}
-
-:deep(.table-head .cell) {
-  font-size: 18px;
-  text-align: center;
-  padding: 4px 0 28px 0;
-}
-
-.index {
-  font-style: italic;
-  font-weight: 500;
-  font-size: 24px;
-  color: #909399;
-  opacity: 0.3;
-  transition: opacity 0.2s;
-}
-
-.table-row:hover .index {
-  opacity: 1;
-}
-
-:deep(.table-row:hover) {
-  cursor: pointer;
 }
 
 :deep(.el-dialog__header) {
@@ -289,34 +241,5 @@ watch(
 :deep(.el-dialog__body) {
   padding: 28px 28px 24px;
 }
-
-.detail-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  line-height: 1.2;
-}
-
-.detail-label {
-  color: #909399;
-  font-weight: 500;
-  font-size: 16px;
-  min-width: 120px;
-}
-
-.detail-value {
-  font-size: 16px;
-  word-break: break-word;
-}
-
-.pagination-btn {
-  margin-top: 24px;
-  display: flex;
-  justify-content: center;
-}
 </style>
+

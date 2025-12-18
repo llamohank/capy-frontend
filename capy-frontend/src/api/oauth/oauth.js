@@ -94,9 +94,7 @@ export const register = ({ email, password, nickname, googleId, turnstileToken }
  */
 export const initiateGoogleOAuth = () => {
   // 導向後端的 Google OAuth 授權端點
-  // 後端會處理 OAuth 流程並 redirect 回前端
-  window.location.href = "http://localhost:8080/api/oauth2/authorization/google";
-  window.location.href = "http://localhost:8080/api/oauth2/authorization/google";
+  window.location.href = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api/oauth2/authorization/google`;
 };
 
 /**

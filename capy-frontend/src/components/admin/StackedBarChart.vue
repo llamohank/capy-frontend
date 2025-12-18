@@ -110,7 +110,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="chart-header">
     <div class="section-title" style="margin-bottom: 0">各分類課程上架數</div>
-    <el-radio-group v-model="range" size="large">
+    <el-radio-group v-model="range">
       <el-radio-button v-for="item in rangeOptions" :key="item.value" :value="item.value">
         {{ item.label }}
       </el-radio-button>

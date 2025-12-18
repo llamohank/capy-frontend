@@ -1,32 +1,50 @@
 <script setup>
-// import { VueDraggable as Draggable } from "vue-draggable-plus";
-// import TextInputDialog from "../../common/TextInputDialog.vue";
-// import { useLesson } from "@/composable/useLesson";
-// import { useCourseStore } from "@/stores/course";
-// import { useVideo } from "@/composable/useVideo";
+import { ref, computed } from "vue";
 import LessonFormDialog from "./LessonFormDialog.vue";
 import { getVideoUrl } from "@/api/teacher/video";
-// import { createLesson, updateLesson } from "@/api/teacher/course";
-// import { useVideoStore } from "@/stores/video";
-import transformSeconds from "@/utils/timetransform";
+
 const props = defineProps({
   sectionInfo: {
     type: Object,
     required: true,
   },
+  sectionIndex: {
+    type: Number,
+    default: 1,
+  },
 });
-// const courseStore = useCourseStore();
-// const { deleteSection, updateSection, deleteCourseLesson, reorderCourseLesson } = useLesson(
-//   props.sectionInfo
-// );
 
-//lesson
+// 依 displayOrder 排序的課程列表
+const sortedLessons = computed(() => {
+  if (!props.sectionInfo?.lessons) return [];
+  return [...props.sectionInfo.lessons].sort((a, b) => a.displayOrder - b.displayOrder);
+});
+
+// 計算章節總時長
+const totalDuration = computed(() => {
+  if (!props.sectionInfo?.lessons) return 0;
+  const totalSeconds = props.sectionInfo.lessons.reduce(
+    (sum, lesson) => sum + (lesson.lessonDurationSeconds || 0),
+    0
+  );
+  return Math.floor(totalSeconds / 60);
+});
+
+// 格式化時長 (秒 -> mm:ss)
+const formatDuration = (seconds) => {
+  if (!seconds) return "00:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+// lesson dialog
 const isEditLesson = ref(false);
 const currentLesson = ref(null);
 const showLessonDialog = ref(false);
 const lessonVideoUrl = ref(null);
 
-const handleEditLesson = async (lessonInfo) => {
+const handleViewLesson = async (lessonInfo) => {
   isEditLesson.value = true;
   currentLesson.value = lessonInfo;
   const res = await getVideoUrl(lessonInfo.lessonId);
@@ -36,8 +54,9 @@ const handleEditLesson = async (lessonInfo) => {
   showLessonDialog.value = true;
 };
 </script>
+
 <template>
-  <!-- //添加單元影片dialog form -->
+  <!-- 單元詳情 dialog -->
   <LessonFormDialog
     :sectionInfo="props.sectionInfo"
     v-model:videoUrl="lessonVideoUrl"
@@ -47,114 +66,224 @@ const handleEditLesson = async (lessonInfo) => {
     :lessonInfo="currentLesson"
   />
 
-  <el-collapse-item :name="sectionInfo.sectionId ?? sectionInfo.id">
+  <!-- 章節摺疊項 -->
+  <el-collapse-item :name="sectionInfo.sectionId ?? sectionInfo.id" class="section-collapse-item">
     <template #icon="{ isActive }">
-      <el-icon size="large" v-show="isActive"><ArrowDownBold /></el-icon>
-      <el-icon size="large" v-show="!isActive"><ArrowRightBold /></el-icon>
+      <el-icon class="collapse-icon" :class="{ 'is-active': isActive }">
+        <ArrowRight />
+      </el-icon>
     </template>
     <template #title>
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding-right: 24px;
-          flex-wrap: wrap;
-          justify-content: space-between;
-        "
-      >
-        <p style="font-size: 20px; padding: 5px 0; padding-left: 20px">
-          {{ sectionInfo?.title
-          }}<span v-if="sectionInfo.lessons?.length > 0" style="font-size: 14px">
-            | 共{{ sectionInfo?.lessons?.length }}單元 時長:992分鐘</span
-          >
-        </p>
+      <div class="section-header">
+        <div class="section-title-area">
+          <span class="section-number">{{ String(sectionIndex).padStart(2, '0') }}</span>
+          <span class="section-name">{{ sectionInfo.title }}</span>
+        </div>
+        <div class="section-meta">
+          <span class="meta-item">
+            <el-icon><VideoPlay /></el-icon>
+            {{ sortedLessons.length }} 單元
+          </span>
+          <span class="meta-item">
+            <el-icon><Clock /></el-icon>
+            {{ totalDuration }} 分鐘
+          </span>
+        </div>
       </div>
     </template>
-    <div>
-      <ul v-if="sectionInfo.lessons?.length > 0" class="course-playlist">
-        <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
-          <div style="display: flex; align-items: center; flex: 2">
-            <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
-            >{{ lesson.lessonTitle
-            }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
-          </div>
-          <div>
-            {{
-              lesson.videoAssetStatus === "upload_failed"
-                ? "暫無影片"
-                : transformSeconds(lesson.lessonDurationSeconds)
-            }}
 
-            <el-button style="margin-left: 8px" type="primary" @click="handleEditLesson(lesson)"
-              >查看
-            </el-button>
-          </div>
-        </li>
-      </ul>
+    <div class="lessons-list">
+      <div
+        v-for="(lesson, index) in sortedLessons"
+        :key="lesson.lessonId"
+        class="lesson-item"
+        @click="handleViewLesson(lesson)"
+      >
+        <div class="lesson-left">
+          <span class="lesson-index">{{ (index + 1).toString().padStart(2, "0") }}</span>
+          <span class="lesson-name">{{ lesson.lessonTitle }}</span>
+          <el-tag v-if="lesson.freePreview" size="small" type="success" class="free-tag">
+            試看
+          </el-tag>
+        </div>
+        <div class="lesson-right">
+          <span class="lesson-duration">{{ formatDuration(lesson.lessonDurationSeconds) }}</span>
+          <el-button size="small" type="primary" plain>
+            查看
+          </el-button>
+        </div>
+      </div>
+      <el-empty v-if="!sortedLessons.length" description="暫無單元" :image-size="60" />
     </div>
   </el-collapse-item>
 </template>
+
 <style scoped>
-:deep(.el-collapse-item__header) {
-  background-color: rgb(221, 233, 246);
+/* 章節摺疊樣式 */
+.section-collapse-item {
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
+  overflow: hidden;
 }
-:deep(.el-collapse-item__header.focusing:focus:not(:hover)) {
-  color: #000;
+
+/* Override Element Plus Collapse Item Header */
+:deep(.el-collapse-item__header) {
+  background-color: #FAFAFA;
+  border-bottom: 1px solid transparent;
+  padding: 0 16px;
+  height: 56px;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-collapse-item__header.is-active) {
+  border-bottom-color: #E5E7EB;
+  background-color: #FFFFFF;
+}
+
+:deep(.el-collapse-item__wrap) {
+  border: none;
 }
 
 :deep(.el-collapse-item__content) {
-  padding: 10px 0;
-  background-color: rgb(245, 247, 249);
-  border-radius: 0 0 8px 8px;
-}
-/* :deep(.el-collapse-item) {
-  background-color: rgb(245, 247, 249);
-}
-:deep(.el-collapse-item__wrap) {
-  border-bottom: none;
-} */
-.upload-btn {
-  width: 90%;
-  margin-left: 5%;
-  border: 1px dashed #000;
-  text-align: center;
-  border-radius: 8px;
-  padding: 20px 0;
-}
-.course-playlist {
-  margin-top: 10px;
-  /* display: flex;
-  flex-direction: column; */
-  /* gap: 15px; */
-}
-.course-playlist li {
-  margin-bottom: 4px;
-  background-color: #fff;
-  padding: 10px 10px;
-  /* border-radius: 8px; */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: space-between;
-}
-.course-playlist li .index {
-  font-size: 20px;
-  font-weight: 700;
-  margin-right: 8px;
-}
-.course-playlist li:hover {
-  background-color: #eff4f9;
-}
-.dialogForm {
-  padding: 16px;
+  padding: 0;
+  background-color: #FFFFFF;
 }
 
-.collapse-chapter-btns {
-  position: absolute;
-  z-index: 10;
+.collapse-icon {
+  font-size: 14px;
+  color: #9CA3AF;
+  transition: transform 0.3s;
+  margin-right: 8px;
+}
+
+.collapse-icon.is-active {
+  transform: rotate(90deg);
+  color: #4B5563;
+}
+
+.section-header {
   display: flex;
-  right: 20px;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-right: 8px;
+}
+
+.section-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-number {
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #6B7280;
+  min-width: 24px;
+}
+
+.section-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.section-meta {
+  display: flex;
+  gap: 16px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #9CA3AF;
+}
+
+/* 單元列表樣式 */
+.lessons-list {
+  padding: 4px 0;
+}
+
+.lesson-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-left: 2px solid transparent;
+}
+
+.lesson-item:hover {
+  background-color: #F9FAFB;
+  border-left-color: var(--el-color-primary-light-5);
+}
+
+.lesson-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.lesson-index {
+  font-size: 13px;
+  font-weight: 500;
+  color: #D1D5DB;
+  min-width: 20px;
+}
+
+.lesson-name {
+  font-size: 14px;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.free-tag {
+  margin-left: 8px;
+}
+
+.lesson-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.lesson-duration {
+  font-size: 13px;
+  color: #9CA3AF;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Media Queries */
+@media (max-width: 640px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .section-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .lesson-item {
+     padding: 12px 16px;
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 12px;
+  }
+
+  .lesson-right {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

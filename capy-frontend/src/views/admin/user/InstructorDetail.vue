@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
 import {
   getInstructorApplicationDetail,
   getApplicationHistory,
@@ -38,8 +39,6 @@ const loading = ref(false);
 const applicationDetail = ref(null);
 const applicationHistory = ref([]);
 const showHistoryDialog = ref(false);
-const showRejectDialog = ref(false);
-const rejectReason = ref("");
 const submitting = ref(false);
 
 // Computed values
@@ -157,13 +156,14 @@ const handleDownload = async (item) => {
   }
 };
 
-// Approve application
+// 審核通過
 const handleApprove = async () => {
   try {
-    await ElMessageBox.confirm("確定要通過此講師申請嗎？", "確認審核", {
-      confirmButtonText: "確定通過",
+    await ElMessageBox.confirm("確定要審核通過此講師申請嗎？", "審核通過", {
+      confirmButtonText: "確認",
       cancelButtonText: "取消",
       type: "success",
+      customClass: "audit-message-box",
     });
 
     submitting.value = true;
@@ -171,7 +171,7 @@ const handleApprove = async () => {
     ElMessage.success("審核通過成功");
     router.push({ name: "instructor_application_list" });
   } catch (error) {
-    if (error !== "cancel") {
+    if (error !== "cancel" && error?.message !== "cancel") {
       console.error("Failed to approve application:", error);
       ElMessage.error("審核操作失敗");
     }
@@ -180,28 +180,33 @@ const handleApprove = async () => {
   }
 };
 
-// Open reject dialog
-const openRejectDialog = () => {
-  rejectReason.value = "";
-  showRejectDialog.value = true;
-};
-
-// Reject application
+// 審核拒絕
 const handleReject = async () => {
-  if (!rejectReason.value.trim()) {
-    ElMessage.warning("請輸入拒絕原因");
-    return;
-  }
-
   try {
+    const { value: reason } = await ElMessageBox.prompt("請輸入拒絕原因", "審核拒絕", {
+      confirmButtonText: "確認",
+      cancelButtonText: "取消",
+      type: "warning",
+      inputType: "textarea",
+      inputPlaceholder: "請輸入拒絕原因...",
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return "請輸入拒絕原因";
+        }
+        return true;
+      },
+      customClass: "audit-message-box",
+    });
+
     submitting.value = true;
-    await rejectInstructorApplication(props.instructorId, rejectReason.value);
-    ElMessage.success("審核不通過已提交");
-    showRejectDialog.value = false;
+    await rejectInstructorApplication(props.instructorId, reason);
+    ElMessage.success("審核拒絕成功");
     router.push({ name: "instructor_application_list" });
   } catch (error) {
-    console.error("Failed to reject application:", error);
-    ElMessage.error("審核操作失敗");
+    if (error !== "cancel" && error?.message !== "cancel") {
+      console.error("Failed to reject application:", error);
+      ElMessage.error("審核操作失敗");
+    }
   } finally {
     submitting.value = false;
   }
@@ -236,8 +241,7 @@ onMounted(() => {
           </div>
           <el-tag
             :type="getStatusConfig(instructor.status).type"
-            size="large"
-            round
+                        round
           >
             {{ getStatusConfig(instructor.status).label }}
           </el-tag>
@@ -388,22 +392,20 @@ onMounted(() => {
 
       <!-- 操作按鈕 -->
       <div class="action-bar">
-        <el-button size="large" :icon="ArrowLeft" @click="goBack"
+        <el-button :icon="ArrowLeft" @click="goBack"
           >返回列表</el-button
         >
         <div class="action-main" v-if="instructor.status === 'pending'">
           <el-button
             type="danger"
-            size="large"
-            :icon="Close"
+                        :icon="Close"
             :loading="submitting"
-            @click="openRejectDialog"
-            >審核不通過</el-button
+            @click="handleReject"
+            >審核拒絕</el-button
           >
           <el-button
             type="primary"
-            size="large"
-            :icon="Check"
+                        :icon="Check"
             :loading="submitting"
             @click="handleApprove"
             >審核通過</el-button
@@ -446,26 +448,6 @@ onMounted(() => {
           </div>
         </el-timeline-item>
       </el-timeline>
-    </el-dialog>
-
-    <!-- 拒絕原因對話框 -->
-    <el-dialog v-model="showRejectDialog" title="審核不通過" width="500px">
-      <el-form>
-        <el-form-item label="拒絕原因" required>
-          <el-input
-            v-model="rejectReason"
-            type="textarea"
-            :rows="4"
-            placeholder="請輸入拒絕原因..."
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="showRejectDialog = false">取消</el-button>
-        <el-button type="danger" :loading="submitting" @click="handleReject">
-          確認不通過
-        </el-button>
-      </template>
     </el-dialog>
   </div>
 </template>

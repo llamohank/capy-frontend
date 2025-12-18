@@ -25,14 +25,16 @@ const adminMenuItems = [
     label: "工作台",
   },
   {
-    type: "submenu",
-    key: "course",
-    icon: "Edit",
-    label: "課程管理",
+    type: 'submenu',
+    key: 'course',
+    icon: 'Edit',
+    label: '課程管理',
+    activeRoutes: ['viewCourseDetail'],
     children: [
-      { route: "course_application_list", label: "上架申請列表" },
-      { route: "courseManagement", label: "課程狀態管理" },
-    ],
+      { route: 'course_application_list', label: '上架申請列表' },
+      { route: 'courseManagement', label: '課程狀態管理', activeRoutes: ['viewCourseDetail'] }
+    ]
+
   },
   {
     type: "submenu",
@@ -101,7 +103,7 @@ const handleUserCommand = async (command) => {
             <div class="header-actions">
               <el-dropdown trigger="hover" @command="handleUserCommand">
                 <span class="user-chip">
-                  <el-avatar :size="40" :src="userProfile.avatar" />
+                  <el-avatar :size="32" :src="userProfile.avatar" />
                   <span class="user-name">{{ userProfile.name }}</span>
                   <el-icon class="arrow"><ArrowDown /></el-icon>
                 </span>
@@ -149,10 +151,10 @@ const handleUserCommand = async (command) => {
 
 /* ==================== Header ==================== */
 :deep(.el-header) {
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #ffffff;
-  height: auto;
-  padding: 12px 28px;
+  border-bottom: 1px solid #E5E7EB;
+  background-color: #FFFFFF;
+  height: 60px;
+  padding: 6px 16px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -163,11 +165,11 @@ const handleUserCommand = async (command) => {
 .el-main {
   background-color: #f5f7fa;
   min-height: 100vh;
-  padding: 24px 32px;
+  padding: 20px 24px;
 }
 
 .main-container {
-  max-width: 1320px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -186,13 +188,14 @@ const handleUserCommand = async (command) => {
   display: flex;
   align-items: center;
   gap: 16px;
+  height: 48px;
 }
 
 .user-chip {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 16px;
+  padding: 4px 10px;
   border-radius: 50px;
   background-color: #f9fafb;
   border: 1px solid #e5e7eb;
@@ -209,15 +212,15 @@ const handleUserCommand = async (command) => {
 }
 
 .user-name {
-  max-width: 180px;
+  max-width: 160px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .arrow {
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 12px;
+  color: #6B7280;
 }
 
 /* ==================== Dropdown Menu ==================== */

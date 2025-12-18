@@ -107,11 +107,10 @@ onMounted(() => {
   <h2 class="section-heading">上架申請列表</h2>
 
   <div class="wrapper" style="margin-bottom: 24px">
-    <div class="filter-bar">
+    <div class="admin-filter-row">
       <el-select
         v-model="filters.parentCategoryId"
-        size="large"
-        placeholder="全部分類"
+                placeholder="全部分類"
         clearable
         style="width: 200px"
       >
@@ -123,46 +122,43 @@ onMounted(() => {
         />
       </el-select>
 
-      <el-button type="primary" size="large" @click="resetFilters">清除篩選</el-button>
+      <el-button type="primary" @click="resetFilters">清除篩選</el-button>
     </div>
   </div>
 
-  <div class="wrapper">
+  <div class="wrapper admin-table-container">
     <el-table
       v-loading="loading"
       stripe
       :row-class-name="() => 'table-row'"
       :cell-class-name="() => 'tbody-cell'"
       :header-cell-class-name="() => 'table-head'"
-      size="large"
-      :data="displayData"
+            :data="displayData"
       style="width: 100%"
       empty-text="暫無申請"
     >
-      <el-table-column label="序號" width="80">
+      <el-table-column label="序號" width="70" align="center">
         <template #default="{ row }">
-          <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
+          <span class="admin-index">#{{ row.index }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="courseTitle" label="課程名稱">
+      <el-table-column label="課程名稱" min-width="200">
         <template #default="{ row }">
-          <div style="width: 80%; padding-left: 10%">
-            <p>{{ row.courseTitle }}</p>
-          </div>
+          {{ row.courseTitle }}
         </template>
       </el-table-column>
-      <el-table-column prop="parentCategoryName" label="分類" />
-      <el-table-column label="申請人">
+      <el-table-column prop="parentCategoryName" label="分類" width="160" />
+      <el-table-column label="申請人" width="180">
         <template #default="{ row }">
           {{ row.instructorName }} / {{ row.userNickname }}
         </template>
       </el-table-column>
-      <el-table-column label="申請時間">
+      <el-table-column label="申請時間" width="150" align="center">
         <template #default="{ row }">
           {{ formatTime(row.submittedAt) }}
         </template>
       </el-table-column>
-      <el-table-column label="檢視">
+      <el-table-column label="檢視" width="80" align="center">
         <template #default="{ row }">
           <el-button type="primary" link @click="viewCourseDetail(row.courseId)">查看</el-button>
         </template>
@@ -170,8 +166,7 @@ onMounted(() => {
     </el-table>
     <div class="pagination-btn" style="justify-content: center">
       <el-pagination
-        size="large"
-        background
+                background
         layout="total, prev, pager, next"
         :page-size="pageSize"
         :total="totalElements"
@@ -183,65 +178,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.filter-form {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.pagination-btn {
-  margin-top: 48px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-:deep(.el-table) {
-  --el-table-header-bg-color: #F9FAFB;
-  --el-table-row-hover-bg-color: #F5F3FF;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-:deep(.tbody-cell .cell) {
-  display: flex;
-  justify-content: center;
-  padding: 16px 12px;
-}
-
-:deep(.table-row .cell) {
-  padding: 16px 12px;
-}
-
-:deep(.table-head .cell) {
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: #374151;
-  padding: 16px 12px;
-}
-
-.index {
-  font-style: italic;
-  font-weight: 600;
-  font-size: 20px;
-  color: #9CA3AF;
-  opacity: 0.4;
-  transition: all 0.2s ease;
-}
-
-.table-row:hover .index {
-  opacity: 1;
-  color: #4F46E5;
-}
+/* Page-specific styles only */
 </style>
 

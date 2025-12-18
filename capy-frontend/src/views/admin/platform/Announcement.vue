@@ -61,9 +61,13 @@ const fetchAnnouncements = async () => {
     loading.value = false;
   }
 };
-
+let isRequesting = false
 // 發布公告
 const handleCreateAnnouncement = async () => {
+  if(isRequesting){
+    ElMessage.warning("處理中，請稍後")
+    return
+  }
   // 驗證表單
   if (!formModel.value.title.trim()) {
     ElMessage.warning("請輸入標題");
@@ -79,6 +83,7 @@ const handleCreateAnnouncement = async () => {
   }
 
   try {
+    isRequesting=true
     submitLoading.value = true;
     await createAnnouncement({
       title: formModel.value.title,
@@ -95,6 +100,7 @@ const handleCreateAnnouncement = async () => {
     ElMessage.error(error?.response?.data?.message || "發布公告失敗");
   } finally {
     submitLoading.value = false;
+    isRequesting=false
   }
 };
 
@@ -151,18 +157,18 @@ onMounted(() => {
     <!-- //公告詳情 -->
     <el-dialog v-model="dialogVisible" center title="公告詳情" width="500">
       <template #header>
-        <h4 class="dialog-heading">公告詳情</h4>
+        <h4 class="admin-dialog-heading">公告詳情</h4>
       </template>
-      <div class="dialog-body">
+      <div class="admin-dialog-body">
         <p>
           {{ currentAnnouncement?.content }}
         </p>
-        <p><span class="detail-label">發布人:</span>{{ currentAnnouncement?.senderNickname }}</p>
+        <p><span class="admin-detail-label">發布人:</span>{{ currentAnnouncement?.senderNickname }}</p>
         <p>
-          <span class="detail-label">發布時間:</span>
+          <span class="admin-detail-label">發布時間:</span>
           <span style="font-style: italic; font-size: 16px">{{ formatDate(currentAnnouncement?.createdAt) }}</span>
         </p>
-        <p><span class="detail-label">可見對象:</span>{{ formatTargetAudience(currentAnnouncement?.targetAudience) }}</p>
+        <p><span class="admin-detail-label">可見對象:</span>{{ formatTargetAudience(currentAnnouncement?.targetAudience) }}</p>
       </div>
     </el-dialog>
     <!-- //發布公告 -->
@@ -176,8 +182,7 @@ onMounted(() => {
       <el-form
         style="padding: 12px"
         label-position="top"
-        size="large"
-        ref="formRef"
+                ref="formRef"
         :model="formModel"
       >
         <el-form-item>
@@ -209,8 +214,8 @@ onMounted(() => {
           <div
             style="display: flex; justify-content: center; gap: 12px; width: 100%; margin-top: 12px"
           >
-            <el-button size="large" @click="addDialogVisible = false">取消</el-button>
-            <el-button size="large" type="primary" :loading="submitLoading" @click="handleCreateAnnouncement">發布</el-button>
+            <el-button @click="addDialogVisible = false">取消</el-button>
+            <el-button type="primary" :loading="submitLoading" @click="handleCreateAnnouncement">發布</el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -220,14 +225,13 @@ onMounted(() => {
       <div class="filter-bar">
         <div style="display: flex; align-items: center; gap: 12px">
           <span style="font-weight: 500; font-size: 16px">發布人 :</span>
-          <el-radio-group v-model="currentAnnouncementType" size="large" fill="#4F46E5" @change="handleTypeChange">
+          <el-radio-group v-model="currentAnnouncementType" fill="#4F46E5" @change="handleTypeChange">
             <el-radio-button label="All" value="" />
             <el-radio-button label="平台" value="platform" />
             <el-radio-button label="講師" value="instructor" />
           </el-radio-group>
         </div>
-        <el-button @click="addDialogVisible = true" type="primary" round size="large"
-          ><el-icon size="large" style="margin-right: 4px"><CirclePlus /></el-icon>發布公告</el-button
+        <el-button @click="addDialogVisible = true" type="primary" round           ><el-icon style="margin-right: 4px"><CirclePlus /></el-icon>發布公告</el-button
         >
       </div>
     </div>
@@ -235,15 +239,14 @@ onMounted(() => {
       <ul v-loading="loading" class="message-list">
         <li v-for="item in announcementList" :key="item.id" @click="checkoutDetail(item)" class="message-list-item">
           <div>
-            <div style="display: flex; align-items: center; margin-bottom: 24px; gap: 4px">
+            <div style="display: flex; align-items: center; margin-bottom: 16px; gap: 4px">
               <h3 class="message-title">{{ item.title }}</h3>
               <el-tag
                 class="tag"
                 type="info"
                 effect="plain"
                 round
-                size="large"
-                >{{ formatTargetAudience(item.targetAudience) }}</el-tag
+                                >{{ formatTargetAudience(item.targetAudience) }}</el-tag
               >
             </div>
             <p style="margin-bottom: 12px; font-weight: 500">
@@ -258,10 +261,10 @@ onMounted(() => {
         </li>
       </ul>
       <div style="justify-content: center" class="pagination-btn">
-        <el-pagination 
-          size="large" 
-          background 
-          layout="total, prev, pager, next" 
+        <el-pagination
+
+          background
+          layout="total, prev, pager, next"
           :total="totalElements"
           :page-size="pageSize"
           :current-page="currentPage"
@@ -272,6 +275,7 @@ onMounted(() => {
   </div>
 </template>
 <style scoped>
+/* Page-specific styles */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -287,15 +291,15 @@ onMounted(() => {
 }
 
 .message-list-item {
-  padding: 20px 24px;
+  padding: 16px 20px;
   position: relative;
   display: flex;
-  gap: 24px;
-  border-radius: 12px;
+  gap: 20px;
+  border-radius: 10px;
   justify-content: space-between;
   align-items: center;
   background-color: #FFFFFF;
-  border-left: 4px solid #C7D2FE;
+  border-left: 3px solid #C7D2FE;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease;
 }
@@ -307,68 +311,25 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.dialog-body {
-  padding: 24px;
-  font-size: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.detail-label {
-  font-weight: 600;
-  font-size: 14px;
-  color: #6B7280;
-  margin-right: 12px;
-}
-
-.dialog-heading {
-  text-align: center;
-  padding: 16px 0;
-  font-weight: 600;
-  font-size: 22px;
-  color: #1F2937;
-}
+/* Uses shared admin-dialog-* classes from admin-dashboard.css */
 
 .checkout {
-  font-size: 13px;
+  font-size: 12px;
   color: #9CA3AF;
   white-space: nowrap;
 }
 
 .message-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   color: #1F2937;
-}
-
-.end-text {
-  margin-top: 12px;
-  text-align: center;
-  color: #9CA3AF;
-}
-
-.add-btn {
-  padding: 18px 24px;
 }
 
 .empty-text {
   text-align: center;
   color: #9CA3AF;
-  padding: 64px 0;
-  font-size: 15px;
-}
-
-.pagination-btn {
-  margin-top: 48px;
-  display: flex;
-}
-
-/* Override radio button fill color */
-:deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-  background-color: #4F46E5 !important;
-  border-color: #4F46E5 !important;
-  box-shadow: -1px 0 0 0 #4F46E5 !important;
+  padding: 48px 0;
+  font-size: 14px;
 }
 </style>
 

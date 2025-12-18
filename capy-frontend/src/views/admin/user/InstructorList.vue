@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { getInstructorApplications } from "@/api/admin/instructor";
 import dayjs from "dayjs";
 
@@ -92,11 +93,10 @@ onMounted(() => {
 <template>
   <h2 class="section-heading">教師申請列表</h2>
   <div class="wrapper" style="margin-bottom: 24px">
-    <div class="filter-bar">
+    <div class="admin-filter-row">
       <el-select
         v-model="currentSort"
-        size="large"
-        placeholder="排序方式"
+                placeholder="排序方式"
         style="width: 200px"
         @change="handleSortChange"
       >
@@ -110,43 +110,40 @@ onMounted(() => {
     </div>
   </div>
 
-  <div class="wrapper">
+  <div class="wrapper admin-table-container">
     <el-table
       v-loading="loading"
       stripe
       :row-class-name="() => 'table-row'"
       :cell-class-name="() => 'tbody-cell'"
       :header-cell-class-name="() => 'table-head'"
-      size="large"
-      :data="dataWithIndex"
+            :data="dataWithIndex"
       style="width: 100%"
       empty-text="暫無申請"
     >
-      <el-table-column label="序號" width="100" align="center">
+      <el-table-column label="序號" width="80" align="center">
         <template #default="{ row }">
-          <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
+          <span class="admin-index">#{{ row.index }}</span>
         </template>
       </el-table-column>
 
-      <el-table-column label="申請者" min-width="280">
+      <el-table-column label="申請者" min-width="250">
         <template #default="{ row }">
-          <div style="width: 80%">
-            <div class="user-info-cell">
-              <el-avatar :size="50" :src="row.avatarUrl" />
-              <div class="user-details">
-                <p class="user-name">{{ row.nickname }}</p>
-                <p class="user-sub">{{ row.fullName }}</p>
-              </div>
+          <div class="admin-user-info-cell">
+            <el-avatar :size="50" :src="row.avatarUrl" />
+            <div class="admin-user-details">
+              <p class="admin-user-name">{{ row.nickname }}</p>
+              <p class="admin-user-sub">{{ row.fullName }}</p>
             </div>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="申請時間" min-width="180" align="center">
+      <el-table-column label="申請時間" min-width="200" align="center">
         <template #default="{ row }">
-          <span class="date-text">{{ formatDate(row.appliedAt) }}</span>
+          <span class="admin-date-text">{{ formatDate(row.appliedAt) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="是否為第一次申請" min-width="160" align="center">
+      <el-table-column label="是否為第一次申請" min-width="180" align="center">
         <template #default="{ row }">
           <span
             class="first-application-badge"
@@ -156,7 +153,7 @@ onMounted(() => {
           </span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="120" align="center">
+      <el-table-column label="操作" min-width="140" align="center">
         <template #default="{ row }">
           <el-button type="primary" link @click="viewDetail(row.applicationId)">
             查看詳情
@@ -166,8 +163,7 @@ onMounted(() => {
     </el-table>
     <div class="pagination-btn" style="justify-content: center">
       <el-pagination
-        size="large"
-        background
+                background
         layout="total, prev, pager, next"
         :total="totalElements"
         :page-size="pageSize"
@@ -178,96 +174,55 @@ onMounted(() => {
   </div>
 </template>
 <style scoped>
-:deep(.el-table) {
-  --el-table-header-bg-color: #f9fafb;
-  --el-table-row-hover-bg-color: #f5f3ff;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-:deep(.tbody-cell .cell) {
+/* User info cell (avatar + name/sub) */
+.admin-user-info-cell {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 16px 12px;
+  gap: 12px;
+  width: 100%;
 }
 
-:deep(.table-head .cell) {
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: #374151;
-  padding: 16px 12px;
+.admin-user-info-cell :deep(.el-avatar) {
+  flex-shrink: 0;
 }
 
-/* 用戶資訊欄位 */
-.user-info-cell {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 8px 0;
-}
-
-.user-details {
+.admin-user-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
 }
 
-.user-name {
+.admin-user-name,
+.admin-user-sub {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-user-name {
   font-weight: 500;
+  font-size: 14px;
   color: #1f2937;
+  line-height: 1.2;
 }
 
-.user-sub {
+.admin-user-sub {
   font-size: 12px;
   color: #909399;
-}
-
-/* 索引樣式 */
-.index {
-  font-style: italic;
-  font-weight: 600;
-  font-size: 20px;
-  color: #9ca3af;
-  opacity: 0.4;
-  transition: all 0.2s ease;
-}
-
-.table-row:hover .index {
-  opacity: 1;
-  color: #4f46e5;
-}
-
-/* 日期樣式 */
-.date-text {
-  font-style: italic;
-  font-weight: 500;
+  line-height: 1.2;
 }
 
 /* 首次申請標記 */
 .first-application-badge {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .highlight-record {
   color: #4f46e5;
   font-weight: 600;
-}
-
-.pagination-btn {
-  margin-top: 48px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 </style>

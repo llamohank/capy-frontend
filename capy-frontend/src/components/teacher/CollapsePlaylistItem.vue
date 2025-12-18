@@ -1,63 +1,98 @@
 <script setup>
+import { ref, computed, watch } from "vue";
 import { VueDraggable as Draggable } from "vue-draggable-plus";
 import TextInputDialog from "../common/TextInputDialog.vue";
+import AlertDialog from "../common/AlertDialog.vue";
+import LessonFormDialog from "./LessonFormDialog.vue";
 import { useLesson } from "@/composable/useLesson";
 import { useCourseStore } from "@/stores/course";
 import { useVideo } from "@/composable/useVideo";
-import AlertDialog from "../common/AlertDialog.vue";
-import LessonFormDialog from "./LessonFormDialog.vue";
+import { useVideoStore } from "@/stores/video";
 import { getVideoUrl } from "@/api/teacher/video";
 import { createLesson, updateLesson } from "@/api/teacher/course";
-import { useVideoStore } from "@/stores/video";
-import transformSeconds from "@/utils/timetransform";
+
 const props = defineProps({
   sectionInfo: {
     type: Object,
     required: true,
   },
+  sectionIndex: {
+    type: Number,
+    default: 1,
+  },
 });
+
 const courseStore = useCourseStore();
 const { deleteSection, updateSection, deleteCourseLesson, reorderCourseLesson } = useLesson(
   props.sectionInfo
 );
 
+// 依 displayOrder 排序的課程列表
+const sortedLessons = computed(() => {
+  if (!props.sectionInfo?.lessons) return [];
+  return [...props.sectionInfo.lessons].sort((a, b) => a.displayOrder - b.displayOrder);
+});
+
+// 計算章節總時長
+const totalDuration = computed(() => {
+  if (!props.sectionInfo?.lessons) return 0;
+  const totalSeconds = props.sectionInfo.lessons.reduce(
+    (sum, lesson) => sum + (lesson.lessonDurationSeconds || 0),
+    0
+  );
+  return Math.floor(totalSeconds / 60);
+});
+
+// 格式化時長 (秒 -> mm:ss)
+const formatDuration = (seconds) => {
+  if (!seconds) return "00:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+// Section dialogs
 const sectionTitle = ref(props.sectionInfo.title);
 const showSectionEditDialog = ref(false);
+const showSectionDeleteDialog = ref(false);
+
 const handleEditSection = async (val) => {
   await updateSection(val);
 };
-const showSectionDeleteDialog = ref(false);
+
 const handleDeleteSection = async () => {
   await deleteSection();
 };
-//lesson
+
+// Lesson dialogs
 const lessonDialogRef = ref(null);
 const isEditLesson = ref(false);
 const currentLesson = ref(null);
 const showLessonDialog = ref(false);
 const lessonVideoUrl = ref(null);
+
 const handleCreateLesson = () => {
   isEditLesson.value = false;
   lessonVideoUrl.value = null;
   showLessonDialog.value = true;
 };
+
 const handleEditLesson = async (lessonInfo) => {
   isEditLesson.value = true;
   currentLesson.value = lessonInfo;
   const res = await getVideoUrl(lessonInfo.lessonId);
-  console.log(res);
   if (res?.signedUrl) {
     lessonVideoUrl.value = res.signedUrl;
   }
   showLessonDialog.value = true;
 };
+
 const handleSaveLesson = async (data) => {
   data.request.courseId = courseStore.currentCourseId;
   data.request.sectionId = props.sectionInfo.sectionId;
   if (!isEditLesson.value) {
     data.request.displayOrder = props.sectionInfo.lessons.length;
   }
-  console.log(data);
   const fd = new FormData();
   fd.append(
     "uploadRequest",
@@ -71,34 +106,25 @@ const handleSaveLesson = async (data) => {
     if (!isEditLesson.value) {
       const res = await createLesson(fd);
       await courseStore.fetchCourseOverview();
-      console.log(res);
       if (data.request.videoMeta) {
         ElMessage.warning("影片上傳中，請勿離開當前頁面或重新刷新");
-        //加入上傳列表 開始上傳
         const videoStore = useVideoStore();
         videoStore.append({ lessonId: res.lessonId, videoAssetId: res.videoInfo.videoAssetId });
         const { uploadVideoToGCP } = useVideo(res.videoInfo.videoAssetId);
-        console.log(1);
         await uploadVideoToGCP(res.videoInfo.initiateUrl, data.videoFile);
       } else {
-        // const message = isEditLesson.value ? "更新成功" : "創建成功";
         ElMessage.success("創建成功");
       }
     } else {
       const res = await updateLesson(fd);
-      console.log(res);
       await courseStore.fetchCourseOverview();
       if (data.request.videoMeta) {
         ElMessage.warning("影片上傳中，請勿離開當前頁面或重新刷新");
-        //加入上傳列表 開始上傳
         const videoStore = useVideoStore();
         videoStore.append({ lessonId: res.lessonId, videoAssetId: res.videoInfo.videoAssetId });
-        // uploadToGCP()
         const { uploadVideoToGCP } = useVideo(res.videoInfo.videoAssetId);
-        console.log(1);
         await uploadVideoToGCP(res.videoInfo.initiateUrl, data.videoFile);
       } else {
-        // const message = isEditLesson.value ? "更新成功" : "創建成功";
         ElMessage.success("更新成功");
       }
     }
@@ -108,9 +134,9 @@ const handleSaveLesson = async (data) => {
     ElMessage.error(message);
   }
 };
+
 const checkIsUploading = (lessonId) => {
   const { isUploading } = useVideo();
-
   return isUploading(lessonId);
 };
 
@@ -118,9 +144,11 @@ const handleDeleteLesson = async (lessonId) => {
   await deleteCourseLesson(lessonId);
 };
 
+// Lesson reorder
 const lessonOrderList = computed(() => {
   return props.sectionInfo.lessons.map((lesson) => lesson.lessonId);
 });
+
 let reverseFlag = false;
 watch(lessonOrderList, async (newVal, oldVal) => {
   if (reverseFlag) {
@@ -140,7 +168,6 @@ watch(lessonOrderList, async (newVal, oldVal) => {
 
   try {
     await reorderCourseLesson(newVal);
-
     ElMessage.success("單元影片順序更新!");
   } catch (e) {
     ElMessage.error("影片順序更新失敗!");
@@ -150,11 +177,13 @@ watch(lessonOrderList, async (newVal, oldVal) => {
 });
 
 const handleStartDrag = () => {
-  ElMessage.primary("托拽以調整單元影片順序");
+  ElMessage.primary("拖拽以調整單元影片順序");
 };
 </script>
+
 <template>
   <div>
+    <!-- Dialogs -->
     <TextInputDialog
       @confirm="handleEditSection"
       v-model:visible="showSectionEditDialog"
@@ -169,7 +198,6 @@ const handleStartDrag = () => {
       alert-text="確定要刪除"
       :highlight="props.sectionInfo.title"
     />
-    <!-- //添加單元影片dialog form -->
     <LessonFormDialog
       :sectionInfo="props.sectionInfo"
       v-model:videoUrl="lessonVideoUrl"
@@ -180,136 +208,318 @@ const handleStartDrag = () => {
       :lessonInfo="currentLesson"
     />
 
-    <el-collapse-item :name="sectionInfo.sectionId ?? sectionInfo.id">
+    <!-- 章節摺疊項 -->
+    <el-collapse-item :name="sectionInfo.sectionId ?? sectionInfo.id" class="section-collapse-item">
       <template #icon="{ isActive }">
-        <el-icon size="large" v-show="isActive"><ArrowDownBold /></el-icon>
-        <el-icon size="large" v-show="!isActive"><ArrowRightBold /></el-icon>
+        <el-icon class="collapse-icon" :class="{ 'is-active': isActive }">
+          <ArrowRight />
+        </el-icon>
       </template>
       <template #title>
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-right: 24px;
-            flex-wrap: wrap;
-            justify-content: space-between;
-          "
-        >
-          <p style="font-size: 20px; padding: 5px 0; padding-left: 20px">
-            {{ sectionInfo?.title
-            }}<span v-if="sectionInfo.lessons?.length > 0" style="font-size: 14px">
-              | 共{{ sectionInfo?.lessons?.length }}單元 時長:992分鐘</span
-            >
-          </p>
-          <div>
-            <el-button @click.stop="showSectionEditDialog = true">編輯</el-button
-            ><el-button @click.stop="showSectionDeleteDialog = true" type="info">刪除</el-button>
+        <div class="section-header">
+          <div class="section-title-area">
+            <span class="section-number">{{ String(sectionIndex).padStart(2, '0') }}</span>
+            <span class="section-name">{{ sectionInfo.title }}</span>
+          </div>
+          <div class="section-actions">
+            <div class="section-meta">
+              <span class="meta-item">
+                <el-icon><VideoPlay /></el-icon>
+                {{ sortedLessons.length }} 單元
+              </span>
+              <span class="meta-item">
+                <el-icon><Clock /></el-icon>
+                {{ totalDuration }} 分鐘
+              </span>
+            </div>
+            <div class="section-buttons">
+              <el-button size="small" @click.stop="showSectionEditDialog = true">編輯</el-button>
+              <el-button size="small" type="danger" plain @click.stop="showSectionDeleteDialog = true">刪除</el-button>
+            </div>
           </div>
         </div>
       </template>
-      <div>
-        <el-button plain class="upload-btn" @click="handleCreateLesson">
-          <el-icon><CirclePlus /></el-icon>上傳單元影片</el-button
-        >
-        <ul v-if="sectionInfo.lessons?.length > 0" class="course-playlist">
-          <Draggable @start="handleStartDrag" v-model="sectionInfo.lessons">
-            <li v-for="(lesson, index) in sectionInfo?.lessons" :key="lesson.lessonId">
-              <div style="display: flex; align-items: center; flex: 2">
-                <span class="index">{{ index < 10 ? "0" + (index + 1) : index }}</span
-                >{{ lesson.lessonTitle
-                }}<el-tag v-show="lesson.freePreview" style="margin-left: 8px">試看單元</el-tag>
-              </div>
-              <div v-if="!checkIsUploading(lesson.lessonId)">
-                {{
-                  lesson.videoAssetStatus === "upload_failed"
-                    ? "暫無影片"
-                    : transformSeconds(lesson.lessonDurationSeconds)
-                }}
 
-                <el-button style="margin-left: 8px" @click="handleEditLesson(lesson)"
-                  >編輯
+      <div class="lessons-content">
+        <!-- 新增單元按鈕 -->
+        <div class="add-lesson-btn" @click="handleCreateLesson">
+          <el-icon><CirclePlus /></el-icon>
+          <span>上傳單元影片</span>
+        </div>
+
+        <!-- 單元列表 -->
+        <div v-if="sectionInfo.lessons?.length > 0" class="lessons-list">
+          <Draggable @start="handleStartDrag" v-model="sectionInfo.lessons" class="lessons-draggable">
+            <div
+              v-for="(lesson, index) in sectionInfo.lessons"
+              :key="lesson.lessonId"
+              class="lesson-item"
+            >
+              <div class="lesson-left">
+                <span class="lesson-index">{{ (index + 1).toString().padStart(2, "0") }}</span>
+                <span class="lesson-name">{{ lesson.lessonTitle }}</span>
+                <el-tag v-if="lesson.freePreview" size="small" type="success" class="free-tag">
+                  試看
+                </el-tag>
+              </div>
+              <div class="lesson-right" v-if="!checkIsUploading(lesson.lessonId)">
+                <span class="lesson-duration">
+                  {{ lesson.videoAssetStatus === "upload_failed" ? "暫無影片" : formatDuration(lesson.lessonDurationSeconds) }}
+                </span>
+                <el-button size="small" type="primary" plain @click="handleEditLesson(lesson)">
+                  編輯
                 </el-button>
-                <el-button type="info" @click="handleDeleteLesson(lesson.lessonId)"
-                  >刪除
+                <el-button size="small" type="danger" plain @click="handleDeleteLesson(lesson.lessonId)">
+                  刪除
                 </el-button>
               </div>
-              <div v-else style="flex: 1">
-                上傳中...請稍後
+              <div class="lesson-right uploading" v-else>
+                <span class="uploading-text">上傳中...</span>
                 <el-progress
                   :percentage="100"
                   :show-text="false"
                   :indeterminate="true"
                   :duration="5"
+                  style="width: 120px;"
                 />
               </div>
-            </li>
+            </div>
           </Draggable>
-        </ul>
+        </div>
+
+        <el-empty v-else description="暫無單元" :image-size="60" />
       </div>
     </el-collapse-item>
   </div>
 </template>
+
 <style scoped>
-:deep(.el-collapse-item__header) {
-  background-color: rgb(221, 233, 246);
+/* 章節摺疊樣式 */
+.section-collapse-item {
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
+  overflow: hidden;
 }
-:deep(.el-collapse-item__header.focusing:focus:not(:hover)) {
-  color: #000;
+
+/* Override Element Plus Collapse Item Header */
+:deep(.el-collapse-item__header) {
+  background-color: #FAFAFA;
+  border-bottom: 1px solid transparent;
+  padding: 0 16px;
+  height: auto;
+  min-height: 56px;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-collapse-item__header.is-active) {
+  border-bottom-color: #E5E7EB;
+  background-color: #FFFFFF;
+}
+
+:deep(.el-collapse-item__wrap) {
+  border: none;
 }
 
 :deep(.el-collapse-item__content) {
-  padding: 10px 0;
-  background-color: rgb(245, 247, 249);
-  border-radius: 0 0 8px 8px;
-}
-/* :deep(.el-collapse-item) {
-  background-color: rgb(245, 247, 249);
-}
-:deep(.el-collapse-item__wrap) {
-  border-bottom: none;
-} */
-.upload-btn {
-  width: 90%;
-  margin-left: 5%;
-  border: 1px dashed #000;
-  text-align: center;
-  border-radius: 8px;
-  padding: 20px 0;
-}
-.course-playlist {
-  margin-top: 10px;
-  /* display: flex;
-  flex-direction: column; */
-  /* gap: 15px; */
-}
-.course-playlist li {
-  margin-bottom: 4px;
-  background-color: #fff;
-  padding: 10px 10px;
-  /* border-radius: 8px; */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: space-between;
-}
-.course-playlist li .index {
-  font-size: 20px;
-  font-weight: 700;
-  margin-right: 8px;
-}
-.course-playlist li:hover {
-  background-color: #eff4f9;
-}
-.dialogForm {
-  padding: 16px;
+  padding: 0;
+  background-color: #FFFFFF;
 }
 
-.collapse-chapter-btns {
-  position: absolute;
-  z-index: 10;
+.collapse-icon {
+  font-size: 14px;
+  color: #9CA3AF;
+  transition: transform 0.3s;
+  margin-right: 8px;
+}
+
+.collapse-icon.is-active {
+  transform: rotate(90deg);
+  color: #4B5563;
+}
+
+.section-header {
   display: flex;
-  right: 20px;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 0;
+  gap: 12px;
+}
+
+.section-title-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-number {
+  font-size: 14px;
+  font-family: inherit;
+  font-weight: 500;
+  color: #6B7280;
+  min-width: 24px;
+}
+
+.section-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.section-meta {
+  display: flex;
+  gap: 16px;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #9CA3AF;
+}
+
+.section-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* 內容區域 */
+.lessons-content {
+  padding: 12px 16px;
+}
+
+/* 新增單元按鈕 */
+.add-lesson-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed #D1D5DB;
+  border-radius: 8px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 12px;
+}
+
+.add-lesson-btn:hover {
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  background-color: #F9FAFB;
+}
+
+/* 單元列表樣式 */
+.lessons-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.lessons-draggable {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lesson-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background-color: #FAFAFA;
+  border-radius: 6px;
+  cursor: grab;
+  transition: background-color 0.15s ease;
+  border-left: 2px solid transparent;
+}
+
+.lesson-item:hover {
+  background-color: #F3F4F6;
+  border-left-color: var(--el-color-primary-light-5);
+}
+
+.lesson-item:active {
+  cursor: grabbing;
+}
+
+.lesson-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.lesson-index {
+  font-size: 13px;
+  font-weight: 500;
+  color: #D1D5DB;
+  min-width: 20px;
+}
+
+.lesson-name {
+  font-size: 14px;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.free-tag {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.lesson-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.lesson-right.uploading {
+  gap: 8px;
+}
+
+.uploading-text {
+  font-size: 13px;
+  color: var(--el-color-warning);
+}
+
+.lesson-duration {
+  font-size: 13px;
+  color: #9CA3AF;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .section-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .lesson-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .lesson-right {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 </style>

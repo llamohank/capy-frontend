@@ -211,7 +211,7 @@ export const getPreviewVideoUrl = (lessonId) => {
     throw new Error('lessonId 為必填參數')
   }
 
-  const apiBaseURL = 'http://localhost:8080'
+  const apiBaseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
   return `${apiBaseURL}/api/student/preview/${lessonId}/master`
 }
 

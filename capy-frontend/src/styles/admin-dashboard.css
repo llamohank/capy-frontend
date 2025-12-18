@@ -254,11 +254,17 @@
 }
 
 /* ==================== Radio Button Group - Indigo ==================== */
+.el-radio-group .el-radio-button__inner {
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
 /* 限定在 admin 路由下才套用,避免影響學生端 */
 .admin-layout .el-radio-group .el-radio-button__inner:hover,
 [class*="admin"] .el-radio-group .el-radio-button__inner:hover {
     color: var(--admin-primary);
 }
+
 
 .admin-layout .el-radio-group .el-radio-button__original-radio:checked+.el-radio-button__inner,
 [class*="admin"] .el-radio-group .el-radio-button__original-radio:checked+.el-radio-button__inner {
@@ -308,4 +314,258 @@
 .admin-empty__text {
     font-size: 15px;
     color: #6B7280;
+}
+
+/* ==================== Admin Shared Table Styles ==================== */
+.admin-table-container :deep(.el-table) {
+    --el-table-header-bg-color: #F9FAFB;
+    --el-table-row-hover-bg-color: #F5F3FF;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+/* Ensure table body fills full width */
+.admin-table-container :deep(.el-table__body),
+.admin-table-container :deep(.el-table__header) {
+    width: 100% !important;
+}
+
+.admin-table-container :deep(.tbody-cell .cell) {
+    display: flex;
+    align-items: center; /* Vertical center */
+    padding: 12px 10px;
+    /* Default justify-content is flex-start (left), which is what we want for User Info */
+}
+
+/* Only center horizontally if the column has align="center" (which adds .is-center to the td) */
+.admin-table-container :deep(.tbody-cell.is-center .cell) {
+    justify-content: center;
+}
+
+/* Header cells are always centered in this design */
+.admin-table-container :deep(.table-head .cell) {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: #374151;
+    padding: 12px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-table-container :deep(.table-row .cell) {
+    padding: 12px 10px;
+}
+
+.admin-table-container :deep(.table-row:hover) {
+    cursor: pointer;
+}
+
+/* Admin Table Index Style */
+.admin-index {
+    font-style: italic;
+    font-weight: 600;
+    font-size: 17px;
+    color: #9CA3AF;
+    opacity: 0.4;
+    transition: all 0.2s ease;
+}
+
+.table-row:hover .admin-index {
+    opacity: 1;
+    color: #4F46E5;
+}
+
+/* ==================== Admin Filter Bar ==================== */
+.admin-filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-filter-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.admin-filter-form .el-form-item {
+    margin: 0;
+}
+
+/* ==================== Admin User Info Cell ==================== */
+.admin-user-info-cell {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 0;
+    width: 100%;
+}
+
+.admin-user-info-cell .el-avatar {
+    flex-shrink: 0;
+}
+
+.admin-user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-user-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: #1F2937;
+}
+
+.admin-user-sub {
+    font-size: 12px;
+    color: #909399;
+}
+
+/* ==================== Admin Detail List ==================== */
+.admin-detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-detail-row {
+    display: flex;
+    align-items: center;
+    line-height: 1.4;
+}
+
+.admin-detail-label {
+    color: #6B7280;
+    font-weight: 600;
+    font-size: 13px;
+    min-width: 100px;
+}
+
+.admin-detail-value {
+    flex: 1;
+    color: #374151;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+/* ==================== Admin Dialog Styles ==================== */
+.admin-dialog-heading {
+    text-align: center;
+    padding: 12px 0;
+    font-weight: 600;
+    font-size: 18px;
+    color: #1F2937;
+}
+
+.admin-dialog-body {
+    padding: 20px;
+    font-size: 15px;
+    text-align: center;
+}
+
+.admin-dialog-footer {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    padding-bottom: 10px;
+}
+
+.admin-dialog-username {
+    font-weight: 500;
+    color: #409EFF;
+}
+
+/* ==================== Admin Date/Time Text ==================== */
+.admin-date-text {
+    font-style: italic;
+    font-weight: 500;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+.admin-time-text {
+    font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+    font-size: 13px;
+    color: #6B7280;
+}
+
+/* ==================== Admin Pastel Tag Overrides ==================== */
+.admin-table-container :deep(.el-tag--success) {
+    background-color: #D1FAE5;
+    color: #059669;
+    border-color: #A7F3D0;
+}
+
+.admin-table-container :deep(.el-tag--warning) {
+    background-color: #FEF3C7;
+    color: #D97706;
+    border-color: #FDE68A;
+}
+
+.admin-table-container :deep(.el-tag--danger) {
+    background-color: #FEE2E2;
+    color: #DC2626;
+    border-color: #FECACA;
+}
+
+.admin-table-container :deep(.el-tag--info) {
+    background-color: #F3F4F6;
+    color: #4B5563;
+    border-color: #E5E7EB;
+}
+
+.admin-table-container :deep(.el-tag--primary) {
+    background-color: #EEF2FF;
+    color: #4F46E5;
+    border-color: #C7D2FE;
+}
+
+/* ==================== Admin Dialog Header (Gradient) ==================== */
+.admin-dialog-gradient :deep(.el-dialog) {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.admin-dialog-gradient :deep(.el-dialog__header) {
+    text-align: center;
+    font-weight: 600;
+    margin-right: 0;
+    margin-bottom: 12px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+}
+
+.admin-dialog-gradient :deep(.el-dialog__title) {
+    font-size: 18px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: 0.3px;
+}
+
+.admin-dialog-gradient :deep(.el-dialog__headerbtn) {
+    top: 20px;
+    right: 20px;
+}
+
+.admin-dialog-gradient :deep(.el-dialog__headerbtn .el-dialog__close) {
+    color: #FFFFFF;
+    font-size: 18px;
+}
+
+.admin-dialog-gradient :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
+    color: #E0E7FF;
+}
+
+.admin-dialog-gradient :deep(.el-dialog__body) {
+    padding: 24px;
 }

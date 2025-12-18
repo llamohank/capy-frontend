@@ -16,7 +16,7 @@ import {
   updateStudentProfile,
   submitCourseRating,
   updateCourseRating
-} from '@/api/student/Studentcenter'
+} from '@/api/student/studentCenter'
 
 export const useStudentCenterStore = defineStore('studentCenter', {
   state: () => ({

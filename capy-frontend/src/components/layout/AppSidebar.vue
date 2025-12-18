@@ -72,12 +72,12 @@ const isMenuExpanded = (menuKey) => {
 };
 
 // 檢查路由是否匹配
-const isRouteActive = (routeName) => {
-  return route.name === routeName;
+const isRouteActive = (routeName, extraRoutes = []) => {
+  return route.name === routeName || extraRoutes.includes(route.name);
 };
 
 const isSubMenuActive = (children) => {
-  return children.some(child => route.name === child.route);
+  return children.some(child => isRouteActive(child.route, child.activeRoutes));
 };
 
 // 暴露狀態給父組件
@@ -111,7 +111,7 @@ defineExpose({
             v-if="item.type === 'item'"
             :to="{ name: item.route }"
             class="nav-item"
-            :class="{ 'is-active': isRouteActive(item.route) }"
+            :class="{ 'is-active': isRouteActive(item.route, item.activeRoutes || []) }"
           >
             <el-icon class="nav-icon">
               <component :is="item.icon" />
@@ -120,7 +120,7 @@ defineExpose({
           </router-link>
 
           <!-- 子選單 -->
-          <div v-else class="nav-submenu" :class="{ 'is-active': isSubMenuActive(item.children) }">
+          <div v-else class="nav-submenu" :class="{ 'is-active': isSubMenuActive(item.children) || isRouteActive(null, item.activeRoutes || []) }">
             <div
               class="nav-submenu-title"
               :class="{ 'is-open': isMenuExpanded(item.key) }"
@@ -141,7 +141,7 @@ defineExpose({
                   :key="child.route"
                   :to="{ name: child.route }"
                   class="nav-submenu-item"
-                  :class="{ 'is-active': isRouteActive(child.route) }"
+                  :class="{ 'is-active': isRouteActive(child.route, child.activeRoutes || []) }"
                 >
                   {{ child.label }}
                 </router-link>
@@ -190,8 +190,10 @@ defineExpose({
 
 /* ==================== Logo Header ==================== */
 .sidebar-header {
-  display: block;
-  padding: 16px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
   border-bottom: 1px solid rgba(99, 102, 241, 0.2);
   text-decoration: none;
   cursor: pointer;

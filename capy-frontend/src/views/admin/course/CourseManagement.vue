@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
 import { getApprovedCourses, getParentCategories } from "@/api/admin/course";
 import dayjs from "dayjs";
 
@@ -202,11 +203,10 @@ onMounted(() => {
 
   <div class="wrapper" style="margin-bottom: 24px">
     <!-- 篩選與搜尋區 -->
-    <div class="filter-bar">
+    <div class="admin-filter-row">
       <el-select
         v-model="currentCategory"
-        size="large"
-        placeholder="全部分類"
+                placeholder="全部分類"
         clearable
         style="width: 200px"
         @change="handleCategoryChange"
@@ -221,8 +221,7 @@ onMounted(() => {
 
       <el-select
         v-model="currentStatus"
-        size="large"
-        placeholder="全部狀態"
+                placeholder="全部狀態"
         clearable
         style="width: 150px"
         @change="handleStatusChange"
@@ -237,8 +236,7 @@ onMounted(() => {
 
       <el-input
         v-model="searchKeyword"
-        size="large"
-        placeholder="搜尋課程名稱、講師..."
+                placeholder="搜尋課程名稱、講師..."
         style="width: 300px"
         clearable
         @keyup.enter="handleSearch"
@@ -249,15 +247,14 @@ onMounted(() => {
         </template>
       </el-input>
 
-      <el-button type="primary" size="large" @click="handleSearch">
+      <el-button type="primary" @click="handleSearch">
         <el-icon style="margin-right: 4px"><Search /></el-icon>
         搜尋
       </el-button>
 
       <el-select
         v-model="currentSort"
-        size="large"
-        placeholder="排序方式"
+                placeholder="排序方式"
         style="width: 200px"
         @change="handleSortChange"
       >
@@ -271,7 +268,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <div class="wrapper">
+  <div class="wrapper admin-table-container">
     <!-- 課程列表 -->
     <el-table
       v-loading="loading"
@@ -279,46 +276,43 @@ onMounted(() => {
       :row-class-name="() => 'table-row'"
       :cell-class-name="() => 'tbody-cell'"
       :header-cell-class-name="() => 'table-head'"
-      size="large"
-      :data="dataWithIndex"
+            :data="dataWithIndex"
       style="width: 100%"
       empty-text="暫無課程"
     >
-      <el-table-column label="序號" width="80">
+      <el-table-column label="序號" width="70" align="center">
         <template #default="{ row }">
-          <span class="index"><span style="margin-right: 8px">#</span>{{ row.index }}</span>
+          <span class="admin-index">#{{ row.index }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="課程名稱">
+      <el-table-column label="課程名稱" min-width="200">
         <template #default="{ row }">
-          <div style="width: 80%; padding-left: 10%">
-            <p>{{ row.courseTitle }}</p>
-          </div>
+          {{ row.courseTitle }}
         </template>
       </el-table-column>
-      <el-table-column label="講師">
-        <template #default="{ row }">
-          {{ row.instructorName }} / {{ row.userNickname }}
-        </template>
-      </el-table-column>
-      <el-table-column label="分類">
+      <el-table-column label="分類" width="180">
         <template #default="{ row }">
           {{ formatCategory(row) }}
         </template>
       </el-table-column>
-      <el-table-column label="狀態">
+      <el-table-column label="講師" width="160">
+        <template #default="{ row }">
+          {{ row.instructorName }} / {{ row.userNickname }}
+        </template>
+      </el-table-column>
+      <el-table-column label="狀態" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="statusTagType(row.status)" effect="plain">
             {{ statusLabel(row.status) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="上架日期">
+      <el-table-column label="上架日期" width="150" align="center">
         <template #default="{ row }">
-          <span class="published-at">{{ formatDate(row.publishedAt) }}</span>
+          <span class="admin-date-text">{{ formatDate(row.publishedAt) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="100" align="center">
         <template #default="{ row }">
           <el-button type="primary" link @click="viewCourseDetail(row.courseId)">
             查看詳情
@@ -330,8 +324,7 @@ onMounted(() => {
     <!-- 分頁 -->
     <div class="pagination-btn" style="justify-content: center">
       <el-pagination
-        size="large"
-        background
+                background
         layout="total, prev, pager, next"
         :total="totalElements"
         :page-size="pageSize"
@@ -343,85 +336,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.pagination-btn {
-  margin-top: 48px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-:deep(.el-table) {
-  --el-table-header-bg-color: #F9FAFB;
-  --el-table-row-hover-bg-color: #F5F3FF;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-:deep(.tbody-cell .cell) {
-  display: flex;
-  justify-content: center;
-  padding: 16px 12px;
-}
-
-:deep(.table-head .cell) {
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  color: #374151;
-  padding: 16px 12px;
-}
-
-.index {
-  font-style: italic;
-  font-weight: 600;
-  font-size: 20px;
-  color: #9CA3AF;
-  opacity: 0.4;
-  transition: all 0.2s ease;
-}
-
-.table-row:hover .index {
-  opacity: 1;
-  color: #4F46E5;
-}
-
-.published-at {
-  font-style: italic;
-  font-weight: 500;
-  color: #6B7280;
-}
-
-/* Status Tag Styles */
-:deep(.el-tag--success) {
-  background-color: #D1FAE5;
-  color: #059669;
-  border-color: #A7F3D0;
-}
-
-:deep(.el-tag--warning) {
-  background-color: #FEF3C7;
-  color: #D97706;
-  border-color: #FDE68A;
-}
-
-:deep(.el-tag--danger) {
-  background-color: #FEE2E2;
-  color: #DC2626;
-  border-color: #FECACA;
-}
-
-:deep(.el-tag--info) {
-  background-color: #F3F4F6;
-  color: #4B5563;
-  border-color: #E5E7EB;
-}
+/* Page-specific styles only */
 </style>
 

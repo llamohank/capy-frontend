@@ -1,10 +1,12 @@
 <script setup>
 import { ref, provide, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { ElMessage, ElMessageBox } from "element-plus";
 import CourseAttachment from "@/components/admin/CourseAttachment.vue";
 import CourseDetailForm from "@/components/admin/CourseDetailForm.vue";
 import CoursePlaylist from "@/components/admin/CoursePlaylist.vue";
-import { getCourseOverview, approveCourse, rejectCourse, forceUnpublishCourse, restoreCourse, getAllCategories, getAllTags } from "@/api/admin/course";
+import { getCourseOverview, approveCourse, rejectCourse, forceUnpublishCourse, restoreCourse, getAllCategories } from "@/api/admin/course";
+import { listAllTags } from "@/api/admin/tag";
 
 const props = defineProps({
   viewtype: {
@@ -39,7 +41,7 @@ const fetchCourseOverview = async () => {
     const [courseResult, categoriesResult, tagsResult] = await Promise.all([
       getCourseOverview(courseId),
       getAllCategories(),
-      getAllTags(),
+      listAllTags(),
     ]);
     if (courseResult) {
       courseData.value = courseResult.course || null;
@@ -63,6 +65,7 @@ const handleApprove = async () => {
       confirmButtonText: "確認",
       cancelButtonText: "取消",
       type: "success",
+      customClass: "audit-message-box",
     });
 
     const courseId = route.params.courseId;
@@ -92,6 +95,7 @@ const handleReject = async () => {
         }
         return true;
       },
+      customClass: "audit-message-box",
     });
 
     const courseId = route.params.courseId;
@@ -121,6 +125,7 @@ const handleForceUnpublish = async () => {
         }
         return true;
       },
+      customClass: "audit-message-box",
     });
 
     const courseId = route.params.courseId;
@@ -150,6 +155,7 @@ const handleRestore = async () => {
         }
         return true;
       },
+      customClass: "audit-message-box",
     });
 
     const courseId = route.params.courseId;
@@ -170,49 +176,139 @@ onMounted(() => {
 </script>
 
 <template>
-  <h2 class="section-heading">
-    {{ props.viewtype === "apply" ? "課程申請詳情" : "課程狀態詳情" }}
-  </h2>
-  <div v-loading="loading" style="display: flex; flex-direction: column; gap: 50px">
-    <CourseDetailForm />
-    <CoursePlaylist />
-    <CourseAttachment />
-    <div class="operation-btns">
-      <el-button @click="$router.go(-1)" size="large" type="info">
-        <el-icon style="margin-right: 4px" size="large"><ArrowLeftBold /></el-icon>
-        返回課程列表
-      </el-button>
-      <div class="operation-btns" v-if="props.viewtype === 'apply'">
-        <el-button type="danger" size="large" @click="handleReject">審核拒絕</el-button>
-        <el-button type="primary" size="large" @click="handleApprove">審核通過</el-button>
+  <div class="page-container">
+    <header class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          {{ props.viewtype === "apply" ? "課程申請詳情" : "課程狀態詳情" }}
+        </h1>
       </div>
-      <div class="operation-btns" v-else>
-        <el-button
-          v-if="courseData?.status !== 'force_unpublish'"
-          type="danger"
-          size="large"
-          @click="handleForceUnpublish"
-        >
-          強制下架
-        </el-button>
-        <el-button
-          v-if="courseData?.status === 'force_unpublish'"
-          type="primary"
-          size="large"
-          @click="handleRestore"
-        >
-          恢復上架
-        </el-button>
+      <div class="header-actions">
+        <template v-if="props.viewtype === 'apply'">
+          <el-button type="danger" @click="handleReject">
+            <el-icon><CloseBold /></el-icon>
+            審核拒絕
+          </el-button>
+          <el-button type="primary" @click="handleApprove">
+            <el-icon><Select /></el-icon>
+            審核通過
+          </el-button>
+        </template>
+        <template v-else>
+          <el-button
+            v-if="courseData?.status !== 'force_unpublish'"
+            type="danger"
+            @click="handleForceUnpublish"
+          >
+            <el-icon><CircleClose /></el-icon>
+            強制下架
+          </el-button>
+          <el-button
+            v-if="courseData?.status === 'force_unpublish'"
+            type="primary"
+            @click="handleRestore"
+          >
+            <el-icon><RefreshRight /></el-icon>
+            恢復上架
+          </el-button>
+        </template>
       </div>
+    </header>
+
+    <div v-loading="loading" class="content-sections">
+      <CourseDetailForm />
+      <CoursePlaylist />
+      <CourseAttachment />
     </div>
   </div>
 </template>
 
 <style scoped>
-.operation-btns {
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
-  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #1F2937;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+}
+
+.page-title::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  background-color: #4F46E5;
+  border-radius: 50%;
+  margin-right: 12px;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  flex-shrink: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.header-actions .el-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  font-weight: 500;
+}
+
+.content-sections {
+  display: flex;
+  flex-direction: column;
   gap: 24px;
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-content {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .header-actions .el-button {
+    flex: 1;
+    justify-content: center;
+  }
 }
 </style>
