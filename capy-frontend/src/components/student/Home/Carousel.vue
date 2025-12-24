@@ -25,7 +25,7 @@ onUnmounted(() => {
 const slides = ref([
   {
     id: 1,
-    url: "/水豚滑手機.png",
+    url: "/capybara-intro01.webp",
     badge: "學生專區",
     title: "隨時隨地，掌握 AI 時代新技能",
     subtitle: "從程式設計到商業管理，開啟你的學習旅程",
@@ -33,7 +33,7 @@ const slides = ref([
   },
   {
     id: 2,
-    url: "/水豚教課程.png",
+    url: "/capybara-intro02.webp",
     badge: "講師招募",
     title: "將你的專業變現，影響全世界",
     subtitle: "建立課程、追蹤收益，成為 CapyCourse 合作講師",
@@ -41,7 +41,7 @@ const slides = ref([
   },
   {
     id: 3,
-    url: "/水豚介紹網站.png",
+    url: "/capybara-intro03.webp",
     badge: "品牌理念",
     title: "像水豚一樣自在的學習節奏",
     subtitle: "加入我們，體驗最清新的線上學習平台",

@@ -40,12 +40,16 @@ const handleViewProfile = () => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .instructor-card {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 24px;
+
+  @include mobile {
+    padding: 16px;
+  }
 }
 
 .card-title {
@@ -53,6 +57,11 @@ const handleViewProfile = () => {
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 20px 0;
+
+  @include mobile {
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
 }
 
 .instructor-info {
@@ -60,10 +69,25 @@ const handleViewProfile = () => {
   align-items: center;
   gap: 16px;
   margin-bottom: 16px;
+
+  @include mobile {
+    gap: 12px;
+  }
 }
 
 .instructor-avatar {
   flex-shrink: 0;
+
+  @include mobile {
+    /* 透過深層選擇器調整 Element Plus Avatar 尺寸 */
+    width: 60px !important;
+    height: 60px !important;
+
+    /* 調整 icon 尺寸以配合縮小的 avatar */
+    :deep(.el-icon) {
+      font-size: 24px;
+    }
+  }
 }
 
 .instructor-details {
@@ -94,9 +118,9 @@ const handleViewProfile = () => {
   color: #7ec8a3;
   font-weight: 600;
   padding: 0;
-}
 
-.view-profile-btn:hover {
-  color: #6bb890;
+  &:hover {
+    color: #6bb890;
+  }
 }
 </style>

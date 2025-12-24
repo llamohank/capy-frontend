@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { ArrowDown, Lock, Unlock } from '@element-plus/icons-vue';
 
 const props = defineProps({
   // 選單項目配置
@@ -161,7 +162,7 @@ defineExpose({
         :title="isPinned ? '取消釘選' : '釘選側邊欄'"
       >
         <el-icon :size="16">
-          <component :is="isPinned ? 'Unlock' : 'Lock'" />
+          <component :is="isPinned ? Unlock : Lock" />
         </el-icon>
         <span class="pin-text">{{ isPinned ? '取消釘選' : '釘選' }}</span>
       </button>

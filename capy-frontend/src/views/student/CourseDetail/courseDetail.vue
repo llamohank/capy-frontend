@@ -151,6 +151,41 @@
       </el-aside>
     </el-container>
 
+    <!-- Mobile Sticky Action Bar (手機版底部懸浮購買列) -->
+    <div class="mobile-action-bar mobile-only">
+      <div v-if="!course.isEnrolled" class="action-price">
+        NT${{ course.price }}
+      </div>
+      <div class="action-buttons">
+        <el-button
+          v-if="course.isEnrolled"
+          type="primary"
+          size="large"
+          class="action-btn"
+          @click="navigateToLearning"
+        >
+          {{ course.progress > 0 ? '繼續學習' : '開始學習' }}
+        </el-button>
+        <template v-else>
+          <el-button
+            type="warning"
+            size="large"
+            class="action-btn"
+            @click="handleBuyNow"
+          >
+            立即購買
+          </el-button>
+          <el-button
+            :icon="Star"
+            circle
+            size="large"
+            :type="isInWishlist ? 'warning' : 'default'"
+            @click="handleToggleWishlist"
+          />
+        </template>
+      </div>
+    </div>
+
     <!-- Preview Modal -->
     <el-dialog
       v-model="isPreviewVisible"
@@ -835,10 +870,14 @@ onBeforeUnmount(async () => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .course-detail-page {
   min-height: 100vh;
   background: #FCF9F4;
+  /* 為手機版底部懸浮列預留空間 */
+  @include mobile {
+    padding-bottom: 80px;
+  }
 }
 
 .main-container {
@@ -846,10 +885,23 @@ onBeforeUnmount(async () => {
   margin: 0 auto;
   padding: 32px 24px;
   align-items: flex-start;
+
+  @include below($bp-xl) {
+    flex-direction: column;
+  }
+
+  @include mobile {
+    padding: 24px 16px;
+  }
 }
 
 .main-content {
   padding: 0 24px 0 0;
+
+  @include below($bp-xl) {
+    padding: 0;
+    width: 100%;
+  }
 }
 
 /* 桌面版隱藏主要封面圖片 */
@@ -861,12 +913,25 @@ onBeforeUnmount(async () => {
   margin-bottom: 32px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: none; /* 預設隱藏 */
-}
 
-.course-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  &.mobile-only {
+    /* 平板和桌面版隱藏 (>= 768px) */
+    @include not-mobile {
+      display: none !important;
+    }
+
+    /* 手機版顯示 (< 768px) */
+    @include mobile {
+      display: block;
+      height: 250px;
+    }
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 /* Sticky Sidebar */
@@ -874,15 +939,21 @@ onBeforeUnmount(async () => {
   position: sticky;
   top: 20px;
   z-index: 10;
+
+  @include below($bp-xl) {
+    width: 100%;
+    position: static;
+    margin-top: 24px;
+  }
 }
 
 .purchase-card {
   border-radius: 12px;
   border: 1px solid #e8e8e8;
-}
 
-.purchase-card :deep(.el-card__body) {
-  padding: 0;
+  :deep(.el-card__body) {
+    padding: 0;
+  }
 }
 
 /* 課程預覽區域 - 添加播放覆蓋層 */
@@ -893,16 +964,20 @@ onBeforeUnmount(async () => {
   position: relative;
   cursor: pointer;
   transition: transform 0.3s ease;
-}
 
-.course-preview:hover {
-  transform: scale(1.02);
-}
+  &:hover {
+    transform: scale(1.02);
 
-.course-preview img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+    .play-overlay {
+      opacity: 1;
+    }
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
 /* 播放覆蓋層 */
@@ -920,10 +995,6 @@ onBeforeUnmount(async () => {
   gap: 8px;
   opacity: 0;
   transition: opacity 0.3s ease;
-}
-
-.course-preview:hover .play-overlay {
-  opacity: 1;
 }
 
 .play-icon {
@@ -971,11 +1042,11 @@ onBeforeUnmount(async () => {
   padding: 8px 12px;
   background-color: #f5f7fa;
   border-radius: 6px;
-}
 
-.last-watched-info .el-icon {
-  color: #7ec8a3;
-  font-size: 16px;
+  .el-icon {
+    color: #7ec8a3;
+    font-size: 16px;
+  }
 }
 
 .buy-btn,
@@ -992,11 +1063,11 @@ onBeforeUnmount(async () => {
   background: var(--capy-warning, #FB8C00);
   border-color: var(--capy-warning, #FB8C00);
   color: white;
-}
 
-.buy-btn:hover {
-  background: var(--el-color-warning-dark-2, #c97000);
-  border-color: var(--el-color-warning-dark-2, #c97000);
+  &:hover {
+    background: var(--el-color-warning-dark-2, #c97000);
+    border-color: var(--el-color-warning-dark-2, #c97000);
+  }
 }
 
 /* 學習按鈕 (Primary - 綠色/藍色) */
@@ -1004,11 +1075,11 @@ onBeforeUnmount(async () => {
   background: var(--capy-primary, #7ec8a3);
   border-color: var(--capy-primary, #7ec8a3);
   color: white;
-}
 
-.learning-btn:hover {
-  background: var(--el-color-primary-dark-2, #5fa885);
-  border-color: var(--el-color-primary-dark-2, #5fa885);
+  &:hover {
+    background: var(--el-color-primary-dark-2, #5fa885);
+    border-color: var(--el-color-primary-dark-2, #5fa885);
+  }
 }
 
 /* Add to Cart 保持為 Outlined 樣式 */
@@ -1016,10 +1087,10 @@ onBeforeUnmount(async () => {
   background: #fff;
   border: 2px solid #7ec8a3;
   color: #7ec8a3;
-}
 
-.cart-btn:hover {
-  background: #f0f9f4;
+  &:hover {
+    background: #f0f9f4;
+  }
 }
 
 /* 願望清單按鈕樣式 - 未加入狀態 */
@@ -1032,14 +1103,14 @@ onBeforeUnmount(async () => {
   border: 2px solid #FB8C00;
   color: #FB8C00;
   transition: all 0.3s ease;
-}
 
-.wishlist-btn:hover {
-  background: #FFF3E0;
-}
+  &:hover {
+    background: #FFF3E0;
+  }
 
-.wishlist-btn .el-icon {
-  margin-right: 4px;
+  .el-icon {
+    margin-right: 4px;
+  }
 }
 
 /* 願望清單按鈕樣式 - 已加入狀態 */
@@ -1052,15 +1123,15 @@ onBeforeUnmount(async () => {
   border: 2px solid #FB8C00;
   color: #fff;
   transition: all 0.3s ease;
-}
 
-.wishlist-btn-active:hover {
-  background: #E67E00;
-  border-color: #E67E00;
-}
+  &:hover {
+    background: #E67E00;
+    border-color: #E67E00;
+  }
 
-.wishlist-btn-active .el-icon {
-  margin-right: 4px;
+  .el-icon {
+    margin-right: 4px;
+  }
 }
 
 .course-includes {
@@ -1072,10 +1143,10 @@ onBeforeUnmount(async () => {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 12px 0;
-}
 
-.includes-title:not(:first-child) {
-  margin-top: 20px;
+  &:not(:first-child) {
+    margin-top: 20px;
+  }
 }
 
 .include-item {
@@ -1085,11 +1156,11 @@ onBeforeUnmount(async () => {
   padding: 8px 0;
   font-size: 14px;
   color: #666;
-}
 
-.include-item .el-icon {
-  color: #7ec8a3;
-  font-size: 18px;
+  .el-icon {
+    color: #7ec8a3;
+    font-size: 18px;
+  }
 }
 
 /* 預覽播放器容器 */
@@ -1099,6 +1170,11 @@ onBeforeUnmount(async () => {
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+
+  /* 手機版取消圓角，最大化顯示區域 */
+  @include mobile {
+    border-radius: 4px;
+  }
 }
 
 .video-wrapper {
@@ -1124,23 +1200,79 @@ onBeforeUnmount(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.85); /* 手機版加深背景，提升對比 */
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
 }
 
+/* Mobile Action Bar - 手機版底部懸浮購買列 */
+.mobile-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 12px 16px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 100;
+  gap: 12px;
+
+  /* 桌面版隱藏 */
+  @include not-mobile {
+    display: none !important;
+  }
+
+  /* 手機版顯示 */
+  @include mobile {
+    display: flex;
+  }
+
+  .action-price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    justify-content: flex-end;
+
+    .action-btn {
+      flex: 1;
+      max-width: 200px;
+    }
+  }
+}
+
 .buy-overlay-content {
   text-align: center;
   padding: 40px;
   max-width: 400px;
+  width: 100%;
+
+  /* 手機版優化 */
+  @include mobile {
+    padding: 20px;
+    max-width: 90%;
+  }
 }
 
 .buy-icon {
   font-size: 64px;
   color: var(--capy-warning);
   margin-bottom: 24px;
+
+  @include mobile {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
 }
 
 .buy-title {
@@ -1148,6 +1280,11 @@ onBeforeUnmount(async () => {
   font-weight: 700;
   color: white;
   margin: 0 0 16px 0;
+
+  @include mobile {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+  }
 }
 
 .buy-text {
@@ -1155,6 +1292,11 @@ onBeforeUnmount(async () => {
   color: rgba(255, 255, 255, 0.8);
   margin: 0 0 32px 0;
   line-height: 1.6;
+
+  @include mobile {
+    font-size: 14px;
+    margin: 0 0 20px 0;
+  }
 }
 
 .buy-now-btn {
@@ -1162,6 +1304,24 @@ onBeforeUnmount(async () => {
   font-weight: 600;
   padding: 14px 32px;
   height: auto;
+
+  @include mobile {
+    font-size: 14px;
+    padding: 10px 24px;
+    width: 100%; /* 手機版按鈕全寬 */
+  }
+}
+
+/* 調整 Element Plus Dialog 在手機版的樣式 */
+:deep(.el-dialog) {
+  @include mobile {
+    width: 95% !important; /* 寬度佔滿 */
+    margin-top: 10vh !important; /* 調整垂直位置 */
+
+    .el-dialog__body {
+      padding: 10px; /* 減少內距 */
+    }
+  }
 }
 
 /* Shaka Player 控制列樣式 */
@@ -1188,42 +1348,6 @@ onBeforeUnmount(async () => {
 
   .shaka-played-range {
     background-color: var(--capy-primary, #54CDF2);
-  }
-}
-
-/* 平板和桌面版 */
-@media (min-width: 769px) {
-  .mobile-only {
-    display: none !important;
-  }
-}
-
-@media (max-width: 1200px) {
-  .main-container {
-    flex-direction: column;
-  }
-
-  .main-content {
-    padding: 0;
-    width: 100%;
-  }
-
-  .sidebar {
-    width: 100%;
-    position: static;
-    margin-top: 24px;
-  }
-}
-
-/* 手機版 - 顯示封面圖片 */
-@media (max-width: 768px) {
-  .main-container {
-    padding: 24px 16px;
-  }
-
-  .course-media.mobile-only {
-    display: block;
-    height: 250px;
   }
 }
 </style>

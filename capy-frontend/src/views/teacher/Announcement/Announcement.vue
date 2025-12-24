@@ -1,4 +1,5 @@
 <script setup>
+import { CirclePlus } from "@element-plus/icons-vue";
 import { getAnnouncementList, createAnnouncement } from "@/api/teacher/announcement";
 const dialogVisible = ref(false);
 const addDialogVisible = ref(false);

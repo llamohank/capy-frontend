@@ -136,7 +136,7 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .course-content-wrapper {
   display: flex;
   flex-direction: column;
@@ -150,6 +150,16 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   background: #fff;
   border-radius: 8px;
   margin-bottom: 24px;
+
+  :deep(.el-breadcrumb__inner),
+  :deep(.el-breadcrumb__inner:hover),
+  :deep(.el-breadcrumb__separator) {
+    color: black;
+  }
+
+  @include mobile {
+    padding: 24px 16px;
+  }
 }
 
 /* Course Content Styles */
@@ -160,23 +170,15 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   margin-bottom: 24px;
 }
 
-.course-header :deep(.el-breadcrumb__inner) {
-  color: black;
-}
-
-.course-header :deep(.el-breadcrumb__inner:hover) {
-  color: black;
-}
-
-.course-header :deep(.el-breadcrumb__separator) {
-  color: black;
-}
-
 .course-title {
   font-size: 36px;
   font-weight: 700;
   margin: 20px 0 0 0;
   line-height: 1.3;
+
+  @include mobile {
+    font-size: 24px;
+  }
 }
 
 .section-title-student {
@@ -185,6 +187,10 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   color: #1a1a1a;
   margin: 0 0 20px 0;
   padding: 24px 24px 0 24px;
+
+  @include mobile {
+    padding: 24px 16px 0 16px;
+  }
 }
 
 .section-header {
@@ -211,10 +217,19 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
 
 .section-content {
   padding: 12px 24px;
+
+  @include mobile {
+    padding: 12px 16px;
+  }
 }
 
 .el-collapse {
   padding: 0 24px 24px 24px;
+  border: none;
+
+  @include mobile {
+    padding: 0 16px 24px 16px;
+  }
 }
 
 .lesson-item {
@@ -224,31 +239,48 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   border-bottom: 1px solid #f0f0f0;
   gap: 12px;
   transition: background-color 0.2s ease;
-}
 
-.lesson-item:last-child {
-  border-bottom: none;
-}
+  &:last-child {
+    border-bottom: none;
+  }
 
-/* 可點擊的課程項目 */
-.lesson-item.clickable {
-  cursor: pointer;
-}
+  &.clickable {
+    cursor: pointer;
 
-.lesson-item.clickable:hover {
-  background-color: #f8f9fa;
+    &:hover {
+      background-color: #f8f9fa;
+    }
+  }
+
+  @include mobile {
+    padding: 12px 0;
+    flex-wrap: wrap;
+  }
 }
 
 .lesson-number {
   color: #666;
   font-size: 14px;
   min-width: 24px;
+
+  @include mobile {
+    font-size: 12px;
+    margin-right: 4px;
+  }
 }
 
 .lesson-title {
   flex: 1;
   color: #333;
   font-size: 14px;
+
+  @include mobile {
+    font-size: 14px;
+    line-height: 1.4;
+    min-width: 100%;
+    margin-bottom: 4px;
+    order: -1;
+  }
 }
 
 .lesson-duration {
@@ -256,6 +288,11 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   font-size: 13px;
   display: flex;
   align-items: center;
+
+  @include mobile {
+    font-size: 12px;
+    margin-left: auto;
+  }
 }
 
 /* 預覽連結樣式 */
@@ -272,42 +309,16 @@ const handlePreviewClick = (lesson, sectionIndex, lessonIndex) => {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-}
 
-.preview-link:hover {
-  background: var(--capy-primary, #54CDF2);
-  color: white;
-  text-decoration: none;
-}
-
-:deep(.el-collapse) {
-  border: none;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .course-header {
-    padding: 24px 16px;
+  &:hover {
+    background: var(--capy-primary, #54CDF2);
+    color: white;
+    text-decoration: none;
   }
 
-  .course-title {
-    font-size: 24px;
-  }
-
-  .course-description {
-    font-size: 14px;
-  }
-
-  .section-title-student {
-    padding: 24px 16px 0 16px;
-  }
-
-  .el-collapse {
-    padding: 0 16px 24px 16px;
-  }
-
-  .section-content {
-    padding: 12px 16px;
+  @include mobile {
+    padding: 4px 10px;
+    font-size: 12px;
   }
 }
 

@@ -958,11 +958,21 @@ defineExpose({
   margin-top: var(--capy-spacing-lg);
   font-size: var(--capy-font-size-base);
   color: var(--capy-text-primary);
+  /* Force wrap and flexible height */
+  white-space: normal;
+  height: auto;
+  align-items: flex-start; /* Align checkbox to top */
+  padding: 8px 0;
+}
+
+.bank-confirmation-checkbox :deep(.el-checkbox__input) {
+  margin-top: 2px; /* Slight adjustment for alignment */
 }
 
 .bank-confirmation-checkbox :deep(.el-checkbox__label) {
   color: var(--capy-text-primary);
   font-weight: var(--capy-font-weight-medium);
+  line-height: 1.5;
 }
 
 /* Section Titles */
@@ -1129,8 +1139,25 @@ defineExpose({
     font-size: var(--capy-font-size-xl);
   }
 
+  /* Force labels to stack on top for mobile */
+  .wizard-form :deep(.el-form-item) {
+    display: block;
+  }
+  
   .wizard-form :deep(.el-form-item__label) {
-    width: 100px !important;
+    width: 100% !important;
+    text-align: left;
+    margin-bottom: 8px;
+    justify-content: flex-start;
+  }
+  
+  .wizard-form :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+  }
+
+  /* Prevent delete button overlap on mobile */
+  .experience-card {
+    padding-top: 50px;
   }
 
   .review-descriptions :deep(.el-descriptions__label) {
@@ -1142,11 +1169,12 @@ defineExpose({
   }
 
   .wizard-footer {
-    flex-direction: column;
+    flex-direction: row; /* 保持水平排列 */
   }
 
   .wizard-footer .el-button {
-    width: 100%;
+    flex: 1; /* 按鈕平均分配寬度 */
+    width: auto;
   }
 }
 </style>

@@ -99,12 +99,16 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .ratings-reviews {
   background: #fff;
   border-radius: 8px;
   padding: 24px;
   margin-bottom: 24px;
+
+  @include mobile {
+    padding: 16px;
+  }
 }
 
 .section-title-student {
@@ -112,6 +116,11 @@ onMounted(() => {
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 24px 0;
+
+  @include mobile {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
 }
 
 .rating-overview {
@@ -120,6 +129,13 @@ onMounted(() => {
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 1px solid #e8e8e8;
+
+  @include mobile {
+    flex-direction: column;
+    gap: 24px;
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
 }
 
 .rating-score {
@@ -163,22 +179,26 @@ onMounted(() => {
 .progress-wrapper {
   flex: 1;
   min-width: 200px;
-}
 
-.progress-wrapper :deep(.el-progress) {
-  width: 100%;
-}
+  @include mobile {
+    min-width: auto;
+  }
 
-.progress-wrapper :deep(.el-progress-bar) {
-  padding-right: 0;
-}
+  :deep(.el-progress) {
+    width: 100%;
+  }
 
-.progress-wrapper :deep(.el-progress-bar__outer) {
-  background-color: #f0f0f0;
-}
+  :deep(.el-progress-bar) {
+    padding-right: 0;
+  }
 
-.progress-wrapper :deep(.el-progress-bar__inner) {
-  background-color: #ff9900;
+  :deep(.el-progress-bar__outer) {
+    background-color: #f0f0f0;
+  }
+
+  :deep(.el-progress-bar__inner) {
+    background-color: #ff9900;
+  }
 }
 
 .percentage-label {
@@ -197,11 +217,15 @@ onMounted(() => {
 .review-item {
   padding-bottom: 24px;
   border-bottom: 1px solid #f0f0f0;
-}
 
-.review-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  @include mobile {
+    padding-bottom: 16px;
+  }
 }
 
 .review-header {
@@ -209,6 +233,15 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+
+  @include mobile {
+    gap: 10px;
+
+    :deep(.el-avatar) {
+      width: 32px;
+      height: 32px;
+    }
+  }
 }
 
 .reviewer-info {
@@ -220,11 +253,19 @@ onMounted(() => {
   font-weight: 600;
   color: #1a1a1a;
   margin: 0 0 4px 0;
+
+  @include mobile {
+    font-size: 14px;
+  }
 }
 
 .review-date {
   font-size: 13px;
   color: #999;
+
+  @include mobile {
+    font-size: 12px;
+  }
 }
 
 .review-rating {
@@ -236,12 +277,5 @@ onMounted(() => {
   color: #666;
   line-height: 1.6;
   margin: 0;
-}
-
-@media (max-width: 768px) {
-  .rating-overview {
-    flex-direction: column;
-    gap: 24px;
-  }
 }
 </style>

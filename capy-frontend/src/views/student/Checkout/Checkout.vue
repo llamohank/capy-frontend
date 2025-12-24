@@ -485,8 +485,28 @@ const handleCheckout = async () => {
 
     // 根據錯誤類型顯示不同訊息
     if (error.response) {
-      // API 回傳錯誤
-      const errorMsg = error.response.data?.message || '結帳失敗，請稍後再試'
+      const status = error.response.status
+      let errorMsg = '結帳失敗，請稍後再試'
+
+      switch (status) {
+        case 400:
+          errorMsg = '訂單資料有誤，請確認購物車內容'
+          break
+        case 401:
+          errorMsg = '請先登入後再進行結帳'
+          break
+        case 403:
+          errorMsg = '您沒有權限進行此操作'
+          break
+        case 404:
+          errorMsg = '找不到相關課程或訂單資訊'
+          break
+        case 500:
+          errorMsg = '系統忙碌中，請稍後再試'
+          break
+        default:
+          errorMsg = error.response.data?.message || '結帳失敗，請稍後再試'
+      }
       ElMessage.error(errorMsg)
     } else if (error.message) {
       // 自定義錯誤訊息

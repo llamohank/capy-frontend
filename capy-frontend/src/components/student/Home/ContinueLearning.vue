@@ -1,5 +1,4 @@
 <script setup>
-import { number } from 'echarts'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getCourseSections } from '@/api/student/courseLearning'

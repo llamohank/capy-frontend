@@ -206,7 +206,35 @@ const handleSubmit = async () => {
     }, 1500);
   } catch (error) {
     console.error('重設密碼失敗:', error);
-    ElMessage.error(error.message || '重設密碼失敗，請重新申請重設連結');
+    // 根據錯誤類型顯示不同訊息
+    if (error.response) {
+      const status = error.response.status
+      let errorMsg = '重設密碼失敗，請重新申請重設連結'
+
+      switch (status) {
+        case 400:
+          // 可能包含 "invalid token" 或 "password requirements"
+          if (error.response.data?.message?.includes('token')) {
+            errorMsg = '重設連結無效或已過期，請重新申請'
+          } else {
+            errorMsg = '密碼格式不符或請求無效'
+          }
+          break
+        case 404:
+          errorMsg = '找不到使用者或連結無效'
+          break
+        case 500:
+          errorMsg = '系統忙碌中，請稍後再試'
+          break
+        default:
+          errorMsg = error.response.data?.message || '重設密碼失敗，請稍後再試'
+      }
+      ElMessage.error(errorMsg)
+    } else if (error.message) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('重設密碼失敗，請重新申請重設連結')
+    }
 
     // 如果 token 無效，延遲後導向登入頁面
     setTimeout(() => {

@@ -274,10 +274,54 @@ export const getSuggestions = (params = {}) => {
   })
 }
 
+/**
+ * 5. 取得各星等課程數量（無需登入）
+ * GET /explore/rates
+ *
+ * @returns {Promise<RateQuantityVo>} 回傳各星等的課程數量
+ *
+ * @example
+ * const rates = await getRateQuantities()
+ *
+ * @returns {Promise<Object>} 回應結構：
+ * {
+ *   oneStarQuantity: number,    // 1 星課程數量
+ *   twoStarQuantity: number,    // 2 星課程數量
+ *   threeStarQuantity: number,  // 3 星課程數量
+ *   fourStarQuantity: number,   // 4 星課程數量
+ *   fiveStarQuantity: number    // 5 星課程數量
+ * }
+ */
+export const getRateQuantities = () => {
+  return request({
+    url: '/explore/rates',
+    method: 'GET'
+  }).then(response => {
+    // http.js 攔截器已經提取了 response.data
+    return response || {
+      oneStarQuantity: 0,
+      twoStarQuantity: 0,
+      threeStarQuantity: 0,
+      fourStarQuantity: 0,
+      fiveStarQuantity: 0
+    }
+  }).catch(error => {
+    console.error('取得評分數量失敗:', error)
+    return {
+      oneStarQuantity: 0,
+      twoStarQuantity: 0,
+      threeStarQuantity: 0,
+      fourStarQuantity: 0,
+      fiveStarQuantity: 0
+    }
+  })
+}
+
 // 匯出所有 API 函數
 export default {
   searchCourses,
   getCategories,
   getTags,
-  getSuggestions
+  getSuggestions,
+  getRateQuantities
 }

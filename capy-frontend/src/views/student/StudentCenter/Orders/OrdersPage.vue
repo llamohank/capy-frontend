@@ -343,7 +343,26 @@ const loadOrders = async () => {
     console.error('載入訂單失敗:', error)
 
     if (error.response) {
-      ElMessage.error(error.response.data?.message || '載入訂單失敗，請稍後再試')
+      const status = error.response.status
+      let errorMsg = '載入訂單失敗，請稍後再試'
+
+      switch (status) {
+        case 401:
+          errorMsg = '請先登入後再查看訂單'
+          break
+        case 403:
+          errorMsg = '您沒有權限查看這些訂單'
+          break
+        case 404:
+          errorMsg = '找不到訂單資料'
+          break
+        case 500:
+          errorMsg = '系統忙碌中，請稍後再試'
+          break
+        default:
+          errorMsg = error.response.data?.message || '載入訂單失敗，請稍後再試'
+      }
+      ElMessage.error(errorMsg)
     } else {
       ElMessage.error('載入訂單失敗，請稍後再試')
     }

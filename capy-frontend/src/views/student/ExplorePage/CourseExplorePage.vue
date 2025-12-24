@@ -24,7 +24,7 @@
           <!-- Ratings Section -->
           <div class="filter-section">
             <h4 class="section-title-student">Ratings</h4>
-            <RatingOptions v-model="selectedRating" />
+            <RatingOptions v-model="selectedRating" :rate-quantities="rateQuantities" />
           </div>
         </el-card>
       </el-aside>
@@ -143,7 +143,7 @@
         <!-- Ratings Section -->
         <div class="filter-section">
           <h4 class="section-title-student">課程評價</h4>
-          <RatingOptions v-model="selectedRating" />
+          <RatingOptions v-model="selectedRating" :rate-quantities="rateQuantities" />
         </div>
 
         <!-- Apply Button -->
@@ -169,6 +169,7 @@ import ActiveFiltersBar from "@/components/student/Explore/ActiveFiltersBar.vue"
 import { useWishlistStore } from "@/stores/wishlist";
 import { useUserStore } from "@/stores/user";
 import { useExploreStore } from "@/stores/explore";
+import { getRateQuantities } from "@/api/student/explore";
 
 // Router
 const route = useRoute();
@@ -205,6 +206,15 @@ const coursesData = ref({
   first: true,
   last: true,
   empty: true,
+});
+
+// 評分數量資料
+const rateQuantities = ref({
+  oneStarQuantity: 0,
+  twoStarQuantity: 0,
+  threeStarQuantity: 0,
+  fourStarQuantity: 0,
+  fiveStarQuantity: 0
 });
 
 // 建立 category ID 到 name 的映射
@@ -548,6 +558,14 @@ onMounted(async () => {
       console.error("載入願望清單失敗:", error);
     });
   }
+
+  // 載入評分數量（不阻塞主流程）
+  getRateQuantities().then(data => {
+    rateQuantities.value = data;
+    console.log('📊 評分數量載入完成:', data);
+  }).catch(error => {
+    console.error('載入評分數量失敗:', error);
+  });
 });
 
 onUnmounted(() => {

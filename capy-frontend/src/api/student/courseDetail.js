@@ -179,7 +179,11 @@ export const fetchCourseDetail = async (courseId, params = {}) => {
       fetchCourseReviews(courseId, params)
     ])
 
+    console.log('🔍 fetchCourseInfo 回應:', courseInfo)
+    console.log('📊 isEnrolled 值:', courseInfo?.isEnrolled)
+
     // 整合成舊版格式
+    // 注意：isEnrolled 需要從 courseInfo 中提取到 courseInfo 層級
     return {
       nextCursorId: reviewsData.nextCursorId,
       nextCursorCreatedAt: reviewsData.nextCursorCreatedAt,
@@ -188,7 +192,9 @@ export const fetchCourseDetail = async (courseId, params = {}) => {
         course: courseInfo,
         sections: sections,
         rateTable: rateTable,
-        userReviews: reviewsData.reviews
+        userReviews: reviewsData.reviews,
+        // 🔥 關鍵：將 isEnrolled 提升到 courseInfo 層級
+        isEnrolled: courseInfo?.isEnrolled || false
       }
     }
   } catch (error) {

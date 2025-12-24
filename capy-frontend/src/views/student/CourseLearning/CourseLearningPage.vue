@@ -788,10 +788,21 @@ const formatLessonName = (name) => {
 /**
  * 處理單元點擊
  */
-const handleLessonClick = (lesson) => {
+const handleLessonClick = async (lesson) => {
   if (lesson.id === currentLessonId.value) {
     return
   }
+
+  // 🔥 切換單元前先同步當前進度
+  if (resumeStartTime.value > lastSyncedSeconds.value) {
+    console.log('🔄 切換單元前同步進度:', resumeStartTime.value)
+    await syncLessonProgress({ seconds: resumeStartTime.value, force: true })
+  }
+
+  // 重置播放相關狀態
+  resumeStartTime.value = 0
+  lastSyncedSeconds.value = 0
+  lastProgressSyncedAt.value = 0
 
   router.push({
     name: 'courseLearning',
@@ -1103,11 +1114,59 @@ watch(activeTab, (newTab) => {
   }
 })
 
+/**
+ * 🔥 進度保護：頁面離開時同步（使用 sendBeacon 確保發送）
+ */
+const syncProgressBeforeLeave = () => {
+  if (resumeStartTime.value > lastSyncedSeconds.value && currentLessonId.value) {
+    const seconds = resumeStartTime.value
+    console.log('🔄 離開前同步進度:', seconds)
+    
+    // 使用 sendBeacon 確保頁面關閉時也能發送
+    const url = `http://localhost:8080/api/lesson/progress/save`
+    const data = JSON.stringify({
+      lessonId: currentLessonId.value,
+      lastWatchSeconds: Math.floor(seconds)
+    })
+    
+    // 嘗試使用 sendBeacon（最可靠）
+    if (navigator.sendBeacon) {
+      const blob = new Blob([data], { type: 'application/json' })
+      const success = navigator.sendBeacon(url, blob)
+      console.log('📡 sendBeacon 發送:', success ? '成功' : '失敗')
+    }
+    
+    // 同時也呼叫普通 API（作為備份）
+    syncLessonProgress({ seconds, force: true })
+  }
+}
+
+// 🔥 頁面關閉/重新整理時同步
+const handleBeforeUnload = () => {
+  console.log('⚠️ 頁面即將卸載，同步學習進度')
+  syncProgressBeforeLeave()
+}
+
+// 🔥 頁面隱藏時同步（切換分頁、最小化等）
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'hidden') {
+    console.log('👁️ 頁面隱藏，同步學習進度')
+    if (resumeStartTime.value > lastSyncedSeconds.value) {
+      syncLessonProgress({ seconds: resumeStartTime.value, force: true })
+    }
+  }
+}
+
 // 頁面離開前補送最後進度
 onBeforeUnmount(() => {
+  console.log('🔚 元件卸載，同步學習進度')
   if (resumeStartTime.value > lastSyncedSeconds.value) {
     syncLessonProgress({ seconds: resumeStartTime.value, force: true })
   }
+  
+  // 移除事件監聽器
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 
 // 生命週期
@@ -1115,6 +1174,10 @@ onMounted(async () => {
   await loadCourseData()
   await loadQAData()
   // 我的提問在切換到該 Tab 時才載入
+  
+  // 🔥 註冊進度保護事件監聽器
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import { CirclePlus, Clock, Folder, VideoPlay } from "@element-plus/icons-vue";
 import { VueDraggable as Draggable } from "vue-draggable-plus";
 import CollapsePlaylistItem from "./CollapsePlaylistItem.vue";
 import TextInputDialog from "../common/TextInputDialog.vue";

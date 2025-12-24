@@ -1,9 +1,15 @@
 import axios from "axios";
 import router from "@/router";
 
+const envBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const baseUrl =
+  typeof envBaseUrl === "string" && envBaseUrl.trim() ? envBaseUrl.trim() : "http://localhost:8080";
+const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+const apiBaseUrl = /\/api$/.test(normalizedBaseUrl) ? normalizedBaseUrl : `${normalizedBaseUrl}/api`;
+
 // 建立實體時指派預設配置
 const instance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'}/api`,
+  baseURL: apiBaseUrl,
   timeout: 10000,
   withCredentials: true, // 啟用 Cookie 傳送
 });

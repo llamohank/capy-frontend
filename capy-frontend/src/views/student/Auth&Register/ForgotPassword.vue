@@ -97,7 +97,31 @@ const handleSubmit = async () => {
     isSuccess.value = true;
   } catch (error) {
     console.error('發送重設密碼郵件失敗:', error);
-    ElMessage.error(error.message || '發送失敗，請稍後再試');
+    
+    // 根據錯誤類型顯示不同訊息
+    if (error.response) {
+      const status = error.response.status
+      let errorMsg = '發送失敗，請稍後再試'
+
+      switch (status) {
+        case 404:
+          errorMsg = '找不到此電子郵件地址，請確認您輸入的信箱'
+          break
+        case 429:
+          errorMsg = '請求次數過多，請稍後再試'
+          break
+        case 500:
+          errorMsg = '系統忙碌中，請稍後再試'
+          break
+        default:
+          errorMsg = error.response.data?.message || '發送失敗，請稍後再試'
+      }
+      ElMessage.error(errorMsg)
+    } else if (error.message) {
+      ElMessage.error(error.message)
+    } else {
+      ElMessage.error('發送失敗，請稍後再試')
+    }
   } finally {
     isLoading.value = false;
   }

@@ -1,6 +1,16 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import {
+  ArrowDown,
+  Avatar,
+  Bell,
+  ChatLineRound,
+  Document,
+  House,
+  Menu,
+  SwitchButton,
+} from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/user";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import { logout } from "@/api/oauth/oauth";
@@ -24,38 +34,38 @@ const teacherMenuItems = [
   {
     type: "item",
     route: "teacherWorkspace",
-    icon: "House",
+    icon: House,
     label: "工作台",
   },
   {
     type: "item",
     route: "mycourse",
-    icon: "Menu",
+    icon: Menu,
     label: "我的課程",
     activeRoutes: ["createcourse", "editcoursedetail", "coursedetail"],
   },
   {
     type: "item",
     route: "notification",
-    icon: "Bell",
+    icon: Bell,
     label: "消息中心",
   },
   {
     type: "item",
     route: "coursecomment",
-    icon: "ChatLineRound",
+    icon: ChatLineRound,
     label: "課程留言",
   },
   {
     type: "item",
     route: "announcement",
-    icon: "Document",
+    icon: Document,
     label: "發布公告",
   },
   {
     type: "item",
     route: "teacherprofile",
-    icon: "Avatar",
+    icon: Avatar,
     label: "教師個人詳情",
   },
 ];
@@ -68,7 +78,7 @@ const handleUserCommand = async (command) => {
   }
 
   if (command === "switch-student") {
-    router.push("/student");
+    router.push("/student/my-learning");
     ElMessage.success("已切換至學生中心");
   }
 };

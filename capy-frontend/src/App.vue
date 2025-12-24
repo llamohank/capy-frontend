@@ -83,13 +83,7 @@ onMounted(async () => {
     console.log("👤 訪客模式");
   }
 
-  // 🔥 關鍵：監聽頁面卸載事件，確保 SSE 連線被關閉
-  window.addEventListener("beforeunload", () => {
-    console.log("⚠️ 頁面即將卸載，關閉 SSE 連線");
-    if (userStore.isAuthenticated) {
-      notificationStore.stopSSE();
-    }
-  });
+  // 注意：beforeunload 由 notificationSSE.js 統一處理，避免重複關閉連線
 
   // 添加滾動監聽 - 同時監聽 window 和 document
   window.addEventListener("scroll", handleScroll, { passive: true });
@@ -149,35 +143,43 @@ watch(
   }
 );
 
-// 組件卸載時清理 SSE 連線和滾動監聽
+// 組件卸載時清理滾動監聽
+// 注意：不要在這裡停止 SSE，因為 App.vue 卸載只會在完整頁面卸載時發生
+// SSE 的停止由 beforeunload（notificationSSE.js）和 logout（watch）處理
 onUnmounted(() => {
-  notificationStore.stopSSE();
   window.removeEventListener("scroll", handleScroll);
   document.removeEventListener("scroll", handleScroll);
   console.log("🗑️ Scroll listener removed");
 });
 
-// 監聽頁面可見性變化（優化）
+// 監聯頁面可見性變化（統一處理 SSE 連線）
 if (typeof document !== "undefined") {
   document.addEventListener("visibilitychange", async () => {
     if (document.hidden) {
-      // 頁面隱藏時保持連線（後端有 30 分鐘超時）
-      console.log("頁面隱藏，SSE 連線保持");
+      // 頁面隱藏時暫停 SSE 連線，節省資源
+      console.log("👁️ 頁面隱藏，暫停 SSE 連線");
+      if (userStore.isAuthenticated) {
+        notificationStore.stopSSE();
+      }
     } else {
       // 頁面顯示時確保連線並重新載入通知
       if (userStore.isAuthenticated) {
-        console.log("頁面顯示，檢查 SSE 連線狀態");
+        console.log("👁️ 頁面顯示，重新建立 SSE 連線");
 
         // 重新載入通知列表和未讀數量
-        await notificationStore.fetchStudentNotifications({
-          page: 0,
-          size: 10,
-        });
-        await notificationStore.fetchUnreadCount();
+        try {
+          await notificationStore.fetchStudentNotifications({
+            page: 0,
+            size: 10,
+          });
+          await notificationStore.fetchUnreadCount();
+        } catch (error) {
+          console.error("載入通知失敗:", error);
+        }
 
-        // 如果 SSE 未連線，重新建立連線
+        // 重新建立 SSE 連線
         if (!notificationStore.isSSEConnected) {
-          console.log("重新建立 SSE 連線");
+          console.log("🔄 重新建立 SSE 連線");
           notificationStore.startSSE();
         }
       }

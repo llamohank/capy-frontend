@@ -1,4 +1,5 @@
 <script setup>
+import { CirclePlus } from "@element-plus/icons-vue";
 import CourseCard from "@/components/teacher/CourseCard.vue";
 import { getCourseList } from "@/api/teacher/course";
 const courseList = ref([]);

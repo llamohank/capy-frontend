@@ -1,7 +1,7 @@
 <template>
   <div class="rating-options">
     <div
-      v-for="rating in ratingOptions"
+      v-for="rating in computedRatingOptions"
       :key="rating.value"
       class="rating-option"
       :class="{ active: localRating === rating.value }"
@@ -14,8 +14,8 @@
           size="small"
         />
         <span class="rating-label">
-          <span class="rating-value">{{ rating.value }}.0</span>
-          <span class="rating-up" v-if="rating.value < 5"> & up</span>
+          <span class="rating-value">{{ Number.isInteger(rating.value) ? rating.value + '.0' : rating.value }}</span>
+          <span class="rating-up"> & up</span>
         </span>
         <span class="rating-count">({{ rating.count }})</span>
       </div>
@@ -24,12 +24,23 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   modelValue: {
     type: Number,
     default: 0
+  },
+  // 接收後端回傳的評分數量
+  rateQuantities: {
+    type: Object,
+    default: () => ({
+      oneStarQuantity: 0,
+      twoStarQuantity: 0,
+      threeStarQuantity: 0,
+      fourStarQuantity: 0,
+      fiveStarQuantity: 0
+    })
   }
 })
 
@@ -37,14 +48,17 @@ const emit = defineEmits(['update:modelValue'])
 
 const localRating = ref(props.modelValue)
 
-// 評分選項（包含課程數量）
-const ratingOptions = [
-  { value: 5, count: 45 },
-  { value: 4, count: 120 },
-  { value: 3, count: 234 },
-  { value: 2, count: 312 },
-  { value: 1, count: 456 }
-]
+// 計算評分選項（使用後端數據或預設值）
+const computedRatingOptions = computed(() => {
+  const q = props.rateQuantities || {}
+  return [
+    { value: 4.5, count: q.fiveStarQuantity ?? 0 },
+    { value: 4, count: q.fourStarQuantity ?? 0 },
+    { value: 3, count: q.threeStarQuantity ?? 0 },
+    { value: 2, count: q.twoStarQuantity ?? 0 },
+    { value: 1, count: q.oneStarQuantity ?? 0 }
+  ]
+})
 
 // Rating 改變處理
 const handleRatingChange = (value) => {

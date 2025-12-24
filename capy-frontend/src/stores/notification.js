@@ -297,6 +297,7 @@ export const useNotificationStore = defineStore("notification", () => {
     // 檢查 SSE 服務本身的連線狀態，而不是 store 的狀態
     const actualState = notificationSSEService.getConnectionState();
     const isActuallyConnected = notificationSSEService.isConnected();
+    const isActuallyActive = notificationSSEService.isConnectionActive();
 
     console.log("🔍 startSSE 檢查:", {
       storeConnected: isSSEConnected.value,
@@ -305,17 +306,17 @@ export const useNotificationStore = defineStore("notification", () => {
     });
 
     // 如果實際連線是活躍的，就不需要重新連線
-    if (isActuallyConnected) {
+    if (isActuallyActive) {
       console.log("✅ SSE 連線已存在且活躍");
       // 同步 store 狀態
-      isSSEConnected.value = true;
+      isSSEConnected.value = isActuallyConnected;
       connectionState.value = actualState;
 
       return;
     }
 
     // 如果 store 認為已連線但實際沒有，重置狀態
-    if (isSSEConnected.value && !isActuallyConnected) {
+    if (isSSEConnected.value && !isActuallyActive) {
       console.log("🔄 重置不一致的連線狀態");
       isSSEConnected.value = false;
       connectionState.value = "disconnected";
@@ -379,19 +380,26 @@ export const useNotificationStore = defineStore("notification", () => {
       // 連線狀態變更回調
       (state) => {
         connectionState.value = state;
-        console.log("連線狀態更新:", state);
+        // 🔥 修正：根據實際狀態更新 isSSEConnected
+        isSSEConnected.value = state === 'connected';
+        console.log("連線狀態更新:", state, "isConnected:", isSSEConnected.value);
       }
     );
 
-    isSSEConnected.value = true;
+    // 🔥 修正：不要在這裡設為 true，等 callback 確認後再設定
+    // isSSEConnected.value = true;  // 移除這行
     connectionState.value = notificationSSEService.getConnectionState();
-    console.log("SSE 通知服務已啟動");
+    console.log("SSE 通知服務已啟動，等待連線確認...");
   };
 
   /**
    * 停止 SSE 連線
    */
   const stopSSE = () => {
+    // 🔍 Debug: 記錄呼叫來源
+    console.log("🛑 stopSSE 被呼叫，來源:");
+    console.trace();
+    
     notificationSSEService.disconnect();
     isSSEConnected.value = false;
     connectionState.value = "disconnected";

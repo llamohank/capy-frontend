@@ -204,13 +204,18 @@ defineExpose({
     font-size: 14px;
   }
 
+  /* 保持水平並排 */
   .dialog-footer {
-    flex-direction: column-reverse;
+    flex-direction: row;
   }
 
+  /* 按鈕平均分配寬度 */
   .cancel-button,
   .confirm-button {
-    width: 100%;
+    flex: 1;
+    width: auto;
+    padding: 12px; /* 稍微縮小內距以適應小螢幕 */
+    font-size: 14px;
   }
 }
 </style>

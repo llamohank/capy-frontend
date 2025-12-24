@@ -75,17 +75,18 @@ router.beforeEach(async (to, from, next) => {
     "notFound",
   ];
 
-  // 如果用戶未初始化，先初始化用戶資訊
-  if (!userStore.userInfo.userId) {
+  // 檢查路由是否需要認證
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
+  // 只有在需要判斷登入狀態的路由才 await init（避免 public 頁面首屏被 API 阻塞）
+  const shouldResolveAuth = requiresAuth || to.name === "login" || to.name === "register";
+  if (shouldResolveAuth && !userStore.userInfo.userId) {
     try {
       await userStore.init();
     } catch (error) {
       console.error("初始化用戶資訊失敗:", error);
     }
   }
-
-  // 檢查路由是否需要認證
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
 
   if (requiresAuth) {
     // 需要認證的路由

@@ -984,21 +984,52 @@ onMounted(() => {
     // ⚠️ 移除 return，讓程式繼續執行 initTurnstile
   }
 
+  // 動態載入 Turnstile script
+  const loadTurnstileScript = () => {
+    if (document.getElementById('turnstile-script')) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.id = 'turnstile-script';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+  };
+
   // 等待 Turnstile script 載入後渲染 widgets
-  const initTurnstile = () => {
-    if (window.turnstile) {
-      console.log('Turnstile 已載入，Site Key:', turnstileSiteKey);
-      // 根據當前 tab 渲染對應的 widget
-      setTimeout(() => {
-        if (activeTab.value === 'login' && loginWidgetId.value === null) {
-          renderLoginTurnstile();
-        } else if (activeTab.value === 'register' && registerWidgetId.value === null) {
-          renderRegisterTurnstile();
+  const initTurnstile = async () => {
+    try {
+      await loadTurnstileScript();
+      
+      // 等待 window.turnstile 準備好
+      let attempts = 0;
+      const checkTurnstile = () => {
+        if (window.turnstile) {
+          console.log('Turnstile 已載入，Site Key:', turnstileSiteKey);
+          // 根據當前 tab 渲染對應的 widget
+          setTimeout(() => {
+            if (activeTab.value === 'login' && loginWidgetId.value === null) {
+              renderLoginTurnstile();
+            } else if (activeTab.value === 'register' && registerWidgetId.value === null) {
+              renderRegisterTurnstile();
+            }
+          }, 100);
+        } else if (attempts < 20) { // 最多等待 2 秒
+          attempts++;
+          setTimeout(checkTurnstile, 100);
+        } else {
+          console.error('Turnstile 載入超時');
         }
-      }, 100);
-    } else {
-      console.log('等待 Turnstile 載入...');
-      setTimeout(initTurnstile, 100);
+      };
+      checkTurnstile();
+    } catch (error) {
+      console.error('Turnstile script 載入失敗:', error);
     }
   };
 

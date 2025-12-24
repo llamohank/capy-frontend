@@ -1,6 +1,16 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import {
+  ArrowDown,
+  DataAnalysis,
+  Edit,
+  House,
+  Management,
+  SetUp,
+  SwitchButton,
+  UserFilled,
+} from "@element-plus/icons-vue";
 import AppSidebar from "@/components/layout/AppSidebar.vue";
 import { logout } from "@/api/oauth/oauth";
 const router = useRouter();
@@ -21,13 +31,13 @@ const adminMenuItems = [
   {
     type: "item",
     route: "adminWorkspace",
-    icon: "House",
+    icon: House,
     label: "工作台",
   },
   {
     type: 'submenu',
     key: 'course',
-    icon: 'Edit',
+    icon: Edit,
     label: '課程管理',
     activeRoutes: ['viewCourseDetail'],
     children: [
@@ -39,7 +49,7 @@ const adminMenuItems = [
   {
     type: "submenu",
     key: "user",
-    icon: "UserFilled",
+    icon: UserFilled,
     label: "用戶管理",
     children: [
       { route: "instructor_application_list", label: "教師申請列表" },
@@ -49,7 +59,7 @@ const adminMenuItems = [
   {
     type: "submenu",
     key: "platform",
-    icon: "Management",
+    icon: Management,
     label: "平台管理",
     children: [
       { route: "platform_announcement", label: "平台公告" },
@@ -59,13 +69,13 @@ const adminMenuItems = [
   {
     type: "item",
     route: "datastatic",
-    icon: "DataAnalysis",
+    icon: DataAnalysis,
     label: "數據分析",
   },
   {
     type: "item",
     route: "operationrecord",
-    icon: "SetUp",
+    icon: SetUp,
     label: "操作紀錄查詢",
   },
 ];
@@ -80,7 +90,7 @@ const handleUserCommand = async (command) => {
     await logout();
     router.push("/");
   } else if (command === "switch-student") {
-    router.push("/student");
+    router.push("/student/my-learning");
     ElMessage.success("已切換至學生中心");
   }
 };
